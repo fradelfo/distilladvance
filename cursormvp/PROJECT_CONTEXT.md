@@ -1,7 +1,7 @@
 # Distill - Project Context
 
 > This file maintains current project state, decisions, and context for Claude Code sessions.
-> Updated: 2025-11-26
+> Updated: 2025-11-27
 
 ## Project Summary
 
@@ -9,34 +9,44 @@
 
 ## Current State
 
-### Implemented ✅
+### Sprint 1: Foundation ✅ COMPLETE
 - [x] Monorepo structure with Bun workspaces
 - [x] Browser extension scaffold (Manifest V3)
-  - `manifest.json` configured for target platforms
-  - Background service worker with message handling
-  - Content script with conversation extraction framework
-  - Platform detection (ChatGPT, Claude, Gemini, Copilot)
-- [x] Web app package (Next.js 14+ scaffold)
-- [x] API server package (Express/tRPC scaffold)
-- [x] Shared types package with core domain types
-- [x] Prisma schema with full data model
+- [x] Content scripts for ChatGPT, Claude, Gemini, Copilot
+- [x] Background service worker with message handling
+- [x] Web app package (Next.js 14+)
+- [x] API server (Express + tRPC)
+- [x] Shared types package
+- [x] Prisma schema + PostgreSQL connection
 - [x] Docker Compose for local services
-- [x] Kubernetes production manifests
-- [x] Playwright E2E test configuration
-- [x] Root configuration (tsconfig, biome, package.json)
-- [x] Claude Code agents and commands
+- [x] Authentication (NextAuth.js v5 + Google OAuth + Credentials)
+- [x] User registration + login/signup pages
+- [x] Protected route middleware
 
-### In Progress 🔄
-- [ ] Extension popup UI components
-- [ ] Platform-specific conversation extractors
-- [ ] API endpoint implementations
+### Sprint 2: Core Loop ✅ COMPLETE
+- [x] Extension popup UI (React + Vite + Tailwind)
+- [x] Capture modal with conversation preview
+- [x] Privacy mode selector (full/prompt-only)
+- [x] Distillation service (Anthropic Claude)
+- [x] Prompt library UI (`/prompts` + `/prompts/[id]`)
+- [x] tRPC CRUD routers for prompts
+- [x] Typed message passing system
+- [x] Keyboard shortcut (Ctrl+Shift+D)
 
-### Not Started ⏳
-- [ ] Authentication flow (NextAuth.js)
-- [ ] AI distillation service
+### Sprint 3: Team Features ✅ COMPLETE
+- [x] Workspace creation & management (`/workspaces`)
+- [x] Workspace invites & member roles
+- [x] Collections/folders (`/collections`)
+- [x] Run prompt flow with variable extraction
+- [x] Onboarding wizard (`/onboarding`)
+- [x] Privacy mode API integration
+- [x] Conversation router with privacy modes
+
+### Not Started (Sprint 4+) ⏳
+- [ ] Prompt editor with rich formatting
+- [ ] Coach feature (prompt improvement suggestions)
 - [ ] Vector embedding pipeline
 - [ ] Semantic search functionality
-- [ ] User dashboard
 - [ ] Chrome Web Store deployment
 
 ## Architecture Decisions
@@ -130,10 +140,15 @@ CHROMA_URL=http://localhost:8000
 
 ```
 User
- ├── Conversations (captured from AI chats)
+ ├── Conversations (captured from AI chats, with PrivacyMode)
  │    └── Prompts (distilled content)
  │         └── Embeddings (for semantic search)
  ├── Collections (organized prompt groups)
+ ├── Workspaces (team containers)
+ │    ├── Members (with roles: Owner, Admin, Member)
+ │    ├── Invites (pending invitations)
+ │    ├── Prompts (shared prompts)
+ │    └── Collections (shared collections)
  ├── ApiKeys (for external integrations)
  └── AiUsageLogs (cost tracking)
 ```
@@ -155,13 +170,28 @@ User
 - AI provider selection based on task complexity (cost optimization)
 - All message passing is type-safe via shared-types package
 
+## Available Routes (12)
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing page |
+| `/login` | Authentication |
+| `/signup` | User registration |
+| `/dashboard` | User home |
+| `/prompts` | Prompt library |
+| `/prompts/[id]` | Prompt detail & run |
+| `/collections` | Collections list |
+| `/collections/[id]` | Collection detail |
+| `/workspaces` | Team workspaces |
+| `/workspaces/[slug]` | Workspace detail |
+| `/onboarding` | Welcome wizard |
+
 ## Obsidian Reference
 
 Project documentation also saved to Obsidian vault:
-- `Projects/Distill/README.md`
-- `Projects/Distill/Structure.md`
-- `Projects/Distill/Quick Reference.md`
-- `Projects/Distill/Development Log.md`
+- `Projects/DistillAdv/README.md`
+- `Projects/DistillAdv/Development Log.md`
+- `Projects/DistillAdv/Roadmap.md`
 
 ---
 

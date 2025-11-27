@@ -4,7 +4,7 @@
 
 **Project:** Distill
 **Description:** Browser extension + web app (SaaS) that captures AI chat conversations and distills them into reusable, coached prompt templates with team sharing and privacy controls
-**Stage:** Post-MVP scaffold, pre-implementation
+**Stage:** Development - Sprint 4 (Advanced Features)
 **Repository:** /Users/delf0/Desktop/distill2/cursormvp/
 
 ### Tech stack
@@ -75,32 +75,48 @@ Knowledge workers and teams don't have a simple, trusted way to:
 
 ## Current implementation status
 
-### Implemented
+> **Current Sprint:** 4 - Advanced Features
+> **See:** `Projects/DistillAdv/Development Log.md` for detailed progress
+
+### Sprint 1: Foundation ✅ COMPLETE
 - [x] Monorepo structure with Bun workspaces
 - [x] Browser extension scaffold (Manifest V3)
 - [x] Content scripts for ChatGPT, Claude, Gemini, Copilot
 - [x] Background service worker with message handling
 - [x] Web app package scaffold (Next.js)
-- [x] API server package scaffold (Express/tRPC)
+- [x] API server (Express + tRPC)
 - [x] Shared types package
-- [x] Prisma schema (User, Conversation, Prompt, Collection, Embeddings)
+- [x] Prisma schema + PostgreSQL connection
 - [x] Docker Compose for local services
-- [x] Kubernetes manifests
-- [x] Test configuration (Vitest, Playwright)
+- [x] Authentication (NextAuth.js v5 + Google OAuth + Credentials)
+- [x] User registration + login/signup pages
+- [x] Protected route middleware
 
-### In progress
-- [ ] Extension popup UI components
-- [ ] Platform-specific conversation extractors
+### Sprint 2: Core Loop ✅ COMPLETE
+- [x] Extension popup UI (React + Vite + Tailwind)
+- [x] Capture modal with conversation preview
+- [x] Privacy mode selector (full/prompt-only)
+- [x] Distillation service (Anthropic Claude)
+- [x] Prompt library UI (`/prompts` + `/prompts/[id]`)
+- [x] tRPC CRUD routers for prompts
+- [x] Typed message passing system
+- [x] Keyboard shortcut (Ctrl+Shift+D)
 
-### Not started
-- [ ] Authentication flow (NextAuth.js)
-- [ ] AI distillation service
-- [ ] Vector embedding pipeline
-- [ ] Semantic search
-- [ ] Prompt coach feature
-- [ ] User dashboard
-- [ ] Workspace/team features
-- [ ] Privacy mode implementation
+### Sprint 3: Team Features ✅ COMPLETE
+- [x] Workspace creation & management (`/workspaces`)
+- [x] Workspace invites & member roles (Owner, Admin, Member)
+- [x] Collections/folders (`/collections` + `/collections/[id]`)
+- [x] Run prompt flow with {{variable}} extraction
+- [x] Onboarding wizard (`/onboarding`)
+- [x] Privacy mode API (PrivacyMode enum: PROMPT_ONLY, FULL)
+- [x] Conversation router with privacy-aware data handling
+
+### Sprint 4: Advanced Features 🟡 NOT STARTED
+- [ ] Prompt editor with rich formatting
+- [ ] Coach feature (prompt improvement suggestions)
+- [ ] Vector embedding pipeline (ChromaDB)
+- [ ] Semantic search functionality
+- [ ] Chrome Web Store deployment
 
 ## Code conventions
 
@@ -218,7 +234,34 @@ chore: description
 ### Open questions
 - [ ] Exact distillation prompt engineering
 - [ ] Coach suggestions: LLM-based or heuristic?
-- [ ] Variable extraction algorithm
+- [x] Variable extraction algorithm (implemented: `{{variable}}` syntax)
+
+### Available Routes (12)
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing page |
+| `/login`, `/signup` | Authentication |
+| `/dashboard` | User home |
+| `/prompts`, `/prompts/[id]` | Prompt library & detail |
+| `/collections`, `/collections/[id]` | Collections & detail |
+| `/workspaces`, `/workspaces/[slug]` | Team workspaces |
+| `/onboarding` | Welcome wizard |
+
+---
+
+## Documentation (Obsidian)
+
+**Vault path:** `Projects/DistillAdv/`
+
+| Document | Path |
+|----------|------|
+| Project README | `Projects/DistillAdv/README.md` |
+| Development Log | `Projects/DistillAdv/Development Log.md` |
+| Session Resume | `Projects/DistillAdv/Session Start.md` |
+| Roadmap | `Projects/DistillAdv/Roadmap.md` |
+| Sprint Goals | `Projects/DistillAdv/Sprint 1/Goals.md` |
+| Architecture | `Projects/DistillAdv/Architecture/System Overview.md` |
 
 ---
 
@@ -229,4 +272,4 @@ When starting a new session:
 2. Check status: `git status`
 3. Review open phase: `docs/phases/`
 4. Check PROJECT_CONTEXT.md in cursormvp/ for latest state
-5. Check Obsidian daily log for blockers
+5. Check Obsidian `Projects/DistillAdv/Development Log.md` for blockers

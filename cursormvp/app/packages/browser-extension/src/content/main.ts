@@ -3,7 +3,17 @@
  * Injected into AI chat pages to capture conversations
  */
 
-import type { ConversationMessage, ConversationSource, ExtensionMessage } from '@distill/shared-types';
+import type {
+  ConversationMessage,
+  ConversationSource,
+  ExtensionMessage,
+  CapturedConversation,
+} from '@distill/shared-types';
+import { showCaptureModal, CaptureModal } from './components/CaptureModal';
+import { MessageTypes } from '../shared/messages';
+
+// Module state
+let currentModal: CaptureModal | null = null;
 
 // Detect which AI chat platform we're on
 function detectPlatform(): ConversationSource {
@@ -118,29 +128,92 @@ function getConversationTitle(): string {
   return titleElement?.textContent?.trim() || 'Untitled Conversation';
 }
 
-// Listen for messages from background script
+// Build captured conversation object
+function buildCapturedConversation(): CapturedConversation {
+  const platform = detectPlatform();
+  const messages = extractConversation();
+
+  return {
+    source: platform,
+    url: window.location.href,
+    title: getConversationTitle(),
+    messages,
+    capturedAt: new Date(),
+  };
+}
+
+// Open the capture modal overlay
+function openCaptureModal(): void {
+  // Close existing modal if open
+  if (currentModal) {
+    currentModal.remove();
+    currentModal = null;
+  }
+
+  const conversation = buildCapturedConversation();
+
+  currentModal = showCaptureModal({
+    conversation,
+    onClose: () => {
+      currentModal = null;
+    },
+    onDistill: (result) => {
+      console.log('[Distill] Distill completed:', result);
+    },
+  });
+}
+
+// Listen for messages from background script and popup
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
-  if (message.type === 'CAPTURE_CONVERSATION') {
-    const platform = detectPlatform();
-    const messages = extractConversation();
+  switch (message.type) {
+    case MessageTypes.CAPTURE_CONVERSATION: {
+      const capturedData = buildCapturedConversation();
 
-    const capturedData = {
-      source: platform,
-      url: window.location.href,
-      title: getConversationTitle(),
-      messages,
-      capturedAt: new Date().toISOString(),
-    };
+      // Send back to background script
+      chrome.runtime.sendMessage({
+        type: MessageTypes.CONVERSATION_CAPTURED,
+        payload: capturedData,
+        source: 'content',
+        timestamp: Date.now(),
+      });
 
-    // Send back to background script
-    chrome.runtime.sendMessage({
-      type: 'CONVERSATION_CAPTURED',
-      payload: capturedData,
-      source: 'content',
-      timestamp: Date.now(),
-    });
+      sendResponse({ success: true, data: capturedData });
+      break;
+    }
 
-    sendResponse({ success: true, data: capturedData });
+    case MessageTypes.OPEN_CAPTURE_MODAL: {
+      openCaptureModal();
+      sendResponse({ success: true });
+      break;
+    }
+
+    case MessageTypes.CLOSE_CAPTURE_MODAL: {
+      if (currentModal) {
+        currentModal.remove();
+        currentModal = null;
+      }
+      sendResponse({ success: true });
+      break;
+    }
+
+    case MessageTypes.GET_PAGE_STATUS: {
+      const platform = detectPlatform();
+      const messages = extractConversation();
+
+      sendResponse({
+        success: true,
+        data: {
+          supported: platform !== 'other',
+          platform,
+          hasConversation: messages.length > 0,
+          messageCount: messages.length,
+        },
+      });
+      break;
+    }
+
+    default:
+      sendResponse({ success: false, error: 'Unknown message type' });
   }
 
   return true;
@@ -192,12 +265,8 @@ function injectDistillButton() {
   });
 
   button.addEventListener('click', () => {
-    chrome.runtime.sendMessage({
-      type: 'CAPTURE_CONVERSATION',
-      payload: {},
-      source: 'content',
-      timestamp: Date.now(),
-    });
+    // Open the capture modal directly
+    openCaptureModal();
   });
 
   shadow.appendChild(button);

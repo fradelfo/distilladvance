@@ -17,6 +17,7 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
+  password      String?   // Hashed password for credentials auth (null for OAuth-only users)
   name          String?
   image         String?
   emailVerified DateTime?
@@ -24,12 +25,13 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts       Account[]
-  sessions       Session[]
-  conversations  Conversation[]
-  prompts        Prompt[]
-  collections    Collection[]
-  apiKeys        ApiKey[]
+  accounts            Account[]
+  sessions            Session[]
+  conversations       Conversation[]
+  prompts             Prompt[]
+  collections         Collection[]
+  apiKeys             ApiKey[]
+  workspaceMemberships WorkspaceMember[]
 
   @@map("users")
 }
@@ -101,6 +103,7 @@ model Conversation {
 model Prompt {
   id             String   @id @default(cuid())
   userId         String
+  workspaceId    String?  // Optional workspace ownership
   conversationId String?
   title          String
   content        String   @db.Text
@@ -116,11 +119,13 @@ model Prompt {
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace    Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   collections  CollectionPrompt[]
   embeddings   PromptEmbedding[]
 
   @@index([userId])
+  @@index([workspaceId])
   @@index([conversationId])
   @@index([tags])
   @@map("prompts")
@@ -129,6 +134,7 @@ model Prompt {
 model Collection {
   id          String   @id @default(cuid())
   userId      String
+  workspaceId String?  // Optional workspace ownership
   name        String
   description String?
   isPublic    Boolean  @default(false)
@@ -136,10 +142,12 @@ model Collection {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  prompts CollectionPrompt[]
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  prompts   CollectionPrompt[]
 
   @@index([userId])
+  @@index([workspaceId])
   @@map("collections")
 }
 
@@ -156,6 +164,68 @@ model CollectionPrompt {
 
   @@unique([collectionId, promptId])
   @@map("collection_prompts")
+}
+
+// ============================================================================
+// Workspace & Team Management
+// ============================================================================
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     WorkspaceMember[]
+  invites     WorkspaceInvite[]
+  prompts     Prompt[]
+  collections Collection[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model WorkspaceInvite {
+  id          String        @id @default(cuid())
+  workspaceId String
+  email       String
+  role        WorkspaceRole @default(MEMBER)
+  token       String        @unique
+  expiresAt   DateTime
+  createdAt   DateTime      @default(now())
+  acceptedAt  DateTime?
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@map("workspace_invites")
 }
 
 // ============================================================================

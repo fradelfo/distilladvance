@@ -3,19 +3,8 @@
   "name": "Distill - AI Chat Conversation Distillation",
   "version": "0.1.0",
   "description": "Distill AI chat conversations into reusable, optimized prompts",
-  "icons": {
-    "16": "icons/icon-16.png",
-    "32": "icons/icon-32.png",
-    "48": "icons/icon-48.png",
-    "128": "icons/icon-128.png"
-  },
   "action": {
     "default_popup": "popup/index.html",
-    "default_icon": {
-      "16": "icons/icon-16.png",
-      "32": "icons/icon-32.png",
-      "48": "icons/icon-48.png"
-    },
     "default_title": "Distill AI Conversations"
   },
   "options_page": "options/index.html",
@@ -33,10 +22,18 @@
         "https://copilot.microsoft.com/*"
       ],
       "js": ["content/main.js"],
-      "css": ["content/styles.css"],
       "run_at": "document_idle"
     }
   ],
+  "commands": {
+    "capture-conversation": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Capture and distill the current conversation"
+    }
+  },
   "permissions": [
     "storage",
     "activeTab",
@@ -54,7 +51,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/styles.css", "icons/*"],
+      "resources": ["icons/*"],
       "matches": ["<all_urls>"]
     }
   ],

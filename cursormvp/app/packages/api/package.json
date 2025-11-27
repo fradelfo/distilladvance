@@ -4,6 +4,14 @@
   "private": true,
   "description": "API server for Distill with AI/LLM integration",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
@@ -18,6 +26,7 @@
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
     "@distill/shared-types": "workspace:*",
     "@prisma/client": "^5.20.0",
     "@trpc/server": "^11.0.0-rc.0",
@@ -25,6 +34,7 @@
     "bullmq": "^5.13.0",
     "chromadb": "^1.8.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
     "express": "^4.21.0",
     "ioredis": "^5.4.0",
     "openai": "^4.67.0",

@@ -27,6 +27,7 @@
     "api:build": "bun --cwd app/packages/api run build",
     "api:test": "bun --cwd app/packages/api run test",
     "db:migrate": "bun --cwd app/packages/api run db:migrate",
+    "db:generate": "bun --cwd app/packages/api run db:generate && bun --cwd app/packages/web-app run db:generate",
     "db:seed": "bun --cwd app/packages/api run db:seed",
     "db:studio": "bun --cwd app/packages/api run db:studio",
     "ai:test": "vitest run --config tests/config/vitest.ai.config.ts",

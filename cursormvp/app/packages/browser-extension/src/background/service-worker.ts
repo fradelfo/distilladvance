@@ -3,7 +3,8 @@
  * Handles extension lifecycle, message passing, and background tasks
  */
 
-import type { ExtensionMessage, ExtensionMessageType } from '@distill/shared-types';
+import type { ExtensionMessage } from '@distill/shared-types';
+import { MessageTypes } from '../shared/messages';
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener((details) => {
@@ -12,6 +13,22 @@ chrome.runtime.onInstalled.addListener((details) => {
     initializeDefaults();
   } else if (details.reason === 'update') {
     console.log('[Distill] Extension updated');
+  }
+});
+
+// Handle keyboard shortcut command
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'capture-conversation') {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      // Send message to content script to open capture modal
+      chrome.tabs.sendMessage(tab.id, {
+        type: MessageTypes.OPEN_CAPTURE_MODAL,
+        payload: {},
+        source: 'background',
+        timestamp: Date.now(),
+      });
+    }
   }
 });
 
@@ -69,18 +86,27 @@ async function handleMessage(
   const { type, payload } = message;
 
   switch (type) {
+    case MessageTypes.CAPTURE_CONVERSATION:
     case 'CAPTURE_CONVERSATION':
       return handleCaptureConversation(payload);
 
+    case MessageTypes.CONVERSATION_CAPTURED:
+    case 'CONVERSATION_CAPTURED':
+      return handleConversationCaptured(payload);
+
+    case MessageTypes.DISTILL_REQUEST:
     case 'DISTILL_REQUEST':
       return handleDistillRequest(payload);
 
+    case MessageTypes.GET_SETTINGS:
     case 'GET_SETTINGS':
       return getSettings();
 
+    case MessageTypes.UPDATE_SETTINGS:
     case 'UPDATE_SETTINGS':
       return updateSettings(payload);
 
+    case MessageTypes.AUTH_STATUS:
     case 'AUTH_STATUS':
       return getAuthStatus();
 
@@ -91,12 +117,32 @@ async function handleMessage(
 }
 
 async function handleCaptureConversation(payload: unknown) {
+  // Request capture from content script
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    return new Promise((resolve) => {
+      chrome.tabs.sendMessage(
+        tab.id!,
+        {
+          type: MessageTypes.CAPTURE_CONVERSATION,
+          payload: {},
+          source: 'background',
+          timestamp: Date.now(),
+        },
+        resolve
+      );
+    });
+  }
+  return { success: false, error: 'No active tab' };
+}
+
+async function handleConversationCaptured(payload: unknown) {
   // Store captured conversation
   const conversations = await chrome.storage.local.get('conversations');
   const existing = conversations.conversations || [];
 
   existing.unshift({
-    ...payload,
+    ...(payload as object),
     capturedAt: new Date().toISOString(),
   });
 
@@ -105,13 +151,36 @@ async function handleCaptureConversation(payload: unknown) {
     conversations: existing.slice(0, 100),
   });
 
+  // Update stats
+  const stats = await chrome.storage.local.get(['promptsSaved', 'lastCapture']);
+  await chrome.storage.local.set({
+    promptsSaved: (stats.promptsSaved || 0) + 1,
+    lastCapture: new Date().toISOString(),
+  });
+
   return { success: true, message: 'Conversation captured' };
 }
 
 async function handleDistillRequest(payload: unknown) {
-  // TODO: Implement distillation logic
-  // This would call the API server to process the conversation
-  return { success: true, message: 'Distillation queued' };
+  // TODO: Implement actual API call to distillation service
+  // For now, simulate a successful distillation
+  console.log('[Distill] Processing distill request:', payload);
+
+  // In production, this would:
+  // 1. Get auth token from storage
+  // 2. Call the API server with the conversation
+  // 3. Return the distilled prompt result
+
+  return {
+    success: true,
+    data: {
+      promptId: 'prompt-' + Date.now(),
+      title: 'Distilled Prompt',
+      content: 'Generated prompt template...',
+      tags: ['generated'],
+      metadata: {},
+    },
+  };
 }
 
 async function getSettings() {
@@ -141,9 +210,9 @@ async function handleDistillSelection(text: string, tab?: chrome.tabs.Tab) {
 async function handleDistillPage(tab?: chrome.tabs.Tab) {
   if (!tab?.id) return;
 
-  // Send message to content script to capture conversation
+  // Send message to content script to open capture modal
   chrome.tabs.sendMessage(tab.id, {
-    type: 'CAPTURE_CONVERSATION',
+    type: MessageTypes.OPEN_CAPTURE_MODAL,
     payload: {},
     source: 'background',
     timestamp: Date.now(),

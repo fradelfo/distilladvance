@@ -448,4 +448,40 @@ export const distillRouter = router({
 
       return { success: true };
     }),
+
+  /**
+   * Increment usage count for a prompt and return the updated prompt.
+   */
+  incrementUsage: authedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const prompt = await ctx.prisma.prompt.findUnique({
+        where: { id: input.id },
+        select: { id: true },
+      });
+
+      if (!prompt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Prompt not found",
+        });
+      }
+
+      const updatedPrompt = await ctx.prisma.prompt.update({
+        where: { id: input.id },
+        data: { usageCount: { increment: 1 } },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          tags: true,
+          isPublic: true,
+          usageCount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return updatedPrompt;
+    }),
 });

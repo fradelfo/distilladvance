@@ -1,0 +1,531 @@
+{
+  "description": "Comprehensive MCP integration configuration for browser extension + AI web application development",
+  "version": "1.0.0",
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "config": {
+        "repositories": [
+          "${GITHUB_OWNER}/${GITHUB_REPO}"
+        ],
+        "features": {
+          "issues": true,
+          "pull_requests": true,
+          "discussions": true,
+          "releases": true,
+          "actions": true
+        }
+      },
+      "description": "GitHub integration for issue tracking, PR management, and repository operations"
+    },
+
+    "postgresql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      },
+      "config": {
+        "schema": "public",
+        "readonly": false,
+        "allowed_tables": [
+          "users",
+          "conversations",
+          "distillations",
+          "user_preferences",
+          "ai_usage_logs",
+          "extension_analytics"
+        ]
+      },
+      "description": "PostgreSQL database integration for user data, conversations, and analytics"
+    },
+
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}"
+      },
+      "config": {
+        "channels": [
+          "#development",
+          "#alerts",
+          "#deployments",
+          "#ai-experiments"
+        ],
+        "features": {
+          "send_messages": true,
+          "read_messages": true,
+          "manage_channels": false,
+          "upload_files": true
+        }
+      },
+      "description": "Slack integration for team notifications, alerts, and collaboration"
+    },
+
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "config": {
+        "allowed_directories": [
+          "app/",
+          "docs/",
+          "tests/",
+          "scripts/",
+          ".github/",
+          "k8s/",
+          "prisma/"
+        ],
+        "readonly": false,
+        "watch_for_changes": true,
+        "file_operations": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false
+        }
+      },
+      "description": "Enhanced filesystem operations with project-aware file management"
+    },
+
+    "web": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "config": {
+        "allowed_domains": [
+          "api.openai.com",
+          "api.anthropic.com",
+          "docs.google.com",
+          "github.com",
+          "stackoverflow.com",
+          "developer.mozilla.org",
+          "chrome.google.com",
+          "addons.mozilla.org",
+          "microsoftedge.microsoft.com",
+          "claude.ai",
+          "chat.openai.com"
+        ],
+        "rate_limiting": {
+          "requests_per_minute": 60,
+          "burst_limit": 10
+        },
+        "features": {
+          "follow_redirects": true,
+          "parse_html": true,
+          "extract_metadata": true
+        }
+      },
+      "description": "Web fetching for research, documentation, and browser extension store APIs"
+    },
+
+    "aws": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws"],
+      "env": {
+        "AWS_REGION": "${AWS_REGION:-us-east-1}",
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"
+      },
+      "config": {
+        "services": [
+          "s3",
+          "rds",
+          "eks",
+          "cloudwatch",
+          "lambda",
+          "secretsmanager"
+        ],
+        "s3": {
+          "allowed_buckets": [
+            "${PROJECT_NAME}-assets",
+            "${PROJECT_NAME}-backups",
+            "${PROJECT_NAME}-logs"
+          ]
+        },
+        "rds": {
+          "allowed_instances": [
+            "${PROJECT_NAME}-main",
+            "${PROJECT_NAME}-staging"
+          ]
+        },
+        "readonly": true
+      },
+      "description": "AWS services integration for cloud infrastructure management and monitoring"
+    },
+
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"],
+      "config": {
+        "allowed_operations": [
+          "list_containers",
+          "list_images",
+          "inspect_container",
+          "view_logs",
+          "build_image"
+        ],
+        "container_filters": {
+          "label": [
+            "project=${PROJECT_NAME}",
+            "environment=${NODE_ENV}"
+          ]
+        },
+        "security": {
+          "readonly": true,
+          "no_privileged": true,
+          "no_host_network": true
+        }
+      },
+      "description": "Docker container management for local development and debugging"
+    },
+
+    "kubernetes": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+      "env": {
+        "KUBECONFIG": "${KUBECONFIG:-~/.kube/config}"
+      },
+      "config": {
+        "namespaces": [
+          "${PROJECT_NAME}-dev",
+          "${PROJECT_NAME}-staging",
+          "${PROJECT_NAME}-prod"
+        ],
+        "allowed_resources": [
+          "pods",
+          "services",
+          "deployments",
+          "configmaps",
+          "secrets",
+          "ingress",
+          "persistentvolumes"
+        ],
+        "readonly": true
+      },
+      "description": "Kubernetes cluster management for deployment monitoring and debugging"
+    },
+
+    "sentry": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
+        "SENTRY_ORG": "${SENTRY_ORG}",
+        "SENTRY_PROJECT": "${SENTRY_PROJECT}"
+      },
+      "config": {
+        "features": {
+          "issues": true,
+          "events": true,
+          "releases": true,
+          "performance": true,
+          "alerts": true
+        },
+        "time_range": "24h",
+        "environment_filter": [
+          "development",
+          "staging",
+          "production"
+        ]
+      },
+      "description": "Sentry integration for error tracking, performance monitoring, and alerting"
+    },
+
+    "redis": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-redis"],
+      "env": {
+        "REDIS_URL": "${REDIS_URL}"
+      },
+      "config": {
+        "allowed_commands": [
+          "GET",
+          "SET",
+          "DEL",
+          "EXISTS",
+          "TTL",
+          "KEYS",
+          "INFO",
+          "MEMORY"
+        ],
+        "key_patterns": [
+          "cache:*",
+          "session:*",
+          "queue:*",
+          "analytics:*"
+        ],
+        "readonly": false
+      },
+      "description": "Redis integration for cache management, session storage, and queue operations"
+    }
+  },
+
+  "environments": {
+    "development": {
+      "enabled_servers": [
+        "github",
+        "postgresql",
+        "filesystem",
+        "web",
+        "docker",
+        "redis"
+      ],
+      "config_overrides": {
+        "postgresql": {
+          "readonly": false
+        },
+        "docker": {
+          "allowed_operations": [
+            "list_containers",
+            "list_images",
+            "inspect_container",
+            "view_logs",
+            "build_image",
+            "start_container",
+            "stop_container"
+          ]
+        }
+      }
+    },
+
+    "staging": {
+      "enabled_servers": [
+        "github",
+        "postgresql",
+        "web",
+        "aws",
+        "kubernetes",
+        "sentry",
+        "redis"
+      ],
+      "config_overrides": {
+        "postgresql": {
+          "readonly": true
+        },
+        "aws": {
+          "readonly": true
+        },
+        "kubernetes": {
+          "readonly": true
+        }
+      }
+    },
+
+    "production": {
+      "enabled_servers": [
+        "github",
+        "postgresql",
+        "web",
+        "aws",
+        "kubernetes",
+        "sentry",
+        "slack",
+        "redis"
+      ],
+      "config_overrides": {
+        "postgresql": {
+          "readonly": true,
+          "allowed_tables": [
+            "users",
+            "conversations",
+            "distillations",
+            "extension_analytics"
+          ]
+        },
+        "aws": {
+          "readonly": true
+        },
+        "kubernetes": {
+          "readonly": true
+        },
+        "slack": {
+          "features": {
+            "send_messages": true,
+            "read_messages": false,
+            "manage_channels": false,
+            "upload_files": false
+          }
+        }
+      }
+    }
+  },
+
+  "security": {
+    "environment_variables": {
+      "required": [
+        "GITHUB_TOKEN",
+        "DATABASE_URL"
+      ],
+      "optional": [
+        "SLACK_BOT_TOKEN",
+        "SLACK_APP_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "REDIS_URL",
+        "SENTRY_AUTH_TOKEN",
+        "KUBECONFIG"
+      ],
+      "validation": {
+        "GITHUB_TOKEN": "^ghp_[A-Za-z0-9]{36}$",
+        "DATABASE_URL": "^postgres(ql)?://",
+        "REDIS_URL": "^redis://"
+      }
+    },
+
+    "access_controls": {
+      "production": {
+        "readonly_by_default": true,
+        "require_approval": [
+          "database_writes",
+          "infrastructure_changes",
+          "sensitive_operations"
+        ]
+      },
+      "staging": {
+        "readonly_by_default": true,
+        "require_approval": [
+          "database_writes"
+        ]
+      },
+      "development": {
+        "readonly_by_default": false,
+        "require_approval": []
+      }
+    }
+  },
+
+  "monitoring": {
+    "health_checks": {
+      "enabled": true,
+      "interval": "5m",
+      "timeout": "30s",
+      "endpoints": [
+        "github",
+        "postgresql",
+        "redis",
+        "sentry"
+      ]
+    },
+
+    "usage_tracking": {
+      "enabled": true,
+      "metrics": [
+        "request_count",
+        "response_time",
+        "error_rate",
+        "data_transfer"
+      ],
+      "retention": "30d"
+    },
+
+    "alerting": {
+      "channels": ["slack"],
+      "conditions": [
+        {
+          "name": "server_down",
+          "condition": "health_check_failed",
+          "severity": "critical"
+        },
+        {
+          "name": "high_error_rate",
+          "condition": "error_rate > 5%",
+          "severity": "warning"
+        }
+      ]
+    }
+  },
+
+  "development_tools": {
+    "browser_extension_tools": {
+      "chrome_webstore_api": {
+        "enabled": true,
+        "api_endpoint": "https://www.googleapis.com/chromewebstore/v1.1",
+        "required_env": ["CHROME_CLIENT_ID", "CHROME_CLIENT_SECRET", "CHROME_REFRESH_TOKEN"]
+      },
+      "firefox_addons_api": {
+        "enabled": true,
+        "api_endpoint": "https://addons.mozilla.org/api/v5",
+        "required_env": ["FIREFOX_API_KEY", "FIREFOX_API_SECRET"]
+      },
+      "edge_addons_api": {
+        "enabled": false,
+        "api_endpoint": "https://api.partnercenter.microsoft.com",
+        "required_env": ["EDGE_CLIENT_ID", "EDGE_CLIENT_SECRET"]
+      }
+    },
+
+    "ai_service_tools": {
+      "openai_api": {
+        "enabled": true,
+        "api_endpoint": "https://api.openai.com/v1",
+        "required_env": ["OPENAI_API_KEY"],
+        "features": ["chat_completions", "embeddings", "usage_monitoring"]
+      },
+      "anthropic_api": {
+        "enabled": true,
+        "api_endpoint": "https://api.anthropic.com/v1",
+        "required_env": ["ANTHROPIC_API_KEY"],
+        "features": ["messages", "usage_monitoring"]
+      },
+      "vector_databases": {
+        "chroma": {
+          "enabled": true,
+          "connection": "${CHROMA_URL:-http://localhost:8000}"
+        },
+        "pinecone": {
+          "enabled": false,
+          "required_env": ["PINECONE_API_KEY", "PINECONE_ENVIRONMENT"]
+        }
+      }
+    }
+  },
+
+  "setup_instructions": {
+    "quick_setup": [
+      "1. Copy this config to your project root as .mcp/config.json",
+      "2. Create .env file with required environment variables",
+      "3. Install MCP servers: npm install -g @modelcontextprotocol/server-*",
+      "4. Configure Claude Code to use this MCP configuration",
+      "5. Test connections with: claude mcp health-check"
+    ],
+
+    "environment_setup": {
+      "development": [
+        "Set NODE_ENV=development",
+        "Configure local database connection",
+        "Set up local Redis instance (optional)",
+        "Configure GitHub personal access token",
+        "Install Docker for container management"
+      ],
+      "staging": [
+        "Set NODE_ENV=staging",
+        "Configure staging database (read-only recommended)",
+        "Set up AWS credentials for staging environment",
+        "Configure Kubernetes access for staging namespace",
+        "Enable Sentry for error tracking"
+      ],
+      "production": [
+        "Set NODE_ENV=production",
+        "Configure production database (read-only for safety)",
+        "Set up production AWS access (read-only)",
+        "Configure Kubernetes production access (monitoring only)",
+        "Enable all monitoring and alerting integrations"
+      ]
+    },
+
+    "security_checklist": [
+      "✓ Environment variables stored securely (not in code)",
+      "✓ Production access is read-only by default",
+      "✓ Sensitive operations require approval",
+      "✓ API keys have minimal required permissions",
+      "✓ Network access is restricted to allowed domains",
+      "✓ Monitoring and alerting is configured",
+      "✓ Regular credential rotation is planned"
+    ]
+  }
+}

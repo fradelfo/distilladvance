@@ -1,0 +1,90 @@
+{
+  "description": "GitHub integration for repository management, issues, pull requests, and project coordination",
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_API_URL": "https://api.github.com"
+      },
+      "description": "GitHub repository access and management"
+    }
+  },
+  "environmentVariables": {
+    "required": [
+      {
+        "name": "GITHUB_TOKEN",
+        "description": "GitHub Personal Access Token with repo, issues, and pull request permissions",
+        "scope": "Repository access, issue management, pull request operations",
+        "howToGenerate": [
+          "1. Go to GitHub Settings > Developer settings > Personal access tokens",
+          "2. Click 'Generate new token (classic)'",
+          "3. Select scopes: repo, read:org, read:user, read:project",
+          "4. Copy the generated token to your environment"
+        ]
+      }
+    ]
+  },
+  "capabilities": [
+    "Repository browsing and file access",
+    "Issue creation, reading, and management",
+    "Pull request operations and reviews",
+    "Branch and commit information",
+    "Repository metadata and settings",
+    "Workflow and action status"
+  ],
+  "useCases": [
+    "Automated issue analysis and resolution",
+    "Pull request review and feedback",
+    "Repository documentation updates",
+    "Project planning and milestone tracking",
+    "Code review coordination",
+    "Release management automation"
+  ],
+  "securityConsiderations": [
+    "Token should have minimal required permissions",
+    "Use organization-specific tokens for team repositories",
+    "Rotate tokens regularly (every 90 days recommended)",
+    "Store tokens securely in environment variables",
+    "Monitor token usage through GitHub audit logs"
+  ],
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "Authentication failed",
+        "cause": "Invalid or expired token",
+        "solution": "Verify token is correct and has required permissions. Generate new token if expired."
+      },
+      {
+        "issue": "Permission denied on repository",
+        "cause": "Token lacks required repository permissions",
+        "solution": "Update token permissions to include 'repo' scope for private repositories."
+      },
+      {
+        "issue": "Rate limiting errors",
+        "cause": "Exceeded GitHub API rate limits",
+        "solution": "Implement request throttling and use authenticated requests for higher limits."
+      }
+    ]
+  },
+  "examples": [
+    {
+      "description": "Analyze and create response for GitHub issue",
+      "prompt": "Analyze GitHub issue #123 and create a detailed response with solution suggestions"
+    },
+    {
+      "description": "Review pull request for code quality",
+      "prompt": "Review pull request #456 for code quality, security issues, and best practices"
+    },
+    {
+      "description": "Create release notes from recent commits",
+      "prompt": "Generate release notes for version 2.1.0 based on commits since last release"
+    }
+  ],
+  "limits": {
+    "rateLimit": "5000 requests per hour for authenticated requests",
+    "dataAccess": "Access limited to repositories token has permissions for",
+    "operations": "Read/write operations based on token scope"
+  }
+}

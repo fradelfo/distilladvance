@@ -1,0 +1,560 @@
+{
+  "name": "Enterprise Organizational Hierarchy Configuration",
+  "description": "Multi-level organizational structure management for Claude Code enterprise deployments supporting complex corporate hierarchies",
+  "version": "1.0.0",
+  "schema_version": "2024.1",
+
+  "organization": {
+    "name": "Acme Corporation",
+    "domain": "acme.com",
+    "headquarters": "San Francisco, CA",
+    "timezone": "America/Los_Angeles",
+    "fiscal_year_start": "2024-01-01",
+    "employee_count": 15000,
+    "developer_count": 2500,
+
+    "global_settings": {
+      "default_language": "en-US",
+      "supported_languages": ["en-US", "en-GB", "es-ES", "fr-FR", "de-DE", "ja-JP", "zh-CN"],
+      "compliance_frameworks": ["SOC2", "GDPR", "CCPA", "HIPAA", "ISO27001"],
+      "security_classification": "enterprise",
+      "data_residency_enforcement": true,
+      "audit_retention_years": 7,
+
+      "default_claude_settings": {
+        "model": "sonnet",
+        "max_tokens": 4000,
+        "temperature": 0.3,
+        "session_timeout": 3600,
+        "require_authentication": true,
+        "enable_audit_logging": true
+      }
+    }
+  },
+
+  "hierarchy_structure": {
+    "levels": [
+      {
+        "level": 1,
+        "name": "corporation",
+        "description": "Top-level corporation entity",
+        "max_entities": 1,
+        "governance": "board_oversight"
+      },
+      {
+        "level": 2,
+        "name": "business_unit",
+        "description": "Major business divisions",
+        "max_entities": 20,
+        "governance": "executive_management"
+      },
+      {
+        "level": 3,
+        "name": "division",
+        "description": "Operational divisions within business units",
+        "max_entities": 100,
+        "governance": "divisional_leadership"
+      },
+      {
+        "level": 4,
+        "name": "department",
+        "description": "Functional departments",
+        "max_entities": 500,
+        "governance": "department_management"
+      },
+      {
+        "level": 5,
+        "name": "team",
+        "description": "Working teams and squads",
+        "max_entities": 2000,
+        "governance": "team_leadership"
+      },
+      {
+        "level": 6,
+        "name": "project",
+        "description": "Specific projects and initiatives",
+        "max_entities": 10000,
+        "governance": "project_management"
+      }
+    ]
+  },
+
+  "business_units": [
+    {
+      "id": "bu_engineering",
+      "name": "Engineering",
+      "code": "ENG",
+      "parent": "corporation",
+      "description": "Product engineering and platform development",
+      "head_of_unit": "cto@acme.com",
+      "location": "global",
+      "budget_center": "CC_ENG_001",
+      "employee_count": 1500,
+
+      "claude_configuration": {
+        "usage_tier": "premium",
+        "monthly_budget": 75000,
+        "model_access": ["sonnet", "haiku", "opus"],
+        "advanced_features_enabled": true,
+        "custom_agents_allowed": true,
+        "api_access_enabled": true
+      },
+
+      "compliance_overrides": {
+        "data_classification": "confidential_by_default",
+        "external_model_usage": "restricted",
+        "code_review_required": true,
+        "security_scanning_mandatory": true
+      },
+
+      "divisions": [
+        {
+          "id": "div_platform",
+          "name": "Platform Engineering",
+          "code": "PLAT",
+          "description": "Core platform and infrastructure",
+          "head_of_division": "platform.director@acme.com",
+          "employee_count": 200,
+
+          "departments": [
+            {
+              "id": "dept_infra",
+              "name": "Infrastructure",
+              "code": "INFRA",
+              "description": "Cloud infrastructure and DevOps",
+              "manager": "infra.manager@acme.com",
+              "employee_count": 60,
+
+              "teams": [
+                {
+                  "id": "team_devops",
+                  "name": "DevOps Team",
+                  "lead": "devops.lead@acme.com",
+                  "members": 12,
+                  "focus_areas": ["kubernetes", "terraform", "monitoring"],
+
+                  "claude_specialization": {
+                    "agents": ["devops-engineer", "infrastructure-auditor", "security-scanner"],
+                    "commands": ["deploy-application", "audit-infrastructure", "generate-terraform"],
+                    "integrations": ["aws", "kubernetes", "prometheus", "grafana"]
+                  }
+                },
+                {
+                  "id": "team_sre",
+                  "name": "Site Reliability Engineering",
+                  "lead": "sre.lead@acme.com",
+                  "members": 18,
+                  "focus_areas": ["reliability", "performance", "monitoring"],
+
+                  "claude_specialization": {
+                    "agents": ["sre-specialist", "performance-optimizer", "incident-responder"],
+                    "commands": ["analyze-performance", "create-runbook", "troubleshoot-incident"],
+                    "integrations": ["datadog", "pagerduty", "slack", "jira"]
+                  }
+                }
+              ]
+            },
+            {
+              "id": "dept_security",
+              "name": "Security Engineering",
+              "code": "SEC",
+              "description": "Application and infrastructure security",
+              "manager": "security.manager@acme.com",
+              "employee_count": 40,
+
+              "enhanced_security_controls": {
+                "require_dual_approval": true,
+                "enhanced_audit_logging": true,
+                "restricted_model_access": ["opus"],
+                "real_time_monitoring": true,
+                "session_recording": true
+              },
+
+              "teams": [
+                {
+                  "id": "team_appsec",
+                  "name": "Application Security",
+                  "lead": "appsec.lead@acme.com",
+                  "members": 15,
+                  "focus_areas": ["code_security", "vulnerability_management", "security_testing"],
+
+                  "claude_specialization": {
+                    "agents": ["security-auditor", "vulnerability-scanner", "penetration-tester"],
+                    "commands": ["security-review", "vulnerability-scan", "generate-security-tests"],
+                    "integrations": ["sonarqube", "snyk", "veracode", "github_security"]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "div_products",
+          "name": "Product Engineering",
+          "code": "PROD",
+          "description": "Customer-facing product development",
+          "head_of_division": "products.director@acme.com",
+          "employee_count": 800,
+
+          "departments": [
+            {
+              "id": "dept_frontend",
+              "name": "Frontend Engineering",
+              "code": "FE",
+              "description": "User interface and experience development",
+              "manager": "frontend.manager@acme.com",
+              "employee_count": 120,
+
+              "teams": [
+                {
+                  "id": "team_web",
+                  "name": "Web Platform",
+                  "lead": "web.lead@acme.com",
+                  "members": 25,
+                  "focus_areas": ["react", "typescript", "performance", "accessibility"],
+
+                  "claude_specialization": {
+                    "agents": ["frontend-specialist", "ui-designer", "accessibility-expert"],
+                    "commands": ["generate-components", "review-accessibility", "optimize-performance"],
+                    "integrations": ["figma", "storybook", "lighthouse", "browserstack"]
+                  }
+                },
+                {
+                  "id": "team_mobile",
+                  "name": "Mobile Platform",
+                  "lead": "mobile.lead@acme.com",
+                  "members": 20,
+                  "focus_areas": ["react_native", "ios", "android", "mobile_performance"],
+
+                  "claude_specialization": {
+                    "agents": ["mobile-specialist", "native-developer", "mobile-tester"],
+                    "commands": ["generate-mobile-tests", "optimize-mobile-performance", "review-native-code"],
+                    "integrations": ["xcode", "android_studio", "firebase", "testflight"]
+                  }
+                }
+              ]
+            },
+            {
+              "id": "dept_backend",
+              "name": "Backend Engineering",
+              "code": "BE",
+              "description": "Server-side and API development",
+              "manager": "backend.manager@acme.com",
+              "employee_count": 150,
+
+              "teams": [
+                {
+                  "id": "team_api",
+                  "name": "API Platform",
+                  "lead": "api.lead@acme.com",
+                  "members": 30,
+                  "focus_areas": ["graphql", "rest", "microservices", "api_gateway"],
+
+                  "claude_specialization": {
+                    "agents": ["backend-specialist", "api-designer", "microservices-architect"],
+                    "commands": ["generate-api-tests", "design-schema", "review-architecture"],
+                    "integrations": ["postman", "swagger", "apollo", "kong"]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bu_data",
+      "name": "Data & Analytics",
+      "code": "DATA",
+      "parent": "corporation",
+      "description": "Data science, analytics, and machine learning",
+      "head_of_unit": "chief.data.officer@acme.com",
+      "location": "global",
+      "budget_center": "CC_DATA_001",
+      "employee_count": 300,
+
+      "claude_configuration": {
+        "usage_tier": "enterprise",
+        "monthly_budget": 25000,
+        "model_access": ["sonnet", "haiku"],
+        "advanced_features_enabled": true,
+        "custom_agents_allowed": true,
+        "api_access_enabled": true,
+
+        "data_specific_features": {
+          "jupyter_integration": true,
+          "notebook_sharing": true,
+          "model_experiment_tracking": true,
+          "large_dataset_processing": true
+        }
+      },
+
+      "divisions": [
+        {
+          "id": "div_datascience",
+          "name": "Data Science",
+          "code": "DS",
+          "description": "Machine learning and predictive analytics",
+          "head_of_division": "ds.director@acme.com",
+          "employee_count": 120,
+
+          "teams": [
+            {
+              "id": "team_ml",
+              "name": "Machine Learning",
+              "lead": "ml.lead@acme.com",
+              "members": 25,
+              "focus_areas": ["deep_learning", "nlp", "computer_vision", "recommendation_systems"],
+
+              "claude_specialization": {
+                "agents": ["data-scientist", "ml-engineer", "model-evaluator"],
+                "commands": ["analyze-dataset", "generate-model-code", "evaluate-model-performance"],
+                "integrations": ["jupyter", "mlflow", "wandb", "tensorboard", "huggingface"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bu_product",
+      "name": "Product Management",
+      "code": "PM",
+      "parent": "corporation",
+      "description": "Product strategy and management",
+      "head_of_unit": "chief.product.officer@acme.com",
+      "location": "global",
+      "budget_center": "CC_PROD_001",
+      "employee_count": 80,
+
+      "claude_configuration": {
+        "usage_tier": "standard",
+        "monthly_budget": 8000,
+        "model_access": ["sonnet", "haiku"],
+        "advanced_features_enabled": false,
+        "custom_agents_allowed": false,
+        "api_access_enabled": false
+      },
+
+      "teams": [
+        {
+          "id": "team_product_strategy",
+          "name": "Product Strategy",
+          "lead": "strategy.lead@acme.com",
+          "members": 15,
+          "focus_areas": ["market_research", "competitive_analysis", "product_roadmap"],
+
+          "claude_specialization": {
+            "agents": ["business-analyst", "market-researcher", "product-strategist"],
+            "commands": ["analyze-market-data", "create-user-stories", "generate-product-requirements"],
+            "integrations": ["amplitude", "mixpanel", "productboard", "figma"]
+          }
+        }
+      ]
+    }
+  ],
+
+  "governance_framework": {
+    "access_control": {
+      "inheritance_model": "hierarchical_with_overrides",
+      "permission_escalation": "explicit_approval_required",
+      "cross_unit_collaboration": "controlled_sharing",
+      "external_access": "prohibited_by_default"
+    },
+
+    "budget_management": {
+      "allocation_method": "top_down_with_local_input",
+      "budget_tracking": "real_time",
+      "cost_allocation": "usage_based_chargeback",
+      "overage_handling": "automatic_alerts_with_approval_workflow"
+    },
+
+    "compliance_enforcement": {
+      "policy_inheritance": "cascade_with_strengthening",
+      "audit_scope": "comprehensive",
+      "violation_handling": "escalation_based",
+      "remediation_tracking": "mandatory"
+    },
+
+    "data_governance": {
+      "classification_enforcement": "automatic",
+      "cross_border_restrictions": "strict",
+      "retention_policies": "organization_wide",
+      "privacy_controls": "gdpr_plus_local_requirements"
+    }
+  },
+
+  "role_matrix": {
+    "c_level": {
+      "permissions": {
+        "administration": ["global_policy_management", "budget_oversight", "compliance_reporting"],
+        "access_scope": "enterprise_wide",
+        "claude_capabilities": ["executive_reporting", "strategic_analysis", "board_preparation"]
+      },
+      "restrictions": {
+        "development_access": "view_only",
+        "operational_access": "emergency_only",
+        "approval_required": ["policy_changes", "budget_modifications", "compliance_overrides"]
+      }
+    },
+
+    "bu_head": {
+      "permissions": {
+        "administration": ["bu_policy_management", "budget_management", "user_management"],
+        "access_scope": "business_unit_wide",
+        "claude_capabilities": ["business_analysis", "performance_reporting", "team_coordination"]
+      },
+      "restrictions": {
+        "cross_bu_access": "approval_required",
+        "global_policy_changes": "read_only",
+        "compliance_overrides": "limited"
+      }
+    },
+
+    "division_director": {
+      "permissions": {
+        "administration": ["division_user_management", "resource_allocation", "project_oversight"],
+        "access_scope": "division_wide",
+        "claude_capabilities": ["technical_leadership", "project_management", "team_development"]
+      },
+      "restrictions": {
+        "budget_modifications": "approval_required",
+        "policy_changes": "proposal_only",
+        "cross_division_access": "controlled"
+      }
+    },
+
+    "department_manager": {
+      "permissions": {
+        "administration": ["team_management", "project_assignment", "performance_tracking"],
+        "access_scope": "department_wide",
+        "claude_capabilities": ["team_coordination", "project_planning", "technical_guidance"]
+      },
+      "restrictions": {
+        "budget_visibility": "department_only",
+        "user_provisioning": "approval_required",
+        "cross_department_access": "request_based"
+      }
+    },
+
+    "team_lead": {
+      "permissions": {
+        "administration": ["team_coordination", "task_assignment", "code_review"],
+        "access_scope": "team_wide",
+        "claude_capabilities": ["technical_mentoring", "code_guidance", "architecture_support"]
+      },
+      "restrictions": {
+        "administrative_functions": "limited",
+        "budget_access": "view_only",
+        "user_management": "team_members_only"
+      }
+    },
+
+    "senior_engineer": {
+      "permissions": {
+        "development": ["advanced_development", "architecture_design", "mentoring"],
+        "access_scope": "project_based",
+        "claude_capabilities": ["advanced_coding", "system_design", "technical_research"]
+      },
+      "restrictions": {
+        "administrative_access": "none",
+        "production_deployment": "approval_required",
+        "security_configuration": "read_only"
+      }
+    },
+
+    "engineer": {
+      "permissions": {
+        "development": ["standard_development", "testing", "documentation"],
+        "access_scope": "assigned_projects",
+        "claude_capabilities": ["code_assistance", "test_generation", "documentation_help"]
+      },
+      "restrictions": {
+        "architecture_changes": "approval_required",
+        "production_access": "none",
+        "advanced_features": "limited"
+      }
+    },
+
+    "contractor": {
+      "permissions": {
+        "development": ["limited_development", "assigned_tasks_only"],
+        "access_scope": "specific_project",
+        "claude_capabilities": ["basic_code_assistance", "standard_documentation"]
+      },
+      "restrictions": {
+        "administrative_access": "none",
+        "cross_project_access": "prohibited",
+        "advanced_claude_features": "disabled",
+        "data_export": "prohibited"
+      }
+    }
+  },
+
+  "integration_mappings": {
+    "identity_providers": {
+      "primary": {
+        "provider": "okta",
+        "domain": "acme.okta.com",
+        "saml_endpoint": "https://acme.okta.com/app/claude_enterprise/sso/saml",
+        "attribute_mappings": {
+          "email": "user.email",
+          "name": "user.displayName",
+          "department": "user.department",
+          "business_unit": "user.division",
+          "cost_center": "user.costCenter",
+          "employee_type": "user.employeeType"
+        }
+      },
+      "secondary": {
+        "provider": "azure_ad",
+        "tenant": "acme.onmicrosoft.com",
+        "application_id": "claude-enterprise-app",
+        "attribute_mappings": {
+          "email": "mail",
+          "name": "displayName",
+          "department": "department",
+          "business_unit": "companyName",
+          "manager": "manager"
+        }
+      }
+    },
+
+    "cost_tracking": {
+      "financial_system": "workday",
+      "cost_center_sync": "daily",
+      "budget_tracking": "real_time",
+      "chargeback_frequency": "monthly"
+    },
+
+    "compliance_systems": {
+      "audit_platform": "rsam",
+      "log_aggregation": "splunk_enterprise",
+      "risk_management": "grc_platform",
+      "policy_management": "compliance_engine"
+    }
+  },
+
+  "monitoring_and_reporting": {
+    "usage_analytics": {
+      "tracking_granularity": "user_and_team_level",
+      "reporting_frequency": "real_time_dashboards_monthly_reports",
+      "metrics_retention": "7_years",
+      "anonymization": "gdpr_compliant"
+    },
+
+    "performance_monitoring": {
+      "response_time_tracking": "per_request",
+      "availability_monitoring": "99.9%_sla",
+      "capacity_planning": "predictive_analytics",
+      "cost_optimization": "automated_recommendations"
+    },
+
+    "compliance_reporting": {
+      "audit_trail": "comprehensive",
+      "regulatory_reports": "automated_generation",
+      "violation_tracking": "real_time_alerts",
+      "remediation_status": "dashboard_integration"
+    }
+  }
+}

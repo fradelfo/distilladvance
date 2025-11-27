@@ -1,0 +1,442 @@
+# Kubernetes Ingress Controllers for Blog API
+# Manages external access and routing with SSL termination
+
+# === NGINX INGRESS CONTROLLER DEPLOYMENT ===
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: controller
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx-ingress
+      app.kubernetes.io/component: controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx-ingress
+        app.kubernetes.io/component: controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: nginx-ingress-sa
+      containers:
+      - name: nginx-ingress-controller
+        image: registry.k8s.io/ingress-nginx/controller:v1.8.2
+        args:
+        - /nginx-ingress-controller
+        - --configmap=blog-system/nginx-ingress-config
+        - --tcp-services-configmap=blog-system/tcp-services
+        - --udp-services-configmap=blog-system/udp-services
+        - --annotations-prefix=nginx.ingress.kubernetes.io
+        - --publish-service=blog-system/nginx-ingress-service
+        - --election-id=nginx-ingress-controller-election
+        - --controller-class=k8s.io/ingress-nginx
+        - --ingress-class=nginx
+        - --watch-ingress-without-class=false
+        - --enable-ssl-passthrough
+        - --default-ssl-certificate=blog-system/blog-tls
+        - --metrics-bind-address=0.0.0.0:10254
+        - --profiling=false
+        - --enable-ssl-chain-completion=false
+        - --log-level=2
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+          runAsUser: 101
+          runAsGroup: 82
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        - name: webhook
+          containerPort: 8443
+          protocol: TCP
+        - name: metrics
+          containerPort: 10254
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 1
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 90Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        volumeMounts:
+        - name: webhook-cert
+          mountPath: /usr/local/certificates/
+          readOnly: true
+      volumes:
+      - name: webhook-cert
+        secret:
+          secretName: nginx-ingress-admission
+
+---
+# === NGINX INGRESS SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: controller
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account-id:certificate/cert-id"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    external-dns.alpha.kubernetes.io/hostname: "api.blog.example.com"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  sessionAffinity: None
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: https
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: controller
+
+---
+# === MAIN API INGRESS ===
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-api-ingress
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: ingress
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ingress.class: "nginx"
+
+    # SSL and TLS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "10"
+
+    # Security
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://blog.example.com,https://admin.blog.example.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+
+    # Load balancing
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$binary_remote_addr"
+    nginx.ingress.kubernetes.io/load-balance: "ip_hash"
+
+    # Proxy settings
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout invalid_header http_500 http_502 http_503"
+
+    # Health checks
+    nginx.ingress.kubernetes.io/health-check-path: "/health"
+    nginx.ingress.kubernetes.io/health-check-interval: "30s"
+    nginx.ingress.kubernetes.io/health-check-timeout: "5s"
+
+    # Monitoring
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/enable-rewrite-log: "false"
+spec:
+  tls:
+  - hosts:
+    - api.blog.example.com
+    - admin-api.blog.example.com
+    secretName: blog-api-tls
+  rules:
+  - host: api.blog.example.com
+    http:
+      paths:
+      - path: /api/v1
+        pathType: Prefix
+        backend:
+          service:
+            name: blog-api-service
+            port:
+              number: 3000
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: blog-api-service
+            port:
+              number: 3000
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: blog-api-service
+            port:
+              number: 9090
+  - host: admin-api.blog.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: blog-api-service
+            port:
+              number: 3000
+
+---
+# === MONITORING INGRESS ===
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/component: ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Authentication for monitoring tools
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: "monitoring-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Monitoring Area - Authentication Required"
+
+    # Rate limiting for monitoring
+    nginx.ingress.kubernetes.io/rate-limit: "30"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+
+    # IP whitelist (optional - restrict to office/VPN IPs)
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+spec:
+  tls:
+  - hosts:
+    - prometheus.blog.example.com
+    - grafana.blog.example.com
+    secretName: monitoring-tls
+  rules:
+  - host: prometheus.blog.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+  - host: grafana.blog.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+
+---
+# === INGRESS CONFIGURATION CONFIGMAP ===
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-ingress-config
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: config
+data:
+  # Global configuration
+  client-max-body-size: "10m"
+  proxy-connect-timeout: "30"
+  proxy-send-timeout: "30"
+  proxy-read-timeout: "30"
+  proxy-body-size: "10m"
+
+  # SSL configuration
+  ssl-protocols: "TLSv1.2 TLSv1.3"
+  ssl-ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384"
+  ssl-prefer-server-ciphers: "true"
+  ssl-session-cache: "shared:SSL:10m"
+  ssl-session-timeout: "10m"
+  ssl-buffer-size: "4k"
+
+  # Security headers
+  add-headers: "blog-system/security-headers"
+
+  # Performance
+  worker-processes: "auto"
+  worker-connections: "1024"
+  worker-rlimit-nofile: "2048"
+  keepalive-requests: "100"
+  keepalive-timeout: "75"
+
+  # Logging
+  log-format-escape-json: "true"
+  log-format-upstream: '{"timestamp": "$time_iso8601", "remote_addr": "$remote_addr", "x_forwarded_for": "$http_x_forwarded_for", "request_id": "$req_id", "remote_user": "$remote_user", "bytes_sent": $bytes_sent, "request_time": $request_time, "status": $status, "vhost": "$host", "request_proto": "$server_protocol", "path": "$uri", "request_query": "$args", "request_length": $request_length, "duration": $request_time,"method": "$request_method", "http_referrer": "$http_referer", "http_user_agent": "$http_user_agent", "upstream_addr": "$upstream_addr", "upstream_status": "$upstream_status", "upstream_response_time": "$upstream_response_time", "upstream_response_length": "$upstream_response_length"}'
+
+  # Rate limiting
+  limit-rate-after: "1024"
+  limit-rate: "1024"
+
+  # Buffering
+  proxy-buffering: "on"
+  proxy-buffer-size: "4k"
+  proxy-buffers: "8 4k"
+
+---
+# === SECURITY HEADERS CONFIGMAP ===
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-headers
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: security
+data:
+  X-Frame-Options: "DENY"
+  X-Content-Type-Options: "nosniff"
+  X-XSS-Protection: "1; mode=block"
+  Referrer-Policy: "strict-origin-when-cross-origin"
+  Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+  Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+  Permissions-Policy: "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+
+---
+# === TCP SERVICES CONFIGMAP ===
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: tcp-services
+data:
+  # Example: "9000": "blog-system/tcp-service:9000"
+
+---
+# === UDP SERVICES CONFIGMAP ===
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: udp-services
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/component: udp-services
+data:
+  # Example: "53": "kube-system/kube-dns:53"
+
+---
+# === CERT-MANAGER CLUSTER ISSUER ===
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: cluster-issuer
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: devops@blog.example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+    - dns01:
+        cloudflare:
+          email: devops@blog.example.com
+          apiKeySecretRef:
+            name: cloudflare-api-key
+            key: api-key
+
+---
+# === CERT-MANAGER STAGING ISSUER ===
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: cluster-issuer
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: devops@blog.example.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

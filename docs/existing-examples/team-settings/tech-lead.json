@@ -1,0 +1,109 @@
+{
+  "description": "Configuration template for tech leads - architectural focus with team coordination capabilities",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(**)",
+      "Write(**)",
+      "Glob",
+      "Grep",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(git *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(make *)",
+      "Bash(python *)",
+      "Bash(pip *)",
+      "Bash(pipenv *)",
+      "Bash(poetry *)",
+      "Bash(pytest *)",
+      "Bash(jest *)",
+      "Bash(cypress *)",
+      "Bash(playwright *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(gh *)",
+      "Bash(jq *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(awk *)",
+      "Bash(sed *)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(~/.ssh/**)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Bash(rm -rf /)",
+      "Bash(sudo rm:*)",
+      "Bash(chmod 777:*)",
+      "Bash(aws configure:*)",
+      "Bash(gcloud auth:*)",
+      "Bash(az login:*)"
+    ],
+    "ask": [
+      "Bash(git push --force:*)",
+      "Bash(npm publish:*)",
+      "Bash(docker push:* production)",
+      "Bash(kubectl apply:* production)",
+      "Bash(terraform apply:*)",
+      "Bash(rm -rf node_modules)",
+      "Edit(.claude/settings.json)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "balanced",
+    "MAX_CONCURRENT_TASKS": "5",
+    "ENABLE_ARCHITECTURE_MODE": "true"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint --silent --fix || true"
+          },
+          {
+            "type": "command",
+            "command": "npm run type-check --silent || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash.*git commit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git log -1 --pretty=format:'✓ Tech Lead Commit: %s' && echo '\\n📊 Files changed:' && git diff-tree --no-commit-id --name-only -r HEAD"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔧 Tech Lead session started. Architecture and team coordination mode enabled.'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🟡 Tech Lead Mode | Architecture & Coordination"
+}

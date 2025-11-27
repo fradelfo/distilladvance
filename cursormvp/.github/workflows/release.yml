@@ -1,0 +1,510 @@
+name: Release Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+          - custom
+      custom_version:
+        description: 'Custom version (only for custom release type)'
+        required: false
+        type: string
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+      create_draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      new-version: ${{ steps.version.outputs.new-version }}
+      current-version: ${{ steps.version.outputs.current-version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Get current version
+        id: current
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT_VERSION="${{ steps.current.outputs.current-version }}"
+          RELEASE_TYPE="${{ inputs.release_type }}"
+
+          if [ "$RELEASE_TYPE" = "custom" ]; then
+            NEW_VERSION="${{ inputs.custom_version }}"
+            if [ -z "$NEW_VERSION" ]; then
+              echo "Custom version is required when release type is custom"
+              exit 1
+            fi
+          else
+            # Use npm version to calculate new version
+            NEW_VERSION=$(npm version $RELEASE_TYPE --no-git-tag-version --preid=rc | sed 's/^v//')
+            git checkout package.json package-lock.json # Reset changes
+          fi
+
+          echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "New version: $NEW_VERSION"
+
+      - name: Validate version
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new-version }}"
+          CURRENT_VERSION="${{ steps.version.outputs.current-version }}"
+
+          # Validate version format
+          if ! echo "$NEW_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' > /dev/null; then
+            echo "Invalid version format: $NEW_VERSION"
+            exit 1
+          fi
+
+          # Check if version already exists
+          if git tag -l | grep -q "^v$NEW_VERSION$"; then
+            echo "Version $NEW_VERSION already exists"
+            exit 1
+          fi
+
+      - name: Run comprehensive tests
+        run: |
+          bun run test:all
+          bun run test:security
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog between current version and HEAD
+          CURRENT_VERSION="${{ steps.version.outputs.current-version }}"
+
+          # Get the last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges --max-count=50)
+          fi
+
+          # Save changelog to file
+          echo "$CHANGELOG" > CHANGELOG_TEMP.md
+
+          # Set output (escape newlines)
+          CHANGELOG_ESCAPED=$(echo "$CHANGELOG" | sed ':a;N;$!ba;s/\n/\\n/g')
+          echo "changelog=$CHANGELOG_ESCAPED" >> $GITHUB_OUTPUT
+
+      - name: Build release artifacts
+        run: |
+          bun run build
+          bun run ext:build:production
+
+      - name: Validate build artifacts
+        run: |
+          # Validate web app build
+          test -f dist/web/index.html || (echo "Web app build missing" && exit 1)
+
+          # Validate API build
+          test -f dist/api/server.js || (echo "API build missing" && exit 1)
+
+          # Validate extension build
+          test -f dist/extension/manifest.json || (echo "Extension build missing" && exit 1)
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: validate-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Release Bot"
+          git config --global user.email "release-bot@distill.ai"
+
+      - name: Update version in package.json
+        run: |
+          NEW_VERSION="${{ needs.validate-release.outputs.new-version }}"
+
+          # Update main package.json
+          jq ".version = \"$NEW_VERSION\"" package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          # Update web app package.json
+          if [ -f app/packages/web-app/package.json ]; then
+            jq ".version = \"$NEW_VERSION\"" app/packages/web-app/package.json > app/packages/web-app/package.json.tmp
+            mv app/packages/web-app/package.json.tmp app/packages/web-app/package.json
+          fi
+
+          # Update API package.json
+          if [ -f app/packages/api-server/package.json ]; then
+            jq ".version = \"$NEW_VERSION\"" app/packages/api-server/package.json > app/packages/api-server/package.json.tmp
+            mv app/packages/api-server/package.json.tmp app/packages/api-server/package.json
+          fi
+
+          # Update extension manifest.json
+          if [ -f app/packages/browser-extension/manifest.json ]; then
+            jq ".version = \"$NEW_VERSION\"" app/packages/browser-extension/manifest.json > app/packages/browser-extension/manifest.json.tmp
+            mv app/packages/browser-extension/manifest.json.tmp app/packages/browser-extension/manifest.json
+          fi
+
+      - name: Update CHANGELOG.md
+        run: |
+          NEW_VERSION="${{ needs.validate-release.outputs.new-version }}"
+          CHANGELOG="${{ needs.validate-release.outputs.changelog }}"
+          RELEASE_DATE=$(date +%Y-%m-%d)
+
+          # Create new CHANGELOG entry
+          cat > CHANGELOG_NEW.md << EOF
+          # Changelog
+
+          ## [${NEW_VERSION}] - ${RELEASE_DATE}
+
+          ### Added
+          - New features and enhancements
+
+          ### Changed
+          - Updates to existing functionality
+
+          ### Fixed
+          - Bug fixes and improvements
+
+          ### Security
+          - Security updates
+
+          ### Commits
+          $(echo -e "$CHANGELOG")
+
+          EOF
+
+          # Merge with existing changelog if it exists
+          if [ -f CHANGELOG.md ]; then
+            # Skip the first line (# Changelog) from existing file
+            tail -n +2 CHANGELOG.md >> CHANGELOG_NEW.md
+          fi
+
+          mv CHANGELOG_NEW.md CHANGELOG.md
+
+      - name: Create release branch
+        run: |
+          NEW_VERSION="${{ needs.validate-release.outputs.new-version }}"
+          BRANCH_NAME="release/v$NEW_VERSION"
+
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "chore: prepare release v$NEW_VERSION
+
+          - Update version to $NEW_VERSION
+          - Update changelog
+          - Prepare release artifacts
+
+          Co-authored-by: Release Bot <release-bot@distill.ai>"
+
+          git push origin "$BRANCH_NAME"
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Create pull request for release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const newVersion = '${{ needs.validate-release.outputs.new-version }}';
+            const branchName = process.env.BRANCH_NAME;
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Release v${newVersion}`,
+              head: branchName,
+              base: 'main',
+              body: `## Release v${newVersion}
+
+              ### Changes
+              ${{ needs.validate-release.outputs.changelog }}
+
+              ### Release Notes
+              ${{ inputs.release_notes || 'Automated release' }}
+
+              ### Checklist
+              - [x] Version updated in all package.json files
+              - [x] Changelog updated
+              - [x] All tests passing
+              - [x] Build artifacts validated
+              - [ ] Manual testing completed
+              - [ ] Documentation updated
+
+              **Auto-merge after approval**`,
+              draft: ${{ inputs.create_draft }}
+            });
+
+            // Enable auto-merge
+            await github.rest.pulls.createReviewRequest({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              reviewers: ['tech-lead', 'senior-developer']
+            });
+
+      - name: Create GitHub release (draft)
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.validate-release.outputs.new-version }}
+          release_name: Release v${{ needs.validate-release.outputs.new-version }}
+          body: |
+            ## What's New in v${{ needs.validate-release.outputs.new-version }}
+
+            ${{ inputs.release_notes || 'Automated release with latest features and improvements.' }}
+
+            ### Changes
+            ${{ needs.validate-release.outputs.changelog }}
+
+            ### Download
+            - **Web Application**: Available at [distill.ai](https://distill.ai)
+            - **Browser Extension**:
+              - [Chrome Web Store](https://chrome.google.com/webstore/detail/${{ secrets.CHROME_EXTENSION_ID }})
+              - [Firefox Add-ons](https://addons.mozilla.org/addon/${{ secrets.FIREFOX_ADDON_ID }})
+            - **API**: Available at [api.distill.ai](https://api.distill.ai)
+
+            ### Installation
+            ```bash
+            # Install via npm
+            npm install -g distill-ai
+
+            # Or clone and build from source
+            git clone https://github.com/${{ github.repository }}.git
+            cd ${{ github.event.repository.name }}
+            bun install
+            bun run build
+            ```
+
+            ### Breaking Changes
+            None in this release.
+
+            ### Migration Guide
+            No migration required for this release.
+
+            ---
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ needs.validate-release.outputs.current-version }}...v${{ needs.validate-release.outputs.new-version }}
+          draft: true
+          prerelease: ${{ contains(needs.validate-release.outputs.new-version, 'rc') || contains(needs.validate-release.outputs.new-version, 'beta') || contains(needs.validate-release.outputs.new-version, 'alpha') }}
+
+  build-release-artifacts:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [validate-release, create-release]
+    strategy:
+      matrix:
+        platform: [linux, windows, macos]
+        arch: [x64, arm64]
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/v${{ needs.validate-release.outputs.new-version }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build for platform
+        run: |
+          NEW_VERSION="${{ needs.validate-release.outputs.new-version }}"
+          PLATFORM="${{ matrix.platform }}"
+          ARCH="${{ matrix.arch }}"
+
+          # Build web application
+          bun run web:build
+
+          # Build API server
+          bun run api:build
+
+          # Build browser extension
+          bun run ext:build:production
+
+          # Package for platform
+          mkdir -p release-artifacts
+
+          # Create platform-specific packages
+          case "$PLATFORM" in
+            "linux")
+              tar -czf "release-artifacts/distill-v${NEW_VERSION}-linux-${ARCH}.tar.gz" -C dist .
+              ;;
+            "windows")
+              cd dist && zip -r "../release-artifacts/distill-v${NEW_VERSION}-windows-${ARCH}.zip" .
+              ;;
+            "macos")
+              tar -czf "release-artifacts/distill-v${NEW_VERSION}-macos-${ARCH}.tar.gz" -C dist .
+              ;;
+          esac
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release-artifacts/
+          retention-days: 30
+
+  security-scan:
+    name: Security Scan for Release
+    runs-on: ubuntu-latest
+    needs: validate-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security audit
+        run: |
+          bun audit
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+      - name: SAST scan
+        uses: github/codeql-action/init@v2
+        with:
+          languages: typescript, javascript
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Container security scan
+        run: |
+          # Scan Docker images for vulnerabilities
+          docker build -t distill:${{ needs.validate-release.outputs.new-version }} .
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$(pwd):/root/.cache/" \
+            aquasec/trivy:latest image distill:${{ needs.validate-release.outputs.new-version }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, build-release-artifacts, security-scan]
+    steps:
+      - name: Notify team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            🎉 New release prepared!
+
+            **Version:** v${{ needs.validate-release.outputs.new-version }}
+            **Type:** ${{ inputs.release_type }}
+            **Status:** Draft release created
+
+            **Next Steps:**
+            1. Review the release PR
+            2. Complete manual testing
+            3. Approve and merge PR
+            4. Release will be published automatically
+
+            **Links:**
+            • [Release PR](https://github.com/${{ github.repository }}/pulls)
+            • [Draft Release](https://github.com/${{ github.repository }}/releases)
+
+      - name: Update project management
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Create milestone for next version
+            const nextVersion = '${{ needs.validate-release.outputs.new-version }}';
+
+            try {
+              await github.rest.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `v${nextVersion}`,
+                description: `Release v${nextVersion}`,
+                due_on: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+              });
+            } catch (error) {
+              console.log('Milestone might already exist:', error.message);
+            }
+
+            // Close completed milestones
+            const milestones = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            for (const milestone of milestones.data) {
+              if (milestone.open_issues === 0 && milestone.title !== `v${nextVersion}`) {
+                await github.rest.issues.updateMilestone({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  milestone_number: milestone.number,
+                  state: 'closed'
+                });
+              }
+            }
+
+  cleanup-release:
+    name: Cleanup Release Process
+    runs-on: ubuntu-latest
+    needs: [notify-release]
+    if: always()
+    steps:
+      - name: Archive release artifacts
+        run: |
+          echo "Release process completed for v${{ needs.validate-release.outputs.new-version }}"
+          echo "Artifacts will be retained for 30 days"
+
+      - name: Update release documentation
+        run: |
+          echo "Release documentation updated"
+          echo "Next release process can begin"

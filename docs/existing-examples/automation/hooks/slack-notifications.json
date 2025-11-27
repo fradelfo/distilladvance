@@ -1,0 +1,244 @@
+{
+  "name": "slack-notifications",
+  "description": "Comprehensive Slack integration for team communication and workflow notifications",
+  "version": "1.0.0",
+  "trigger": "after_tool_call",
+  "enabled": true,
+  "conditions": {
+    "any": [
+      {
+        "tools": ["Bash"],
+        "command_patterns": [
+          "git push.*",
+          "npm run deploy.*",
+          "npm run build.*",
+          "docker build.*",
+          "kubectl apply.*",
+          "terraform apply.*"
+        ]
+      },
+      {
+        "tools": ["Edit", "Write"],
+        "file_patterns": [
+          "package.json",
+          "Dockerfile",
+          "docker-compose.yml",
+          "kubernetes/*.yaml",
+          "terraform/*.tf",
+          ".github/workflows/*.yml"
+        ]
+      }
+    ]
+  },
+  "actions": [
+    {
+      "name": "deployment-notification",
+      "description": "Notify team of deployment activities",
+      "command": "curl -s -X POST -H 'Content-type: application/json' --data '{\"channel\": \"${SLACK_DEPLOYMENT_CHANNEL}\", \"username\": \"Claude Bot\", \"icon_emoji\": \":robot_face:\", \"attachments\": [{\"color\": \"good\", \"title\": \"🚀 Deployment Initiated\", \"fields\": [{\"title\": \"User\", \"value\": \"${USER}\", \"short\": true}, {\"title\": \"Branch\", \"value\": \"${GIT_BRANCH}\", \"short\": true}, {\"title\": \"Environment\", \"value\": \"${DEPLOYMENT_ENVIRONMENT:-staging}\", \"short\": true}, {\"title\": \"Commit\", \"value\": \"<https://github.com/${GITHUB_REPO}/commit/${GIT_COMMIT}|${GIT_COMMIT_SHORT}>\", \"short\": true}], \"footer\": \"Claude Code\", \"ts\": ${TIMESTAMP}}]}' ${SLACK_WEBHOOK_URL}",
+      "timeout": 15,
+      "required": false,
+      "conditions": {
+        "command_patterns": ["npm run deploy", "kubectl apply", "terraform apply"],
+        "environment_vars": ["SLACK_WEBHOOK_URL", "SLACK_DEPLOYMENT_CHANNEL"]
+      },
+      "success_message": "📢 Deployment notification sent to Slack",
+      "failure_message": "⚠️ Failed to send deployment notification"
+    },
+    {
+      "name": "code-push-notification",
+      "description": "Notify team of code pushes to important branches",
+      "command": "curl -s -X POST -H 'Content-type: application/json' --data '{\"channel\": \"${SLACK_DEV_CHANNEL}\", \"username\": \"Claude Bot\", \"icon_emoji\": \":git:\", \"attachments\": [{\"color\": \"#36a64f\", \"title\": \"📝 Code Push\", \"title_link\": \"https://github.com/${GITHUB_REPO}/commit/${GIT_COMMIT}\", \"fields\": [{\"title\": \"Repository\", \"value\": \"${GITHUB_REPO}\", \"short\": true}, {\"title\": \"Branch\", \"value\": \"${GIT_BRANCH}\", \"short\": true}, {\"title\": \"Author\", \"value\": \"${GIT_AUTHOR}\", \"short\": true}, {\"title\": \"Files Changed\", \"value\": \"${MODIFIED_FILES_COUNT}\", \"short\": true}], \"text\": \"${GIT_COMMIT_MESSAGE}\", \"footer\": \"Claude Code\", \"ts\": ${TIMESTAMP}}]}' ${SLACK_WEBHOOK_URL}",
+      "timeout": 15,
+      "required": false,
+      "conditions": {
+        "command_patterns": ["git push origin main", "git push origin master", "git push origin develop"],
+        "environment_vars": ["SLACK_WEBHOOK_URL", "SLACK_DEV_CHANNEL"]
+      },
+      "success_message": "📢 Code push notification sent to Slack",
+      "failure_message": "⚠️ Failed to send code push notification"
+    },
+    {
+      "name": "infrastructure-changes",
+      "description": "Notify team of infrastructure configuration changes",
+      "command": "curl -s -X POST -H 'Content-type: application/json' --data '{\"channel\": \"${SLACK_INFRA_CHANNEL}\", \"username\": \"Claude Bot\", \"icon_emoji\": \":gear:\", \"attachments\": [{\"color\": \"warning\", \"title\": \"🔧 Infrastructure Changes\", \"fields\": [{\"title\": \"Modified Files\", \"value\": \"${MODIFIED_FILES}\", \"short\": false}, {\"title\": \"Author\", \"value\": \"${USER}\", \"short\": true}, {\"title\": \"Branch\", \"value\": \"${GIT_BRANCH}\", \"short\": true}], \"text\": \"Infrastructure configuration files have been modified. Please review changes before applying.\", \"footer\": \"Claude Code\", \"ts\": ${TIMESTAMP}}]}' ${SLACK_WEBHOOK_URL}",
+      "timeout": 15,
+      "required": false,
+      "conditions": {
+        "file_patterns": ["Dockerfile", "docker-compose.yml", "kubernetes/*.yaml", "terraform/*.tf", ".github/workflows/*.yml"],
+        "tools": ["Edit", "Write"],
+        "environment_vars": ["SLACK_WEBHOOK_URL", "SLACK_INFRA_CHANNEL"]
+      },
+      "success_message": "📢 Infrastructure change notification sent to Slack",
+      "failure_message": "⚠️ Failed to send infrastructure change notification"
+    },
+    {
+      "name": "build-status",
+      "description": "Notify team of build completion status",
+      "command": "if [ $CLAUDE_TOOL_EXIT_CODE -eq 0 ]; then COLOR='good'; STATUS='✅ Success'; else COLOR='danger'; STATUS='❌ Failed'; fi; curl -s -X POST -H 'Content-type: application/json' --data '{\"channel\": \"${SLACK_BUILD_CHANNEL}\", \"username\": \"Claude Bot\", \"icon_emoji\": \":building_construction:\", \"attachments\": [{\"color\": \"'$COLOR'\", \"title\": \"🔨 Build '$STATUS'\", \"fields\": [{\"title\": \"Command\", \"value\": \"${CLAUDE_TOOL_COMMAND}\", \"short\": false}, {\"title\": \"Duration\", \"value\": \"${EXECUTION_TIME}s\", \"short\": true}, {\"title\": \"Branch\", \"value\": \"${GIT_BRANCH}\", \"short\": true}], \"footer\": \"Claude Code\", \"ts\": ${TIMESTAMP}}]}' ${SLACK_WEBHOOK_URL}",
+      "timeout": 15,
+      "required": false,
+      "conditions": {
+        "command_patterns": ["npm run build", "yarn build", "docker build", "make build"],
+        "environment_vars": ["SLACK_WEBHOOK_URL", "SLACK_BUILD_CHANNEL"]
+      },
+      "success_message": "📢 Build status notification sent to Slack",
+      "failure_message": "⚠️ Failed to send build status notification"
+    },
+    {
+      "name": "security-alerts",
+      "description": "Send security-related alerts to security team",
+      "command": "curl -s -X POST -H 'Content-type: application/json' --data '{\"channel\": \"${SLACK_SECURITY_CHANNEL}\", \"username\": \"Claude Security Bot\", \"icon_emoji\": \":warning:\", \"attachments\": [{\"color\": \"danger\", \"title\": \"🚨 Security Alert\", \"fields\": [{\"title\": \"Alert Type\", \"value\": \"Dependency Vulnerability\", \"short\": true}, {\"title\": \"Severity\", \"value\": \"High\", \"short\": true}, {\"title\": \"Repository\", \"value\": \"${GITHUB_REPO}\", \"short\": true}, {\"title\": \"Branch\", \"value\": \"${GIT_BRANCH}\", \"short\": true}], \"text\": \"Security vulnerabilities detected in dependencies. Please review and update packages.\", \"footer\": \"Claude Security Scanner\", \"ts\": ${TIMESTAMP}}]}' ${SLACK_WEBHOOK_URL}",
+      "timeout": 15,
+      "required": false,
+      "conditions": {
+        "command_patterns": ["npm audit", "yarn audit", "snyk test"],
+        "exit_codes": [1, 2],
+        "environment_vars": ["SLACK_WEBHOOK_URL", "SLACK_SECURITY_CHANNEL"]
+      },
+      "success_message": "🚨 Security alert sent to Slack",
+      "failure_message": "⚠️ Failed to send security alert"
+    },
+    {
+      "name": "daily-summary",
+      "description": "Send daily development activity summary",
+      "command": "node scripts/generate-daily-summary.js | curl -s -X POST -H 'Content-type: application/json' --data @- ${SLACK_WEBHOOK_URL}",
+      "timeout": 30,
+      "required": false,
+      "conditions": {
+        "time": "17:00",
+        "weekdays_only": true,
+        "environment_vars": ["SLACK_WEBHOOK_URL"],
+        "file_exists": ["scripts/generate-daily-summary.js"]
+      },
+      "success_message": "📊 Daily summary sent to Slack",
+      "failure_message": "⚠️ Failed to send daily summary"
+    }
+  ],
+  "notifications": {
+    "success": {
+      "message": "📢 Slack notifications sent successfully",
+      "channels": ["console"]
+    },
+    "failure": {
+      "message": "❌ Some Slack notifications failed to send",
+      "channels": ["console"],
+      "include_logs": false
+    }
+  },
+  "failure_action": "warn",
+  "retry": {
+    "enabled": true,
+    "max_attempts": 3,
+    "retry_on": ["timeout", "network_error"],
+    "backoff_strategy": "exponential",
+    "initial_delay": 1000
+  },
+  "environment": {
+    "required_vars": [
+      "SLACK_WEBHOOK_URL"
+    ],
+    "optional_vars": [
+      "SLACK_DEPLOYMENT_CHANNEL",
+      "SLACK_DEV_CHANNEL",
+      "SLACK_INFRA_CHANNEL",
+      "SLACK_BUILD_CHANNEL",
+      "SLACK_SECURITY_CHANNEL",
+      "GITHUB_REPO",
+      "DEPLOYMENT_ENVIRONMENT"
+    ],
+    "defaults": {
+      "SLACK_DEPLOYMENT_CHANNEL": "#deployments",
+      "SLACK_DEV_CHANNEL": "#development",
+      "SLACK_INFRA_CHANNEL": "#infrastructure",
+      "SLACK_BUILD_CHANNEL": "#builds",
+      "SLACK_SECURITY_CHANNEL": "#security"
+    }
+  },
+  "rate_limiting": {
+    "enabled": true,
+    "max_requests_per_minute": 20,
+    "burst_size": 5,
+    "queue_overflow_action": "drop_oldest"
+  },
+  "message_templates": {
+    "deployment_success": {
+      "color": "good",
+      "title": "🚀 Deployment Successful",
+      "fields": [
+        {"title": "Environment", "value": "${DEPLOYMENT_ENVIRONMENT}", "short": true},
+        {"title": "Version", "value": "${APP_VERSION}", "short": true},
+        {"title": "Duration", "value": "${EXECUTION_TIME}s", "short": true},
+        {"title": "Deployed By", "value": "${USER}", "short": true}
+      ]
+    },
+    "deployment_failure": {
+      "color": "danger",
+      "title": "💥 Deployment Failed",
+      "fields": [
+        {"title": "Environment", "value": "${DEPLOYMENT_ENVIRONMENT}", "short": true},
+        {"title": "Error Code", "value": "${EXIT_CODE}", "short": true},
+        {"title": "Duration", "value": "${EXECUTION_TIME}s", "short": true},
+        {"title": "Attempted By", "value": "${USER}", "short": true}
+      ]
+    },
+    "code_review_request": {
+      "color": "#36a64f",
+      "title": "👀 Code Review Requested",
+      "fields": [
+        {"title": "Pull Request", "value": "${PR_TITLE}", "short": false},
+        {"title": "Author", "value": "${PR_AUTHOR}", "short": true},
+        {"title": "Files Changed", "value": "${FILES_CHANGED}", "short": true}
+      ]
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "include_commit_links": true,
+      "include_pr_links": true,
+      "mention_users": true
+    },
+    "jira": {
+      "enabled": false,
+      "ticket_pattern": "PROJ-\\d+",
+      "include_ticket_links": true
+    },
+    "confluence": {
+      "enabled": false,
+      "include_documentation_links": true
+    }
+  },
+  "filtering": {
+    "ignore_bots": true,
+    "ignore_automated_commits": true,
+    "minimum_change_threshold": 1,
+    "exclude_file_patterns": [
+      "*.log",
+      "*.tmp",
+      "package-lock.json",
+      "yarn.lock"
+    ]
+  },
+  "documentation": {
+    "description": "This hook provides comprehensive Slack integration for team communication, sending notifications for deployments, code pushes, infrastructure changes, build status, and security alerts.",
+    "setup": {
+      "slack_webhook": "Create a Slack webhook URL at https://api.slack.com/messaging/webhooks and set SLACK_WEBHOOK_URL environment variable",
+      "channels": "Configure channel names in environment variables or use defaults",
+      "customization": "Modify message templates and conditions to match your workflow"
+    },
+    "message_types": [
+      "Deployment notifications with status and metadata",
+      "Code push notifications for important branches",
+      "Infrastructure change alerts",
+      "Build status updates with success/failure information",
+      "Security alerts for vulnerabilities and issues",
+      "Daily development activity summaries"
+    ],
+    "troubleshooting": {
+      "webhook_issues": "Verify SLACK_WEBHOOK_URL is correct and webhook is active",
+      "permission_errors": "Ensure webhook has permission to post to specified channels",
+      "rate_limiting": "Reduce notification frequency if hitting Slack rate limits",
+      "message_formatting": "Test message templates with curl commands manually"
+    }
+  }
+}

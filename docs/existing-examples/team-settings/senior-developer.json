@@ -1,0 +1,102 @@
+{
+  "description": "Configuration template for senior developers - full development access with security safeguards",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(tests/**)",
+      "Edit(docs/**)",
+      "Edit(scripts/**)",
+      "Edit(*.config.*)",
+      "Edit(*.json)",
+      "Edit(*.md)",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Write(scripts/**)",
+      "Write(*.config.*)",
+      "Write(*.md)",
+      "Glob",
+      "Grep",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(git *)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(make *)",
+      "Bash(python *)",
+      "Bash(pip *)",
+      "Bash(pytest *)",
+      "Bash(jest *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(~/.ssh/**)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(git push origin main:--force)",
+      "Bash(git push --force:*)",
+      "Bash(npm publish:*)",
+      "Bash(docker push:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(aws *)",
+      "Bash(gcloud *)",
+      "Bash(az *)"
+    ],
+    "ask": [
+      "Bash(git push origin main:*)",
+      "Bash(docker push:*)",
+      "Edit(package.json)",
+      "Edit(.gitignore)",
+      "Edit(Dockerfile)",
+      "Edit(docker-compose.*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git rebase -i:*)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "balanced",
+    "MAX_CONCURRENT_TASKS": "3"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint --silent --fix || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash.*git commit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git log -1 --pretty=format:'✓ Committed: %s'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🔵 Senior Dev Mode | Full Access"
+}

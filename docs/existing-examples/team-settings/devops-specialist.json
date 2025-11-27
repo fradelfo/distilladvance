@@ -1,0 +1,159 @@
+{
+  "description": "Configuration template for DevOps specialists - infrastructure and deployment focus",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(infrastructure/**)",
+      "Edit(deploy/**)",
+      "Edit(.github/workflows/**)",
+      "Edit(.gitlab-ci.yml)",
+      "Edit(Dockerfile*)",
+      "Edit(docker-compose*)",
+      "Edit(k8s/**)",
+      "Edit(helm/**)",
+      "Edit(terraform/**)",
+      "Edit(ansible/**)",
+      "Edit(scripts/**)",
+      "Edit(*.yml)",
+      "Edit(*.yaml)",
+      "Edit(*.tf)",
+      "Edit(*.sh)",
+      "Write(infrastructure/**)",
+      "Write(deploy/**)",
+      "Write(.github/workflows/**)",
+      "Write(scripts/**)",
+      "Write(*.yml)",
+      "Write(*.yaml)",
+      "Write(*.tf)",
+      "Write(*.sh)",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(kubectl *)",
+      "Bash(helm *)",
+      "Bash(terraform *)",
+      "Bash(ansible *)",
+      "Bash(aws *)",
+      "Bash(gcloud *)",
+      "Bash(az *)",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(make *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(rsync *)",
+      "Bash(gh *)",
+      "Bash(jq *)",
+      "Bash(yq *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ps *)",
+      "Bash(top *)",
+      "Bash(htop *)",
+      "Bash(df *)",
+      "Bash(du *)",
+      "Bash(netstat *)",
+      "Bash(systemctl *)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(~/.ssh/id_*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Edit(src/**)",
+      "Edit(tests/**)",
+      "Bash(rm -rf /)",
+      "Bash(sudo rm -rf /*)",
+      "Bash(chmod 777 /*)",
+      "Bash(kubectl delete namespace:* production)",
+      "Bash(terraform destroy:* production)"
+    ],
+    "ask": [
+      "Bash(kubectl apply:* production)",
+      "Bash(helm upgrade:* production)",
+      "Bash(terraform apply:* production)",
+      "Bash(aws s3 rm:* --recursive)",
+      "Bash(gcloud compute instances delete:*)",
+      "Bash(az vm delete:*)",
+      "Bash(docker push:* production)",
+      "Bash(kubectl delete:* production)",
+      "Edit(package.json)",
+      "Edit(src/**)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "infrastructure",
+    "MAX_CONCURRENT_TASKS": "4",
+    "INFRASTRUCTURE_MODE": "true",
+    "KUBECTL_CONTEXT": "development"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash.*kubectl.*production",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️  Production kubectl operation detected. Verify context and proceed with caution.'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash.*terraform.*apply",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🏗️  Terraform apply operation. Plan will be reviewed first.'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit.*\\.tf$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terraform fmt -check=false || echo 'Terraform files formatted'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*\\.ya?ml$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "yamllint . --format parsable || echo 'YAML validation completed'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🚀 DevOps session started. Infrastructure and deployment tools enabled.' && kubectl config current-context || echo 'No kubectl context set'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🔧 DevOps Mode | Infrastructure & Deployment"
+}

@@ -1,0 +1,557 @@
+{
+  "description": "PostgreSQL database integration configuration for user data, AI conversations, and analytics",
+  "version": "1.0.0",
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      },
+      "config": {
+        "connection": {
+          "pool_size": 20,
+          "idle_timeout": 30000,
+          "connection_timeout": 5000,
+          "ssl": {
+            "enabled": true,
+            "reject_unauthorized": false
+          }
+        },
+        "permissions": {
+          "schemas": ["public", "analytics", "ai_logs"],
+          "readonly_by_default": true,
+          "allowed_operations": {
+            "SELECT": true,
+            "INSERT": false,
+            "UPDATE": false,
+            "DELETE": false,
+            "CREATE": false,
+            "DROP": false
+          }
+        },
+        "tables": {
+          "users": {
+            "access": "read",
+            "sensitive_columns": ["email", "encrypted_data"],
+            "row_level_security": true,
+            "audit_log": true
+          },
+          "conversations": {
+            "access": "read_write",
+            "encryption": ["content", "metadata"],
+            "retention_policy": "90_days",
+            "audit_log": true
+          },
+          "distillations": {
+            "access": "read_write",
+            "encryption": ["original_conversation", "distilled_prompt"],
+            "audit_log": true
+          },
+          "user_preferences": {
+            "access": "read_write",
+            "row_level_security": true
+          },
+          "ai_usage_logs": {
+            "access": "read",
+            "partition_by": "date",
+            "retention_policy": "365_days"
+          },
+          "extension_analytics": {
+            "access": "read",
+            "anonymized": true,
+            "partition_by": "date",
+            "retention_policy": "180_days"
+          },
+          "embeddings": {
+            "access": "read_write",
+            "vector_column": "embedding",
+            "index_type": "ivfflat"
+          }
+        }
+      }
+    }
+  },
+
+  "environments": {
+    "development": {
+      "config_overrides": {
+        "permissions": {
+          "readonly_by_default": false,
+          "allowed_operations": {
+            "SELECT": true,
+            "INSERT": true,
+            "UPDATE": true,
+            "DELETE": true,
+            "CREATE": true,
+            "DROP": false
+          }
+        },
+        "connection": {
+          "pool_size": 10
+        }
+      }
+    },
+    "staging": {
+      "config_overrides": {
+        "permissions": {
+          "readonly_by_default": true,
+          "allowed_operations": {
+            "SELECT": true,
+            "INSERT": false,
+            "UPDATE": false,
+            "DELETE": false
+          }
+        }
+      }
+    },
+    "production": {
+      "config_overrides": {
+        "permissions": {
+          "readonly_by_default": true,
+          "allowed_operations": {
+            "SELECT": true,
+            "INSERT": false,
+            "UPDATE": false,
+            "DELETE": false
+          }
+        },
+        "connection": {
+          "ssl": {
+            "enabled": true,
+            "reject_unauthorized": true
+          }
+        }
+      }
+    }
+  },
+
+  "database_schema": {
+    "tables": {
+      "users": {
+        "description": "User accounts and authentication data",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "email": "VARCHAR(255) UNIQUE NOT NULL",
+          "created_at": "TIMESTAMP DEFAULT NOW()",
+          "updated_at": "TIMESTAMP DEFAULT NOW()",
+          "subscription_tier": "VARCHAR(50) DEFAULT 'free'",
+          "preferences": "JSONB",
+          "encrypted_data": "TEXT"
+        },
+        "indexes": [
+          "CREATE UNIQUE INDEX idx_users_email ON users(email)",
+          "CREATE INDEX idx_users_created_at ON users(created_at)",
+          "CREATE INDEX idx_users_subscription ON users(subscription_tier)"
+        ],
+        "row_level_security": {
+          "enabled": true,
+          "policies": [
+            "CREATE POLICY user_isolation ON users FOR ALL TO authenticated_user USING (auth.uid() = id)"
+          ]
+        }
+      },
+
+      "conversations": {
+        "description": "AI chat conversations and context data",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "user_id": "UUID REFERENCES users(id)",
+          "platform": "VARCHAR(50) NOT NULL",
+          "title": "VARCHAR(500)",
+          "content": "JSONB NOT NULL",
+          "metadata": "JSONB",
+          "created_at": "TIMESTAMP DEFAULT NOW()",
+          "updated_at": "TIMESTAMP DEFAULT NOW()",
+          "privacy_level": "VARCHAR(20) DEFAULT 'private'",
+          "is_deleted": "BOOLEAN DEFAULT FALSE"
+        },
+        "indexes": [
+          "CREATE INDEX idx_conversations_user_id ON conversations(user_id)",
+          "CREATE INDEX idx_conversations_platform ON conversations(platform)",
+          "CREATE INDEX idx_conversations_created_at ON conversations(created_at)",
+          "CREATE INDEX idx_conversations_privacy ON conversations(privacy_level)",
+          "CREATE INDEX idx_conversations_content_gin ON conversations USING gin(content)"
+        ],
+        "partitioning": {
+          "type": "RANGE",
+          "column": "created_at",
+          "interval": "1 MONTH"
+        }
+      },
+
+      "distillations": {
+        "description": "Distilled prompts and AI processing results",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "conversation_id": "UUID REFERENCES conversations(id)",
+          "user_id": "UUID REFERENCES users(id)",
+          "original_conversation": "TEXT",
+          "distilled_prompt": "TEXT NOT NULL",
+          "distillation_mode": "VARCHAR(50) NOT NULL",
+          "quality_score": "DECIMAL(3,2)",
+          "ai_model": "VARCHAR(100)",
+          "processing_time_ms": "INTEGER",
+          "token_usage": "JSONB",
+          "cost_estimate": "DECIMAL(10,6)",
+          "created_at": "TIMESTAMP DEFAULT NOW()",
+          "privacy_processed": "BOOLEAN DEFAULT FALSE"
+        },
+        "indexes": [
+          "CREATE INDEX idx_distillations_conversation_id ON distillations(conversation_id)",
+          "CREATE INDEX idx_distillations_user_id ON distillations(user_id)",
+          "CREATE INDEX idx_distillations_mode ON distillations(distillation_mode)",
+          "CREATE INDEX idx_distillations_quality ON distillations(quality_score)",
+          "CREATE INDEX idx_distillations_created_at ON distillations(created_at)"
+        ]
+      },
+
+      "user_preferences": {
+        "description": "User settings and customization preferences",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "user_id": "UUID REFERENCES users(id) UNIQUE",
+          "ai_model_preference": "VARCHAR(100) DEFAULT 'gpt-4'",
+          "privacy_mode": "VARCHAR(50) DEFAULT 'balanced'",
+          "auto_distill": "BOOLEAN DEFAULT FALSE",
+          "custom_prompts": "JSONB DEFAULT '[]'",
+          "extension_settings": "JSONB DEFAULT '{}'",
+          "notification_settings": "JSONB DEFAULT '{}'",
+          "updated_at": "TIMESTAMP DEFAULT NOW()"
+        },
+        "indexes": [
+          "CREATE UNIQUE INDEX idx_user_preferences_user_id ON user_preferences(user_id)"
+        ]
+      },
+
+      "ai_usage_logs": {
+        "description": "AI service usage tracking and analytics",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "user_id": "UUID REFERENCES users(id)",
+          "service_provider": "VARCHAR(50) NOT NULL",
+          "model_name": "VARCHAR(100) NOT NULL",
+          "operation_type": "VARCHAR(50) NOT NULL",
+          "input_tokens": "INTEGER",
+          "output_tokens": "INTEGER",
+          "cost": "DECIMAL(10,6)",
+          "response_time_ms": "INTEGER",
+          "success": "BOOLEAN DEFAULT TRUE",
+          "error_message": "TEXT",
+          "created_at": "TIMESTAMP DEFAULT NOW()"
+        },
+        "indexes": [
+          "CREATE INDEX idx_ai_usage_user_id ON ai_usage_logs(user_id)",
+          "CREATE INDEX idx_ai_usage_provider ON ai_usage_logs(service_provider)",
+          "CREATE INDEX idx_ai_usage_created_at ON ai_usage_logs(created_at)",
+          "CREATE INDEX idx_ai_usage_cost ON ai_usage_logs(cost)"
+        ],
+        "partitioning": {
+          "type": "RANGE",
+          "column": "created_at",
+          "interval": "1 MONTH"
+        }
+      },
+
+      "extension_analytics": {
+        "description": "Browser extension usage analytics (anonymized)",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "session_id": "VARCHAR(100)",
+          "browser": "VARCHAR(50)",
+          "platform": "VARCHAR(50)",
+          "action": "VARCHAR(100)",
+          "target_site": "VARCHAR(100)",
+          "duration_ms": "INTEGER",
+          "success": "BOOLEAN",
+          "error_category": "VARCHAR(100)",
+          "created_at": "TIMESTAMP DEFAULT NOW()",
+          "anonymized_user_id": "VARCHAR(64)"
+        },
+        "indexes": [
+          "CREATE INDEX idx_extension_analytics_session ON extension_analytics(session_id)",
+          "CREATE INDEX idx_extension_analytics_action ON extension_analytics(action)",
+          "CREATE INDEX idx_extension_analytics_site ON extension_analytics(target_site)",
+          "CREATE INDEX idx_extension_analytics_created_at ON extension_analytics(created_at)"
+        ],
+        "partitioning": {
+          "type": "RANGE",
+          "column": "created_at",
+          "interval": "1 WEEK"
+        }
+      },
+
+      "embeddings": {
+        "description": "Vector embeddings for semantic search",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "content_id": "UUID",
+          "content_type": "VARCHAR(50)",
+          "content_hash": "VARCHAR(64)",
+          "embedding": "vector(1536)",
+          "metadata": "JSONB",
+          "created_at": "TIMESTAMP DEFAULT NOW()"
+        },
+        "indexes": [
+          "CREATE INDEX idx_embeddings_content_id ON embeddings(content_id)",
+          "CREATE INDEX idx_embeddings_type ON embeddings(content_type)",
+          "CREATE INDEX idx_embeddings_hash ON embeddings(content_hash)",
+          "CREATE INDEX embeddings_embedding_idx ON embeddings USING ivfflat (embedding vector_cosine_ops)"
+        ],
+        "vector_config": {
+          "dimension": 1536,
+          "distance_metric": "cosine",
+          "index_type": "ivfflat",
+          "lists": 100
+        }
+      }
+    },
+
+    "functions": {
+      "search_similar_conversations": {
+        "description": "Semantic search for similar conversations using vector embeddings",
+        "signature": "search_similar_conversations(query_embedding vector(1536), similarity_threshold float, max_results int)",
+        "returns": "TABLE(conversation_id UUID, similarity_score float, title VARCHAR, created_at TIMESTAMP)",
+        "security": "DEFINER"
+      },
+
+      "get_user_analytics": {
+        "description": "Get user analytics with privacy protections",
+        "signature": "get_user_analytics(user_uuid UUID, date_range daterange)",
+        "returns": "JSONB",
+        "security": "INVOKER"
+      },
+
+      "cleanup_old_data": {
+        "description": "Clean up old data based on retention policies",
+        "signature": "cleanup_old_data()",
+        "returns": "JSONB",
+        "security": "DEFINER"
+      }
+    },
+
+    "views": {
+      "user_conversation_summary": {
+        "description": "Summary view of user conversations with privacy filtering",
+        "definition": "CREATE VIEW user_conversation_summary AS SELECT user_id, COUNT(*) as total_conversations, MAX(created_at) as last_conversation, AVG(array_length(content->'messages', 1)) as avg_message_count FROM conversations WHERE is_deleted = FALSE GROUP BY user_id"
+      },
+
+      "ai_usage_summary": {
+        "description": "Aggregated AI usage statistics",
+        "definition": "CREATE VIEW ai_usage_summary AS SELECT service_provider, model_name, DATE(created_at) as usage_date, COUNT(*) as request_count, SUM(cost) as total_cost, AVG(response_time_ms) as avg_response_time FROM ai_usage_logs WHERE success = TRUE GROUP BY service_provider, model_name, DATE(created_at)"
+      }
+    }
+  },
+
+  "security": {
+    "encryption": {
+      "at_rest": {
+        "enabled": true,
+        "algorithm": "AES-256",
+        "key_management": "AWS KMS"
+      },
+      "in_transit": {
+        "enabled": true,
+        "tls_version": "1.2+",
+        "certificate_validation": true
+      },
+      "application_level": {
+        "sensitive_fields": [
+          "users.email",
+          "users.encrypted_data",
+          "conversations.content",
+          "distillations.original_conversation",
+          "distillations.distilled_prompt"
+        ],
+        "encryption_key": "${ENCRYPTION_KEY}"
+      }
+    },
+
+    "access_controls": {
+      "row_level_security": {
+        "enabled": true,
+        "policies": [
+          "Users can only access their own data",
+          "Admin users can access aggregated analytics only",
+          "Service accounts have limited read access"
+        ]
+      },
+      "column_level_security": {
+        "enabled": true,
+        "restricted_columns": [
+          "users.email",
+          "users.encrypted_data"
+        ]
+      }
+    },
+
+    "audit_logging": {
+      "enabled": true,
+      "logged_operations": [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "SELECT on sensitive tables"
+      ],
+      "log_destination": "audit_logs",
+      "retention": "7 years"
+    }
+  },
+
+  "performance": {
+    "query_optimization": {
+      "auto_explain": {
+        "enabled": true,
+        "log_min_duration": "1s",
+        "log_analyze": true
+      },
+      "index_recommendations": {
+        "enabled": true,
+        "monitoring_period": "7 days"
+      }
+    },
+
+    "caching": {
+      "query_cache": {
+        "enabled": true,
+        "ttl": "300s",
+        "max_size": "1GB"
+      },
+      "connection_pooling": {
+        "enabled": true,
+        "pool_mode": "transaction",
+        "max_connections": 100
+      }
+    },
+
+    "partitioning": {
+      "auto_partition": {
+        "enabled": true,
+        "strategy": "monthly",
+        "tables": ["conversations", "ai_usage_logs", "extension_analytics"]
+      },
+      "partition_maintenance": {
+        "drop_old_partitions": true,
+        "retention_months": 12
+      }
+    }
+  },
+
+  "monitoring": {
+    "health_checks": {
+      "connection_health": {
+        "query": "SELECT 1",
+        "interval": "30s",
+        "timeout": "5s"
+      },
+      "performance_health": {
+        "slow_query_threshold": "1s",
+        "blocking_query_threshold": "30s",
+        "connection_utilization_threshold": 80
+      }
+    },
+
+    "metrics": {
+      "connection_count": true,
+      "query_performance": true,
+      "table_sizes": true,
+      "cache_hit_ratio": true,
+      "replication_lag": true
+    },
+
+    "alerts": {
+      "high_connection_usage": {
+        "threshold": "80%",
+        "severity": "warning"
+      },
+      "slow_queries": {
+        "threshold": "5s",
+        "severity": "warning"
+      },
+      "connection_failures": {
+        "threshold": "5 failures/5min",
+        "severity": "critical"
+      }
+    }
+  },
+
+  "setup_guide": {
+    "prerequisites": [
+      "PostgreSQL 14+ with vector extension (pgvector)",
+      "Database connection URL with appropriate permissions",
+      "SSL certificates configured (for production)"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Install Required Extensions",
+        "description": "Install pgvector extension for vector embeddings",
+        "sql": "CREATE EXTENSION IF NOT EXISTS vector;"
+      },
+      {
+        "step": 2,
+        "title": "Configure Environment Variables",
+        "variables": {
+          "DATABASE_URL": "PostgreSQL connection string",
+          "ENCRYPTION_KEY": "32-byte encryption key for sensitive data"
+        }
+      },
+      {
+        "step": 3,
+        "title": "Run Initial Migration",
+        "description": "Execute database schema setup",
+        "command": "prisma migrate deploy"
+      },
+      {
+        "step": 4,
+        "title": "Test Connection",
+        "command": "claude mcp test postgresql"
+      }
+    ]
+  },
+
+  "best_practices": {
+    "security": [
+      "Use environment variables for connection strings",
+      "Enable row-level security for user data",
+      "Encrypt sensitive data at application level",
+      "Use read-only connections for analytics queries",
+      "Regularly rotate database credentials"
+    ],
+    "performance": [
+      "Use appropriate indexes for common queries",
+      "Partition large tables by date",
+      "Monitor and optimize slow queries",
+      "Use connection pooling",
+      "Implement proper caching strategies"
+    ],
+    "data_management": [
+      "Implement data retention policies",
+      "Regular backup and recovery testing",
+      "Monitor data growth and plan capacity",
+      "Use database migrations for schema changes",
+      "Maintain data quality with constraints"
+    ]
+  },
+
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Connection timeout",
+        "solution": "Check connection string, firewall rules, and database availability"
+      },
+      {
+        "issue": "Permission denied",
+        "solution": "Verify database user permissions and row-level security policies"
+      },
+      {
+        "issue": "Slow queries",
+        "solution": "Check query plans, add appropriate indexes, and optimize queries"
+      },
+      {
+        "issue": "Vector queries not working",
+        "solution": "Ensure pgvector extension is installed and vector indexes are created"
+      }
+    ]
+  }
+}

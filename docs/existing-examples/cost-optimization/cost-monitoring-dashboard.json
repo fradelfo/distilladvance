@@ -1,0 +1,753 @@
+{
+  "name": "Claude Code Cost Monitoring Dashboard",
+  "description": "Real-time cost visibility, usage tracking, and budget monitoring dashboard for enterprise Claude Code deployments",
+  "version": "1.0.0",
+  "dashboard_type": "cost_monitoring",
+  "refresh_interval": "1m",
+  "time_range_default": "24h",
+  "currency": "USD",
+  "timezone": "UTC",
+
+  "data_sources": {
+    "usage_metrics": {
+      "type": "prometheus",
+      "endpoint": "http://prometheus:9090",
+      "queries": {
+        "total_requests": "sum(rate(claude_requests_total[5m]))",
+        "total_tokens": "sum(rate(claude_tokens_total[5m]))",
+        "cost_per_second": "sum(rate(claude_cost_usd_total[1s]))",
+        "active_users": "count(count by (user_id) (claude_requests_total))"
+      }
+    },
+    "billing_data": {
+      "type": "custom_api",
+      "endpoint": "https://api.internal.com/billing/claude",
+      "authentication": "bearer_token",
+      "refresh_frequency": "5m"
+    },
+    "budget_data": {
+      "type": "database",
+      "connection": "postgresql://budget_db",
+      "tables": ["budgets", "allocations", "approvals"]
+    }
+  },
+
+  "panels": {
+    "cost_overview": {
+      "type": "stat_panel",
+      "title": "Cost Overview",
+      "description": "Real-time cost metrics and budget status",
+      "position": {"x": 0, "y": 0, "width": 24, "height": 4},
+      "refresh": "30s",
+
+      "metrics": [
+        {
+          "name": "current_monthly_cost",
+          "title": "Current Month Cost",
+          "query": "sum(claude_monthly_cost_usd)",
+          "format": "currency",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 400000},
+              {"color": "red", "value": 480000}
+            ]
+          },
+          "target": 500000,
+          "trend_comparison": "previous_month"
+        },
+        {
+          "name": "daily_burn_rate",
+          "title": "Daily Burn Rate",
+          "query": "avg_over_time(claude_daily_cost_usd[7d])",
+          "format": "currency",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 16000},
+              {"color": "red", "value": 20000}
+            ]
+          },
+          "target": 16129,
+          "trend_comparison": "previous_week"
+        },
+        {
+          "name": "budget_remaining",
+          "title": "Budget Remaining",
+          "query": "claude_budget_remaining_percent",
+          "format": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 20},
+              {"color": "green", "value": 30}
+            ]
+          },
+          "sparkline": true
+        },
+        {
+          "name": "cost_per_developer",
+          "title": "Cost per Developer",
+          "query": "sum(claude_monthly_cost_usd) / count(claude_active_developers)",
+          "format": "currency",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 180},
+              {"color": "red", "value": 220}
+            ]
+          },
+          "target": 200,
+          "trend_comparison": "previous_month"
+        },
+        {
+          "name": "projected_month_end",
+          "title": "Projected Month End",
+          "query": "predict_linear(claude_monthly_cost_usd[7d], (30 * 24 * 3600))",
+          "format": "currency",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 480000},
+              {"color": "red", "value": 520000}
+            ]
+          },
+          "alert_conditions": [
+            {"threshold": 520000, "severity": "critical", "message": "Projected to exceed monthly budget"}
+          ]
+        },
+        {
+          "name": "efficiency_score",
+          "title": "Cost Efficiency Score",
+          "query": "claude_cost_efficiency_score",
+          "format": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "green", "value": 85}
+            ]
+          },
+          "target": 90,
+          "description": "Composite score based on cost per value delivered"
+        }
+      ]
+    },
+
+    "cost_trends": {
+      "type": "time_series",
+      "title": "Cost Trends",
+      "description": "Historical cost trends and forecasting",
+      "position": {"x": 0, "y": 4, "width": 12, "height": 8},
+      "time_range": "30d",
+
+      "series": [
+        {
+          "name": "daily_cost",
+          "title": "Daily Cost",
+          "query": "sum_over_time(claude_daily_cost_usd[1d])",
+          "color": "#1f77b4",
+          "line_width": 2,
+          "fill_opacity": 0.1,
+          "y_axis": "left"
+        },
+        {
+          "name": "7_day_average",
+          "title": "7-Day Moving Average",
+          "query": "avg_over_time(claude_daily_cost_usd[7d])",
+          "color": "#ff7f0e",
+          "line_width": 1,
+          "line_style": "dashed",
+          "y_axis": "left"
+        },
+        {
+          "name": "budget_limit",
+          "title": "Daily Budget Limit",
+          "query": "claude_daily_budget_limit",
+          "color": "#d62728",
+          "line_width": 1,
+          "line_style": "dotted",
+          "y_axis": "left"
+        },
+        {
+          "name": "active_users",
+          "title": "Active Users",
+          "query": "count(count by (user_id) (increase(claude_requests_total[1d])))",
+          "color": "#2ca02c",
+          "line_width": 2,
+          "y_axis": "right"
+        }
+      ],
+
+      "y_axes": {
+        "left": {
+          "title": "Cost ($)",
+          "format": "currency",
+          "decimals": 0
+        },
+        "right": {
+          "title": "Active Users",
+          "format": "short",
+          "decimals": 0
+        }
+      },
+
+      "annotations": [
+        {
+          "type": "threshold_line",
+          "value": "claude_monthly_budget / days_in_month",
+          "color": "red",
+          "label": "Daily Budget Target"
+        }
+      ]
+    },
+
+    "cost_breakdown_by_model": {
+      "type": "pie_chart",
+      "title": "Cost Breakdown by Model",
+      "description": "Distribution of costs across different Claude models",
+      "position": {"x": 12, "y": 4, "width": 6, "height": 8},
+
+      "query": "sum by (model) (claude_model_cost_usd)",
+      "legend": {
+        "position": "right",
+        "values": ["percent", "current"]
+      },
+      "colors": {
+        "haiku": "#96CEB4",
+        "sonnet": "#FFEAA7",
+        "opus": "#DDA0DD"
+      },
+      "tooltip": {
+        "mode": "multi",
+        "sort": "descending"
+      }
+    },
+
+    "cost_by_business_unit": {
+      "type": "horizontal_bar",
+      "title": "Cost by Business Unit",
+      "description": "Monthly cost allocation across business units",
+      "position": {"x": 18, "y": 4, "width": 6, "height": 8},
+
+      "query": "sum by (business_unit) (claude_monthly_cost_usd)",
+      "display_mode": "list",
+      "value_options": {
+        "show": ["value", "percent"],
+        "calc_list": ["lastNotNull"],
+        "fields": "/^business_unit$/"
+      },
+      "color_by_value": true,
+      "orientation": "horizontal"
+    },
+
+    "usage_efficiency": {
+      "type": "time_series",
+      "title": "Usage Efficiency Metrics",
+      "description": "Cost per request and token efficiency over time",
+      "position": {"x": 0, "y": 12, "width": 12, "height": 6},
+
+      "series": [
+        {
+          "name": "cost_per_request",
+          "title": "Cost per Request",
+          "query": "claude_cost_usd / claude_requests_total",
+          "color": "#1f77b4",
+          "y_axis": "left",
+          "unit": "currency"
+        },
+        {
+          "name": "cost_per_1k_tokens",
+          "title": "Cost per 1K Tokens",
+          "query": "(claude_cost_usd / claude_tokens_total) * 1000",
+          "color": "#ff7f0e",
+          "y_axis": "left",
+          "unit": "currency"
+        },
+        {
+          "name": "tokens_per_request",
+          "title": "Tokens per Request",
+          "query": "claude_tokens_total / claude_requests_total",
+          "color": "#2ca02c",
+          "y_axis": "right",
+          "unit": "short"
+        }
+      ],
+
+      "y_axes": {
+        "left": {
+          "title": "Cost ($)",
+          "format": "currency",
+          "decimals": 4
+        },
+        "right": {
+          "title": "Tokens",
+          "format": "short",
+          "decimals": 0
+        }
+      }
+    },
+
+    "team_cost_analysis": {
+      "type": "table",
+      "title": "Team Cost Analysis",
+      "description": "Detailed cost breakdown by team with efficiency metrics",
+      "position": {"x": 12, "y": 12, "width": 12, "height": 6},
+
+      "query": "claude_team_cost_metrics",
+      "columns": [
+        {
+          "field": "team",
+          "title": "Team",
+          "type": "string",
+          "width": 120
+        },
+        {
+          "field": "monthly_cost",
+          "title": "Monthly Cost",
+          "type": "number",
+          "unit": "currency",
+          "decimals": 0,
+          "width": 100
+        },
+        {
+          "field": "budget_allocation",
+          "title": "Budget",
+          "type": "number",
+          "unit": "currency",
+          "decimals": 0,
+          "width": 100
+        },
+        {
+          "field": "budget_utilization",
+          "title": "Budget Used",
+          "type": "number",
+          "unit": "percent",
+          "decimals": 1,
+          "width": 80,
+          "color_mode": "cell",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 80},
+              {"color": "red", "value": 95}
+            ]
+          }
+        },
+        {
+          "field": "cost_per_developer",
+          "title": "Cost/Dev",
+          "type": "number",
+          "unit": "currency",
+          "decimals": 0,
+          "width": 80
+        },
+        {
+          "field": "requests_per_developer",
+          "title": "Req/Dev",
+          "type": "number",
+          "decimals": 0,
+          "width": 70
+        },
+        {
+          "field": "efficiency_score",
+          "title": "Efficiency",
+          "type": "number",
+          "unit": "percent",
+          "decimals": 1,
+          "width": 80,
+          "color_mode": "cell",
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "green", "value": 85}
+            ]
+          }
+        },
+        {
+          "field": "trend",
+          "title": "30d Trend",
+          "type": "sparkline",
+          "width": 100
+        }
+      ],
+      "sort_by": "monthly_cost",
+      "sort_order": "desc",
+      "pagination": {
+        "enabled": true,
+        "page_size": 10
+      }
+    },
+
+    "budget_alerts": {
+      "type": "alert_list",
+      "title": "Budget Alerts & Notifications",
+      "description": "Active budget alerts and cost anomalies",
+      "position": {"x": 0, "y": 18, "width": 12, "height": 6},
+
+      "alert_sources": ["prometheus", "custom_budget_system"],
+      "time_range": "24h",
+      "show_options": {
+        "alert_name": true,
+        "alert_state": true,
+        "alert_value": true,
+        "time": true
+      },
+      "state_filter": ["alerting", "pending"],
+      "folder_filter": ["claude_cost_alerts"],
+
+      "custom_alerts": [
+        {
+          "name": "Budget Exceeded",
+          "query": "claude_budget_utilization_percent > 100",
+          "severity": "critical",
+          "message": "Budget has been exceeded"
+        },
+        {
+          "name": "High Burn Rate",
+          "query": "increase(claude_daily_cost_usd[1h]) > claude_daily_budget / 24 * 1.5",
+          "severity": "warning",
+          "message": "Burn rate is 50% above expected"
+        },
+        {
+          "name": "Unusual Usage Spike",
+          "query": "rate(claude_requests_total[5m]) > avg_over_time(rate(claude_requests_total[5m])[24h]) * 3",
+          "severity": "warning",
+          "message": "Usage spike detected - 3x normal rate"
+        },
+        {
+          "name": "Cost Anomaly",
+          "query": "abs(claude_hourly_cost_usd - avg_over_time(claude_hourly_cost_usd[7d])) > stddev_over_time(claude_hourly_cost_usd[7d]) * 2",
+          "severity": "info",
+          "message": "Cost anomaly detected - outside 2 standard deviations"
+        }
+      ]
+    },
+
+    "cost_optimization_opportunities": {
+      "type": "table",
+      "title": "Cost Optimization Opportunities",
+      "description": "AI-generated recommendations for cost reduction",
+      "position": {"x": 12, "y": 18, "width": 12, "height": 6},
+
+      "data_source": "optimization_engine_api",
+      "refresh_frequency": "1h",
+      "columns": [
+        {
+          "field": "recommendation_type",
+          "title": "Type",
+          "type": "string",
+          "width": 100
+        },
+        {
+          "field": "description",
+          "title": "Description",
+          "type": "string",
+          "width": 250
+        },
+        {
+          "field": "potential_savings",
+          "title": "Potential Savings",
+          "type": "number",
+          "unit": "currency",
+          "decimals": 0,
+          "width": 120
+        },
+        {
+          "field": "impact_score",
+          "title": "Impact",
+          "type": "number",
+          "unit": "percent",
+          "decimals": 1,
+          "width": 80,
+          "color_mode": "cell"
+        },
+        {
+          "field": "implementation_effort",
+          "title": "Effort",
+          "type": "string",
+          "width": 80,
+          "value_mappings": [
+            {"value": "low", "text": "Low", "color": "green"},
+            {"value": "medium", "text": "Medium", "color": "yellow"},
+            {"value": "high", "text": "High", "color": "red"}
+          ]
+        },
+        {
+          "field": "status",
+          "title": "Status",
+          "type": "string",
+          "width": 100,
+          "value_mappings": [
+            {"value": "new", "text": "New", "color": "blue"},
+            {"value": "in_progress", "text": "In Progress", "color": "yellow"},
+            {"value": "completed", "text": "Completed", "color": "green"},
+            {"value": "dismissed", "text": "Dismissed", "color": "gray"}
+          ]
+        }
+      ],
+      "sort_by": "potential_savings",
+      "sort_order": "desc"
+    },
+
+    "roi_metrics": {
+      "type": "stat_panel",
+      "title": "Return on Investment",
+      "description": "ROI calculations and value metrics",
+      "position": {"x": 0, "y": 24, "width": 24, "height": 4},
+
+      "metrics": [
+        {
+          "name": "monthly_roi",
+          "title": "Monthly ROI",
+          "query": "claude_monthly_roi_percent",
+          "format": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 100},
+              {"color": "green", "value": 150}
+            ]
+          },
+          "target": 200
+        },
+        {
+          "name": "payback_period",
+          "title": "Payback Period",
+          "query": "claude_payback_period_months",
+          "format": "short",
+          "unit": "months",
+          "decimals": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 6},
+              {"color": "red", "value": 12}
+            ]
+          },
+          "target": 6
+        },
+        {
+          "name": "productivity_gain",
+          "title": "Productivity Gain",
+          "query": "claude_productivity_improvement_percent",
+          "format": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 20},
+              {"color": "green", "value": 30}
+            ]
+          },
+          "target": 25
+        },
+        {
+          "name": "cost_avoidance",
+          "title": "Cost Avoidance",
+          "query": "claude_monthly_cost_avoidance_usd",
+          "format": "currency",
+          "decimals": 0,
+          "description": "Estimated cost avoided through efficiency gains"
+        },
+        {
+          "name": "value_delivered",
+          "title": "Value Delivered",
+          "query": "claude_monthly_value_delivered_usd",
+          "format": "currency",
+          "decimals": 0,
+          "description": "Estimated value of work completed with Claude assistance"
+        },
+        {
+          "name": "net_benefit",
+          "title": "Net Monthly Benefit",
+          "query": "claude_monthly_value_delivered_usd - claude_monthly_cost_usd",
+          "format": "currency",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 100000},
+              {"color": "green", "value": 200000}
+            ]
+          }
+        }
+      ]
+    }
+  },
+
+  "dashboard_settings": {
+    "auto_refresh": {
+      "enabled": true,
+      "interval": "1m",
+      "options": ["30s", "1m", "5m", "15m", "30m", "1h"]
+    },
+    "time_picker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "7d", "30d"]
+    },
+    "templating": {
+      "variables": [
+        {
+          "name": "business_unit",
+          "type": "query",
+          "query": "label_values(claude_cost_usd, business_unit)",
+          "multi": true,
+          "include_all": true
+        },
+        {
+          "name": "team",
+          "type": "query",
+          "query": "label_values(claude_cost_usd{business_unit=~\"$business_unit\"}, team)",
+          "multi": true,
+          "include_all": true
+        },
+        {
+          "name": "model",
+          "type": "custom",
+          "options": ["haiku", "sonnet", "opus"],
+          "multi": true,
+          "include_all": true
+        }
+      ]
+    },
+    "annotations": [
+      {
+        "name": "Budget Changes",
+        "datasource": "budget_events",
+        "iconColor": "blue",
+        "lineColor": "blue",
+        "tags": ["budget", "change"]
+      },
+      {
+        "name": "Cost Optimizations",
+        "datasource": "optimization_events",
+        "iconColor": "green",
+        "lineColor": "green",
+        "tags": ["optimization", "implementation"]
+      },
+      {
+        "name": "Incidents",
+        "datasource": "incident_events",
+        "iconColor": "red",
+        "lineColor": "red",
+        "tags": ["incident", "outage"]
+      }
+    ]
+  },
+
+  "alerting": {
+    "notification_channels": [
+      {
+        "name": "slack_finance",
+        "type": "slack",
+        "settings": {
+          "url": "https://hooks.slack.com/services/FINANCE_WEBHOOK",
+          "channel": "#finance-alerts",
+          "title": "Claude Cost Alert"
+        }
+      },
+      {
+        "name": "email_finance_team",
+        "type": "email",
+        "settings": {
+          "addresses": "finance-team@company.com",
+          "subject": "Claude Cost Alert: {{alertname}}"
+        }
+      },
+      {
+        "name": "pagerduty_critical",
+        "type": "pagerduty",
+        "settings": {
+          "integrationKey": "PAGERDUTY_INTEGRATION_KEY",
+          "severity": "critical"
+        }
+      }
+    ],
+
+    "alert_rules": [
+      {
+        "name": "Monthly Budget Exceeded",
+        "frequency": "1m",
+        "conditions": [
+          {
+            "query": "claude_monthly_cost_usd",
+            "reducer": "last",
+            "evaluator": "gt",
+            "params": ["claude_monthly_budget"]
+          }
+        ],
+        "executionErrorState": "alerting",
+        "noDataState": "no_data",
+        "for": "5m",
+        "notifications": ["slack_finance", "email_finance_team", "pagerduty_critical"]
+      },
+      {
+        "name": "High Daily Burn Rate",
+        "frequency": "5m",
+        "conditions": [
+          {
+            "query": "rate(claude_cost_usd[1h]) * 24",
+            "reducer": "last",
+            "evaluator": "gt",
+            "params": ["claude_daily_budget * 1.5"]
+          }
+        ],
+        "executionErrorState": "alerting",
+        "noDataState": "no_data",
+        "for": "15m",
+        "notifications": ["slack_finance", "email_finance_team"]
+      },
+      {
+        "name": "Team Budget Warning",
+        "frequency": "1h",
+        "conditions": [
+          {
+            "query": "claude_team_budget_utilization_percent",
+            "reducer": "last",
+            "evaluator": "gt",
+            "params": [80]
+          }
+        ],
+        "executionErrorState": "alerting",
+        "noDataState": "no_data",
+        "for": "0",
+        "notifications": ["slack_finance"]
+      }
+    ]
+  },
+
+  "export_options": {
+    "pdf_export": true,
+    "csv_export": true,
+    "json_export": true,
+    "scheduled_reports": {
+      "daily_summary": {
+        "enabled": true,
+        "schedule": "0 9 * * *",
+        "recipients": ["finance-team@company.com"],
+        "format": "pdf"
+      },
+      "weekly_analysis": {
+        "enabled": true,
+        "schedule": "0 9 * * 1",
+        "recipients": ["executive-team@company.com"],
+        "format": "pdf"
+      },
+      "monthly_detailed": {
+        "enabled": true,
+        "schedule": "0 9 1 * *",
+        "recipients": ["board@company.com"],
+        "format": "pdf"
+      }
+    }
+  }
+}

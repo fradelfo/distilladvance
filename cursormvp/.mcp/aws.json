@@ -1,0 +1,642 @@
+{
+  "description": "AWS services integration configuration for cloud infrastructure management, monitoring, and deployment automation",
+  "version": "1.0.0",
+  "mcpServers": {
+    "aws": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws"],
+      "env": {
+        "AWS_REGION": "${AWS_REGION:-us-east-1}",
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_SESSION_TOKEN": "${AWS_SESSION_TOKEN}"
+      },
+      "config": {
+        "default_region": "us-east-1",
+        "timeout": 30000,
+        "retry_config": {
+          "max_attempts": 3,
+          "retry_delay": 1000
+        },
+        "services": {
+          "s3": {
+            "enabled": true,
+            "permissions": ["read", "write"],
+            "allowed_buckets": [
+              "${PROJECT_NAME}-assets-*",
+              "${PROJECT_NAME}-backups-*",
+              "${PROJECT_NAME}-logs-*",
+              "${PROJECT_NAME}-static-*"
+            ],
+            "operations": [
+              "listBuckets",
+              "listObjects",
+              "getObject",
+              "putObject",
+              "deleteObject",
+              "getBucketPolicy",
+              "getBucketVersioning"
+            ]
+          },
+          "ec2": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "describeInstances",
+              "describeImages",
+              "describeSecurityGroups",
+              "describeVpcs",
+              "describeSubnets",
+              "describeLoadBalancers"
+            ],
+            "resource_filters": {
+              "tags": [
+                {"Key": "Project", "Value": "${PROJECT_NAME}"},
+                {"Key": "Environment", "Value": ["dev", "staging", "prod"]}
+              ]
+            }
+          },
+          "rds": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "describeDBInstances",
+              "describeDBClusters",
+              "describeDBSnapshots",
+              "describeDBParameterGroups",
+              "describeDBClusterSnapshots"
+            ],
+            "allowed_instances": [
+              "${PROJECT_NAME}-main-*",
+              "${PROJECT_NAME}-staging-*",
+              "${PROJECT_NAME}-analytics-*"
+            ]
+          },
+          "eks": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "describeClusters",
+              "listClusters",
+              "describeNodegroups",
+              "listNodegroups",
+              "describeUpdates"
+            ],
+            "cluster_filters": {
+              "name_patterns": ["${PROJECT_NAME}-*"]
+            }
+          },
+          "lambda": {
+            "enabled": true,
+            "permissions": ["read", "invoke"],
+            "operations": [
+              "listFunctions",
+              "getFunction",
+              "getFunctionConfiguration",
+              "listVersionsByFunction",
+              "listEventSourceMappings",
+              "invokeFunction"
+            ],
+            "function_filters": {
+              "name_patterns": [
+                "${PROJECT_NAME}-*",
+                "*-distillation-*",
+                "*-ai-processing-*",
+                "*-analytics-*"
+              ]
+            }
+          },
+          "cloudwatch": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "getMetricStatistics",
+              "listMetrics",
+              "describeAlarms",
+              "getMetricData",
+              "describeDashboards",
+              "getInsightResults"
+            ],
+            "metric_filters": {
+              "namespaces": [
+                "AWS/EC2",
+                "AWS/RDS",
+                "AWS/EKS",
+                "AWS/Lambda",
+                "AWS/ApplicationELB",
+                "Custom/${PROJECT_NAME}"
+              ]
+            }
+          },
+          "secretsmanager": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "listSecrets",
+              "describeSecret",
+              "getSecretValue"
+            ],
+            "secret_filters": {
+              "name_patterns": [
+                "${PROJECT_NAME}/*",
+                "*/database/*",
+                "*/api-keys/*",
+                "*/certificates/*"
+              ]
+            }
+          },
+          "iam": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "listRoles",
+              "getRolePolicy",
+              "listRolePolicies",
+              "listAttachedRolePolicies",
+              "listUsers",
+              "listGroups"
+            ],
+            "resource_filters": {
+              "path_prefix": [
+                "/${PROJECT_NAME}/",
+                "/service-role/",
+                "/eks-service-role/"
+              ]
+            }
+          },
+          "cloudformation": {
+            "enabled": true,
+            "permissions": ["read"],
+            "operations": [
+              "describeStacks",
+              "listStacks",
+              "describeStackResources",
+              "describeStackEvents",
+              "getTemplate"
+            ],
+            "stack_filters": {
+              "name_patterns": ["${PROJECT_NAME}-*"]
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "environments": {
+    "development": {
+      "config_overrides": {
+        "services": {
+          "s3": {
+            "permissions": ["read", "write", "delete"]
+          },
+          "lambda": {
+            "permissions": ["read", "invoke", "update"]
+          }
+        },
+        "allowed_regions": ["us-east-1", "us-west-2"]
+      }
+    },
+    "staging": {
+      "config_overrides": {
+        "services": {
+          "s3": {
+            "permissions": ["read"]
+          },
+          "lambda": {
+            "permissions": ["read", "invoke"]
+          }
+        }
+      }
+    },
+    "production": {
+      "config_overrides": {
+        "services": {
+          "s3": {
+            "permissions": ["read"]
+          },
+          "ec2": {
+            "permissions": ["read"]
+          },
+          "rds": {
+            "permissions": ["read"]
+          },
+          "lambda": {
+            "permissions": ["read"]
+          }
+        },
+        "read_only_mode": true
+      }
+    }
+  },
+
+  "monitoring_dashboards": {
+    "application_health": {
+      "description": "Overall application health and performance metrics",
+      "metrics": [
+        {
+          "name": "API Response Time",
+          "namespace": "AWS/ApplicationELB",
+          "metric": "TargetResponseTime",
+          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+        },
+        {
+          "name": "Error Rate",
+          "namespace": "AWS/ApplicationELB",
+          "metric": "HTTPCode_Target_5XX_Count",
+          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+        },
+        {
+          "name": "Request Count",
+          "namespace": "AWS/ApplicationELB",
+          "metric": "RequestCount",
+          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+        }
+      ]
+    },
+    "database_performance": {
+      "description": "Database performance and resource utilization",
+      "metrics": [
+        {
+          "name": "CPU Utilization",
+          "namespace": "AWS/RDS",
+          "metric": "CPUUtilization",
+          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+        },
+        {
+          "name": "Database Connections",
+          "namespace": "AWS/RDS",
+          "metric": "DatabaseConnections",
+          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+        },
+        {
+          "name": "Read Latency",
+          "namespace": "AWS/RDS",
+          "metric": "ReadLatency",
+          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+        }
+      ]
+    },
+    "ai_services": {
+      "description": "AI service usage and performance metrics",
+      "metrics": [
+        {
+          "name": "Lambda Invocations",
+          "namespace": "AWS/Lambda",
+          "metric": "Invocations",
+          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+        },
+        {
+          "name": "Lambda Duration",
+          "namespace": "AWS/Lambda",
+          "metric": "Duration",
+          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+        },
+        {
+          "name": "Lambda Errors",
+          "namespace": "AWS/Lambda",
+          "metric": "Errors",
+          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+        }
+      ]
+    },
+    "kubernetes_cluster": {
+      "description": "EKS cluster health and resource utilization",
+      "metrics": [
+        {
+          "name": "Node CPU Utilization",
+          "namespace": "AWS/EKS",
+          "metric": "cluster_cpu_utilization",
+          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+        },
+        {
+          "name": "Node Memory Utilization",
+          "namespace": "AWS/EKS",
+          "metric": "cluster_memory_utilization",
+          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+        },
+        {
+          "name": "Pod Count",
+          "namespace": "AWS/EKS",
+          "metric": "cluster_number_of_running_pods",
+          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+        }
+      ]
+    }
+  },
+
+  "cost_monitoring": {
+    "enabled": true,
+    "budget_alerts": [
+      {
+        "name": "Monthly AWS Spend",
+        "budget_type": "COST",
+        "limit": 500,
+        "currency": "USD",
+        "time_period": "MONTHLY",
+        "threshold_percentage": 80
+      },
+      {
+        "name": "AI Services Spend",
+        "budget_type": "COST",
+        "limit": 200,
+        "currency": "USD",
+        "time_period": "MONTHLY",
+        "cost_filters": {
+          "Service": ["Amazon Lambda", "Amazon S3"]
+        },
+        "threshold_percentage": 90
+      }
+    ],
+    "cost_allocation_tags": [
+      "Project",
+      "Environment",
+      "Team",
+      "CostCenter"
+    ]
+  },
+
+  "automation_workflows": {
+    "infrastructure_management": {
+      "auto_scaling": {
+        "eks_nodes": {
+          "enabled": true,
+          "min_nodes": 2,
+          "max_nodes": 10,
+          "target_cpu_utilization": 70,
+          "scale_down_delay": "10m"
+        },
+        "lambda_concurrency": {
+          "enabled": true,
+          "reserved_concurrency": 100,
+          "provisioned_concurrency": 10
+        }
+      },
+      "backup_automation": {
+        "rds_snapshots": {
+          "enabled": true,
+          "schedule": "cron(0 2 * * ? *)",
+          "retention_days": 30
+        },
+        "s3_backup": {
+          "enabled": true,
+          "cross_region_replication": true,
+          "versioning": true,
+          "lifecycle_rules": {
+            "transition_to_ia": 30,
+            "transition_to_glacier": 90,
+            "expiration": 2555
+          }
+        }
+      }
+    },
+    "security_automation": {
+      "secrets_rotation": {
+        "enabled": true,
+        "rotation_schedule": "rate(90 days)",
+        "secrets": [
+          "${PROJECT_NAME}/database/password",
+          "${PROJECT_NAME}/api-keys/openai",
+          "${PROJECT_NAME}/api-keys/anthropic"
+        ]
+      },
+      "security_scanning": {
+        "enabled": true,
+        "scan_schedule": "cron(0 6 * * 1 *)",
+        "scan_targets": [
+          "ec2_instances",
+          "lambda_functions",
+          "s3_buckets",
+          "iam_policies"
+        ]
+      }
+    }
+  },
+
+  "disaster_recovery": {
+    "backup_strategy": {
+      "rds": {
+        "automated_backups": true,
+        "backup_retention_period": 30,
+        "backup_window": "03:00-04:00",
+        "multi_az": true
+      },
+      "s3": {
+        "cross_region_replication": {
+          "enabled": true,
+          "destination_region": "us-west-2"
+        },
+        "versioning": true,
+        "mfa_delete": true
+      }
+    },
+    "recovery_procedures": {
+      "rds_failover": {
+        "rto": "5 minutes",
+        "rpo": "1 minute",
+        "automated": true
+      },
+      "application_failover": {
+        "rto": "15 minutes",
+        "rpo": "5 minutes",
+        "manual_intervention_required": false
+      }
+    }
+  },
+
+  "security": {
+    "access_controls": {
+      "iam_policies": [
+        {
+          "name": "ReadOnlyAccess",
+          "actions": [
+            "s3:GetObject",
+            "s3:ListBucket",
+            "ec2:Describe*",
+            "rds:Describe*",
+            "cloudwatch:Get*",
+            "cloudwatch:List*",
+            "lambda:Get*",
+            "lambda:List*"
+          ]
+        },
+        {
+          "name": "DevelopmentAccess",
+          "actions": [
+            "s3:*",
+            "lambda:InvokeFunction",
+            "lambda:UpdateFunctionCode",
+            "cloudwatch:*"
+          ],
+          "conditions": {
+            "StringEquals": {
+              "aws:RequestedRegion": ["us-east-1", "us-west-2"]
+            }
+          }
+        }
+      ],
+      "mfa_required": true,
+      "session_duration": 3600
+    },
+    "encryption": {
+      "s3_encryption": "AES256",
+      "rds_encryption": true,
+      "ebs_encryption": true,
+      "kms_key_rotation": true
+    },
+    "network_security": {
+      "vpc_flow_logs": true,
+      "security_groups": {
+        "restrictive_default": true,
+        "logging": true
+      }
+    }
+  },
+
+  "performance_optimization": {
+    "auto_optimization": {
+      "enabled": true,
+      "optimization_targets": [
+        "cost",
+        "performance",
+        "security"
+      ]
+    },
+    "recommendations": {
+      "trusted_advisor": {
+        "enabled": true,
+        "categories": [
+          "cost_optimization",
+          "performance",
+          "security",
+          "fault_tolerance"
+        ]
+      },
+      "compute_optimizer": {
+        "enabled": true,
+        "resource_types": [
+          "ec2_instances",
+          "auto_scaling_groups",
+          "lambda_functions"
+        ]
+      }
+    }
+  },
+
+  "integration_hooks": {
+    "claude_code_agents": {
+      "infrastructure_agent": {
+        "auto_analyze_costs": true,
+        "suggest_optimizations": true,
+        "monitor_security": true
+      },
+      "devops_agent": {
+        "deployment_automation": true,
+        "infrastructure_provisioning": true,
+        "monitoring_setup": true
+      }
+    },
+    "external_tools": {
+      "slack_notifications": {
+        "cost_alerts": "#aws-costs",
+        "security_alerts": "#security",
+        "performance_alerts": "#infrastructure"
+      },
+      "github_actions": {
+        "deployment_triggers": true,
+        "infrastructure_updates": true
+      }
+    }
+  },
+
+  "setup_guide": {
+    "prerequisites": [
+      "AWS account with appropriate permissions",
+      "AWS CLI installed and configured",
+      "IAM user or role with required permissions"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Create IAM User/Role",
+        "description": "Create IAM user or role with minimal required permissions",
+        "required_permissions": [
+          "ReadOnlyAccess policy (minimum)",
+          "Specific service permissions based on configuration",
+          "CloudWatch metrics access",
+          "Cost and billing read access"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Configure Environment Variables",
+        "variables": {
+          "AWS_ACCESS_KEY_ID": "AWS access key ID",
+          "AWS_SECRET_ACCESS_KEY": "AWS secret access key",
+          "AWS_REGION": "Default AWS region (e.g., us-east-1)",
+          "PROJECT_NAME": "Your project name for resource filtering"
+        }
+      },
+      {
+        "step": 3,
+        "title": "Set Up Resource Tags",
+        "description": "Tag your AWS resources for proper filtering and cost allocation",
+        "required_tags": [
+          "Project=${PROJECT_NAME}",
+          "Environment=[dev|staging|prod]",
+          "Team=[team-name]"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Test Connection",
+        "command": "claude mcp test aws"
+      }
+    ]
+  },
+
+  "best_practices": {
+    "security": [
+      "Use least-privilege IAM policies",
+      "Enable MFA for all IAM users",
+      "Rotate access keys regularly",
+      "Use IAM roles instead of users where possible",
+      "Enable CloudTrail for audit logging"
+    ],
+    "cost_optimization": [
+      "Implement cost allocation tags",
+      "Set up budget alerts",
+      "Use Reserved Instances for predictable workloads",
+      "Implement lifecycle policies for S3",
+      "Monitor and optimize resource utilization"
+    ],
+    "performance": [
+      "Use CloudWatch metrics for monitoring",
+      "Implement auto-scaling where appropriate",
+      "Optimize Lambda function memory and timeout",
+      "Use appropriate storage classes",
+      "Implement caching strategies"
+    ]
+  },
+
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Access denied errors",
+        "solution": "Check IAM permissions and resource-based policies"
+      },
+      {
+        "issue": "Region not accessible",
+        "solution": "Verify AWS_REGION environment variable and service availability"
+      },
+      {
+        "issue": "Rate limiting",
+        "solution": "Implement exponential backoff and reduce API call frequency"
+      },
+      {
+        "issue": "Resource not found",
+        "solution": "Check resource tags and naming conventions"
+      }
+    ]
+  }
+}

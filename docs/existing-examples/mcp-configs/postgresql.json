@@ -1,0 +1,246 @@
+{
+  "description": "PostgreSQL database integration for data analysis, schema management, and query operations",
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}",
+        "POSTGRES_HOST": "${POSTGRES_HOST}",
+        "POSTGRES_PORT": "${POSTGRES_PORT}",
+        "POSTGRES_DB": "${POSTGRES_DB}",
+        "POSTGRES_USER": "${POSTGRES_USER}",
+        "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD}",
+        "POSTGRES_SSL": "${POSTGRES_SSL}"
+      },
+      "description": "PostgreSQL database connection for data operations and analysis"
+    }
+  },
+  "environmentVariables": {
+    "option1": {
+      "description": "Connection URL format (recommended)",
+      "required": [
+        {
+          "name": "DATABASE_URL",
+          "description": "Complete PostgreSQL connection URL",
+          "example": "postgresql://username:password@localhost:5432/database_name",
+          "format": "postgresql://user:password@host:port/database?options"
+        }
+      ]
+    },
+    "option2": {
+      "description": "Individual connection parameters",
+      "required": [
+        {
+          "name": "POSTGRES_HOST",
+          "description": "PostgreSQL server hostname or IP address",
+          "example": "localhost"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "description": "PostgreSQL server port",
+          "example": "5432",
+          "default": "5432"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "description": "Database name to connect to",
+          "example": "myapp_production"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "description": "Database username",
+          "example": "myapp_user"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "description": "Database password",
+          "security": "Store securely, never commit to version control"
+        }
+      ],
+      "optional": [
+        {
+          "name": "POSTGRES_SSL",
+          "description": "SSL connection mode",
+          "options": ["require", "prefer", "allow", "disable"],
+          "default": "prefer"
+        }
+      ]
+    }
+  },
+  "capabilities": [
+    "Execute SELECT queries for data analysis",
+    "Read database schema and table structures",
+    "Generate reports and data summaries",
+    "Analyze data patterns and relationships",
+    "Monitor database performance metrics",
+    "Validate data integrity and constraints"
+  ],
+  "restrictions": {
+    "readOnly": {
+      "description": "Recommended configuration for safe operations",
+      "allowedOperations": [
+        "SELECT statements",
+        "EXPLAIN and EXPLAIN ANALYZE",
+        "Information schema queries",
+        "Database metadata queries"
+      ],
+      "deniedOperations": [
+        "INSERT, UPDATE, DELETE statements",
+        "DDL operations (CREATE, ALTER, DROP)",
+        "Administrative commands",
+        "Transaction control statements"
+      ]
+    },
+    "fullAccess": {
+      "description": "Full database access (use with caution)",
+      "note": "Only use in development environments or with proper safeguards"
+    }
+  },
+  "securityConfiguration": {
+    "readOnlyUser": {
+      "description": "Create a dedicated read-only user for Claude Code",
+      "sql": [
+        "-- Create read-only role",
+        "CREATE ROLE claude_readonly;",
+        "",
+        "-- Grant connection and usage permissions",
+        "GRANT CONNECT ON DATABASE myapp_production TO claude_readonly;",
+        "GRANT USAGE ON SCHEMA public TO claude_readonly;",
+        "",
+        "-- Grant SELECT on all tables",
+        "GRANT SELECT ON ALL TABLES IN SCHEMA public TO claude_readonly;",
+        "",
+        "-- Grant SELECT on future tables",
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO claude_readonly;",
+        "",
+        "-- Create specific user",
+        "CREATE USER claude_user WITH PASSWORD 'secure_random_password';",
+        "GRANT claude_readonly TO claude_user;"
+      ]
+    },
+    "connectionSecurity": [
+      "Use SSL connections for production environments",
+      "Implement connection pooling to limit concurrent connections",
+      "Set connection timeouts to prevent hanging connections",
+      "Use least-privilege database users",
+      "Monitor and log database access"
+    ]
+  },
+  "useCases": [
+    "Business intelligence and reporting",
+    "Data analysis and pattern recognition",
+    "Database schema documentation",
+    "Performance monitoring and optimization",
+    "Data quality validation",
+    "Custom report generation",
+    "Database health monitoring"
+  ],
+  "queryExamples": [
+    {
+      "description": "User activity analysis",
+      "sql": "SELECT DATE_TRUNC('day', created_at) as date, COUNT(*) as new_users FROM users WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY date ORDER BY date;"
+    },
+    {
+      "description": "Revenue analysis by month",
+      "sql": "SELECT DATE_TRUNC('month', order_date) as month, SUM(total_amount) as revenue, COUNT(*) as order_count FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL '12 months' GROUP BY month ORDER BY month;"
+    },
+    {
+      "description": "Top performing products",
+      "sql": "SELECT p.name, SUM(oi.quantity) as total_sold, SUM(oi.price * oi.quantity) as total_revenue FROM products p JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name ORDER BY total_revenue DESC LIMIT 10;"
+    },
+    {
+      "description": "Database table sizes",
+      "sql": "SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size FROM pg_tables WHERE schemaname = 'public' ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;"
+    }
+  ],
+  "performanceConsiderations": [
+    "Add LIMIT clauses to queries on large tables",
+    "Use EXPLAIN ANALYZE to understand query performance",
+    "Avoid SELECT * on tables with many columns",
+    "Use indexes for filtered queries",
+    "Consider query timeout settings",
+    "Monitor connection pool usage"
+  ],
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "Connection timeout",
+        "cause": "Database server unreachable or overloaded",
+        "solution": "Check network connectivity, database status, and connection limits"
+      },
+      {
+        "issue": "Permission denied errors",
+        "cause": "Insufficient database privileges",
+        "solution": "Grant necessary permissions to the database user"
+      },
+      {
+        "issue": "SSL connection errors",
+        "cause": "SSL configuration mismatch",
+        "solution": "Verify SSL settings and certificates"
+      },
+      {
+        "issue": "Query timeout",
+        "cause": "Long-running queries on large datasets",
+        "solution": "Add LIMIT clauses, optimize queries, or increase timeout settings"
+      },
+      {
+        "issue": "Too many connections",
+        "cause": "Connection pool exhaustion",
+        "solution": "Implement connection pooling and monitor active connections"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "description": "Analyze user growth trends",
+      "prompt": "Analyze user registration trends over the last 6 months and identify growth patterns"
+    },
+    {
+      "description": "Generate sales performance report",
+      "prompt": "Create a comprehensive sales report including revenue, top products, and customer segments"
+    },
+    {
+      "description": "Identify database performance issues",
+      "prompt": "Analyze database performance and identify slow queries or optimization opportunities"
+    },
+    {
+      "description": "Validate data integrity",
+      "prompt": "Check data integrity across all tables and identify any inconsistencies"
+    }
+  ],
+  "connectionPooling": {
+    "recommended": {
+      "maxConnections": 10,
+      "idleTimeout": "30 seconds",
+      "connectionTimeout": "10 seconds",
+      "statementTimeout": "60 seconds"
+    },
+    "tools": [
+      "PgBouncer for connection pooling",
+      "pg_stat_activity for monitoring connections",
+      "pg_stat_statements for query analysis"
+    ]
+  },
+  "monitoring": {
+    "healthChecks": [
+      "SELECT 1 -- Basic connectivity test",
+      "SELECT version() -- Database version info",
+      "SELECT COUNT(*) FROM pg_stat_activity -- Active connections",
+      "SELECT pg_database_size(current_database()) -- Database size"
+    ],
+    "performanceQueries": [
+      "SELECT * FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 10 -- Tables with most sequential scans",
+      "SELECT query, mean_time, calls FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 10 -- Slowest queries"
+    ]
+  },
+  "bestPractices": [
+    "Always use parameterized queries to prevent SQL injection",
+    "Implement read-only access for analysis operations",
+    "Use connection pooling to manage database connections",
+    "Set appropriate query timeouts",
+    "Monitor database performance regularly",
+    "Use EXPLAIN to understand query execution plans",
+    "Keep database statistics up to date with ANALYZE"
+  ]
+}

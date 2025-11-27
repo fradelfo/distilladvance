@@ -1,0 +1,331 @@
+# Kubernetes ConfigMaps for Blog API Configuration
+# Contains non-sensitive configuration data
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blog-api-config
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: config
+    app.kubernetes.io/version: "1.0.0"
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+
+  # API Configuration
+  API_PREFIX: "/api/v1"
+  MAX_REQUEST_SIZE: "10mb"
+  PAGINATION_DEFAULT_LIMIT: "20"
+  PAGINATION_MAX_LIMIT: "100"
+
+  # Security Configuration
+  BCRYPT_ROUNDS: "12"
+  CORS_ORIGINS: '["https://blog.example.com", "https://admin.blog.example.com"]'
+  CSRF_ENABLED: "true"
+
+  # JWT Configuration
+  JWT_ACCESS_EXPIRY: "15m"
+  JWT_REFRESH_EXPIRY: "7d"
+  JWT_ISSUER: "blog-api"
+  JWT_AUDIENCE: "blog-users"
+
+  # Rate Limiting Configuration
+  RATE_LIMIT_GLOBAL_REQUESTS: "100"
+  RATE_LIMIT_GLOBAL_WINDOW: "900000"
+  RATE_LIMIT_AUTH_REQUESTS: "5"
+  RATE_LIMIT_AUTH_WINDOW: "900000"
+
+  # Email Configuration
+  EMAIL_ENABLED: "true"
+  EMAIL_FROM: "noreply@blog.example.com"
+  SMTP_HOST: "smtp.sendgrid.net"
+  SMTP_PORT: "587"
+  SMTP_SECURE: "false"
+
+  # File Upload Configuration
+  UPLOADS_ENABLED: "true"
+  UPLOADS_MAX_SIZE: "10485760"
+  UPLOADS_ALLOWED_TYPES: '["image/jpeg", "image/png", "image/gif", "image/webp"]'
+  UPLOADS_DESTINATION: "/app/uploads"
+
+  # Monitoring Configuration
+  MONITORING_ENABLED: "true"
+  METRICS_ENDPOINT: "/metrics"
+  HEALTH_ENDPOINT: "/health"
+  PROMETHEUS_ENABLED: "true"
+  PROMETHEUS_PREFIX: "blog_api_"
+
+---
+# Database Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: config
+data:
+  POSTGRES_DB: "blogdb"
+  POSTGRES_USER: "postgres"
+  POSTGRES_INITDB_ARGS: "--auth-local=trust"
+
+  # PostgreSQL Configuration
+  postgresql.conf: |
+    # PostgreSQL configuration for production
+    max_connections = 100
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    maintenance_work_mem = 64MB
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    work_mem = 4MB
+    min_wal_size = 1GB
+    max_wal_size = 4GB
+    max_worker_processes = 4
+    max_parallel_workers_per_gather = 2
+    max_parallel_workers = 4
+    max_parallel_maintenance_workers = 2
+
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = '/var/log/postgresql'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_duration_statement = 1000
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_temp_files = 0
+    log_autovacuum_min_duration = 0
+
+  pg_hba.conf: |
+    # PostgreSQL Client Authentication Configuration File
+    local   all             postgres                                peer
+    local   all             all                                     md5
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             ::1/128                 md5
+    host    all             all             0.0.0.0/0               md5
+    host    replication     postgres        0.0.0.0/0               md5
+
+---
+# Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: config
+data:
+  redis.conf: |
+    # Redis configuration for production
+
+    # Network and General
+    bind 0.0.0.0
+    port 6379
+    timeout 300
+    tcp-keepalive 60
+    tcp-backlog 511
+
+    # Memory Management
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 5
+
+    # Persistence
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+
+    # Security
+    requirepass ${REDIS_PASSWORD}
+
+    # Logging
+    loglevel notice
+    logfile /var/log/redis/redis-server.log
+
+    # Performance
+    databases 16
+    save 900 1
+    save 300 10
+    save 60 10000
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    # Clients
+    maxclients 10000
+
+    # Slow Log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+---
+# Nginx Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: config
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        # Logging
+        log_format json_combined escape=json
+        '{'
+            '"time":"$time_iso8601",'
+            '"remote_addr":"$remote_addr",'
+            '"remote_user":"$remote_user",'
+            '"request":"$request",'
+            '"status":"$status",'
+            '"body_bytes_sent":"$body_bytes_sent",'
+            '"request_time":"$request_time",'
+            '"http_referrer":"$http_referer",'
+            '"http_user_agent":"$http_user_agent",'
+            '"http_x_forwarded_for":"$http_x_forwarded_for",'
+            '"upstream_addr":"$upstream_addr",'
+            '"upstream_response_time":"$upstream_response_time"'
+        '}';
+
+        access_log /var/log/nginx/access.log json_combined;
+
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 10m;
+
+        # Gzip
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/js
+            text/xml
+            text/javascript
+            application/javascript
+            application/xml+rss
+            application/json;
+
+        # Rate Limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=auth:10m rate=2r/s;
+
+        # Upstream
+        upstream blog_api {
+            least_conn;
+            server blog-api-service:3000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+
+        include /etc/nginx/conf.d/*.conf;
+    }
+
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "no-referrer-when-downgrade" always;
+        add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+        # Health check
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+
+        # API routes
+        location /api/ {
+            limit_req zone=api burst=20 nodelay;
+
+            proxy_pass http://blog_api;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+
+            proxy_buffer_size 4k;
+            proxy_buffers 8 4k;
+            proxy_busy_buffers_size 8k;
+        }
+
+        # Auth routes with stricter rate limiting
+        location /api/v1/auth/ {
+            limit_req zone=auth burst=5 nodelay;
+
+            proxy_pass http://blog_api;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Static files (if serving from nginx)
+        location /static/ {
+            alias /var/www/static/;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # Default location
+        location / {
+            return 404;
+        }
+    }

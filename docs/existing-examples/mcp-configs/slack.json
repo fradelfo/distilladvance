@@ -1,0 +1,198 @@
+{
+  "description": "Slack integration for team communication, notifications, and workflow automation",
+  "mcpServers": {
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}",
+        "SLACK_WORKSPACE_ID": "${SLACK_WORKSPACE_ID}"
+      },
+      "description": "Slack workspace integration for communication and automation"
+    }
+  },
+  "environmentVariables": {
+    "required": [
+      {
+        "name": "SLACK_BOT_TOKEN",
+        "description": "Slack Bot User OAuth Token (starts with xoxb-)",
+        "scope": "Bot permissions for channels, users, and messages",
+        "howToGenerate": [
+          "1. Go to https://api.slack.com/apps",
+          "2. Create new app or select existing app",
+          "3. Go to OAuth & Permissions",
+          "4. Add required bot token scopes",
+          "5. Install app to workspace",
+          "6. Copy Bot User OAuth Token"
+        ]
+      },
+      {
+        "name": "SLACK_APP_TOKEN",
+        "description": "Slack App-level Token (starts with xapp-) for socket mode",
+        "scope": "App-level permissions for real-time events",
+        "howToGenerate": [
+          "1. In your Slack app settings, go to Basic Information",
+          "2. Scroll to App-Level Tokens",
+          "3. Generate token with connections:write scope",
+          "4. Copy the generated token"
+        ]
+      }
+    ],
+    "optional": [
+      {
+        "name": "SLACK_WORKSPACE_ID",
+        "description": "Your Slack workspace ID for workspace-specific operations",
+        "howToFind": "Found in your Slack workspace URL or through API"
+      }
+    ]
+  },
+  "requiredScopes": {
+    "botScopes": [
+      "channels:read",
+      "channels:write",
+      "chat:write",
+      "chat:write.public",
+      "files:read",
+      "files:write",
+      "groups:read",
+      "im:read",
+      "im:write",
+      "mpim:read",
+      "reactions:read",
+      "reactions:write",
+      "users:read",
+      "users:read.email"
+    ],
+    "appScopes": [
+      "connections:write"
+    ]
+  },
+  "capabilities": [
+    "Send messages to channels and direct messages",
+    "Read channel and message history",
+    "Upload and share files",
+    "Manage reactions and emoji responses",
+    "Access user profiles and workspace information",
+    "Create and manage threaded conversations",
+    "Receive real-time events and notifications"
+  ],
+  "useCases": [
+    "Automated deployment notifications",
+    "Code review alerts and summaries",
+    "Issue tracking and status updates",
+    "Daily standup automation",
+    "Build and CI/CD status reporting",
+    "Team coordination and project updates",
+    "Alert escalation and incident response"
+  ],
+  "securityConsiderations": [
+    "Store tokens securely in environment variables",
+    "Use minimal required scopes for bot functionality",
+    "Regularly audit bot permissions and access",
+    "Implement rate limiting for bot messages",
+    "Monitor bot usage for unusual activity",
+    "Use workspace admin controls for bot management"
+  ],
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "Bot cannot post to channel",
+        "cause": "Missing channel permissions or bot not invited",
+        "solution": "Invite bot to channel or add necessary scopes (channels:write, chat:write)"
+      },
+      {
+        "issue": "Socket mode connection fails",
+        "cause": "Invalid app token or missing connections:write scope",
+        "solution": "Verify app token is correct and has connections:write scope"
+      },
+      {
+        "issue": "Rate limiting errors",
+        "cause": "Exceeded Slack API rate limits",
+        "solution": "Implement message queuing and respect rate limit headers"
+      },
+      {
+        "issue": "File upload failures",
+        "cause": "Missing file permissions or size limits",
+        "solution": "Add files:write scope and check file size limits (1GB max)"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "description": "Send deployment notification to team channel",
+      "prompt": "Send a notification to #deployments channel about successful production deployment of version 2.1.0"
+    },
+    {
+      "description": "Create daily standup summary",
+      "prompt": "Create and post a daily standup summary based on recent activity and team updates"
+    },
+    {
+      "description": "Alert on critical errors",
+      "prompt": "Monitor error logs and send alerts to #alerts channel for critical issues"
+    },
+    {
+      "description": "Summarize code review feedback",
+      "prompt": "Summarize feedback from recent pull request reviews and share with the team"
+    }
+  ],
+  "messageTemplates": {
+    "deployment": {
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "🚀 Deployment Notification"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Environment:* Production"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Version:* v2.1.0"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Status:* Successful"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Duration:* 5 minutes"
+            }
+          ]
+        }
+      ]
+    },
+    "codeReview": {
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "📝 *Code Review Summary*\n\n*Pull Request:* #123 - Add user authentication\n*Status:* Approved with minor comments\n*Reviewers:* @john, @sarah\n\n*Key Feedback:*\n• Consider adding input validation\n• Great test coverage\n• Documentation looks good"
+          }
+        }
+      ]
+    }
+  },
+  "rateLimits": {
+    "messaging": "1 message per second per channel",
+    "webAPI": "50+ requests per minute (varies by method)",
+    "fileUploads": "20 files per minute",
+    "webhook": "1 request per second"
+  },
+  "bestPractices": [
+    "Use threaded replies for follow-up messages",
+    "Implement message formatting with blocks for better UX",
+    "Cache user and channel information to reduce API calls",
+    "Use appropriate message types (ephemeral for personal info)",
+    "Implement graceful error handling for failed operations",
+    "Respect user preferences and notification settings"
+  ]
+}

@@ -1,0 +1,671 @@
+{
+  "name": "Enterprise Rate Limiting and Quota Management",
+  "description": "Comprehensive rate limiting configuration for Claude Code enterprise deployments with multi-tier access control and intelligent quota management",
+  "version": "1.0.0",
+  "schema_version": "2024.1",
+  "last_updated": "2024-01-15T00:00:00Z",
+
+  "global_settings": {
+    "rate_limiting_enabled": true,
+    "quota_management_enabled": true,
+    "burst_protection_enabled": true,
+    "adaptive_limiting_enabled": true,
+    "fair_usage_enforcement": true,
+    "rate_limit_headers": true,
+    "monitoring_enabled": true,
+    "alerting_enabled": true
+  },
+
+  "rate_limiting_algorithms": {
+    "primary_algorithm": "sliding_window_counter",
+    "fallback_algorithm": "token_bucket",
+    "burst_algorithm": "leaky_bucket",
+
+    "sliding_window_counter": {
+      "window_size_seconds": 60,
+      "precision_seconds": 1,
+      "memory_optimization": true,
+      "distributed_mode": true
+    },
+
+    "token_bucket": {
+      "bucket_size_multiplier": 2.0,
+      "refill_rate": "requests_per_second",
+      "max_tokens": "burst_limit",
+      "token_timeout_seconds": 300
+    },
+
+    "leaky_bucket": {
+      "capacity_multiplier": 1.5,
+      "leak_rate": "sustained_rate",
+      "overflow_handling": "queue_with_timeout",
+      "queue_timeout_seconds": 30
+    }
+  },
+
+  "tier_definitions": {
+    "anonymous": {
+      "description": "Unauthenticated users with basic access",
+      "identification": "ip_address",
+      "tier_priority": 1,
+
+      "rate_limits": {
+        "requests_per_second": 1,
+        "requests_per_minute": 30,
+        "requests_per_hour": 100,
+        "requests_per_day": 500
+      },
+
+      "quotas": {
+        "daily_tokens": 10000,
+        "monthly_tokens": 50000,
+        "max_concurrent_requests": 2,
+        "max_request_size_kb": 50
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 1.5,
+        "burst_duration_seconds": 10,
+        "cooldown_period_seconds": 300
+      },
+
+      "restrictions": {
+        "model_access": ["haiku"],
+        "advanced_features": false,
+        "file_upload": false,
+        "api_access": false,
+        "custom_agents": false
+      }
+    },
+
+    "basic": {
+      "description": "Basic authenticated users",
+      "identification": "user_id",
+      "tier_priority": 2,
+
+      "rate_limits": {
+        "requests_per_second": 5,
+        "requests_per_minute": 150,
+        "requests_per_hour": 1000,
+        "requests_per_day": 5000
+      },
+
+      "quotas": {
+        "daily_tokens": 100000,
+        "monthly_tokens": 1000000,
+        "max_concurrent_requests": 5,
+        "max_request_size_kb": 500,
+        "max_context_length": 50000
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 2.0,
+        "burst_duration_seconds": 30,
+        "cooldown_period_seconds": 180
+      },
+
+      "restrictions": {
+        "model_access": ["haiku", "sonnet"],
+        "advanced_features": true,
+        "file_upload": true,
+        "api_access": false,
+        "custom_agents": false
+      }
+    },
+
+    "professional": {
+      "description": "Professional users with enhanced capabilities",
+      "identification": "user_id_with_subscription",
+      "tier_priority": 3,
+
+      "rate_limits": {
+        "requests_per_second": 20,
+        "requests_per_minute": 600,
+        "requests_per_hour": 5000,
+        "requests_per_day": 25000
+      },
+
+      "quotas": {
+        "daily_tokens": 1000000,
+        "monthly_tokens": 10000000,
+        "max_concurrent_requests": 15,
+        "max_request_size_kb": 2000,
+        "max_context_length": 200000
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 3.0,
+        "burst_duration_seconds": 60,
+        "cooldown_period_seconds": 120
+      },
+
+      "restrictions": {
+        "model_access": ["haiku", "sonnet", "opus"],
+        "advanced_features": true,
+        "file_upload": true,
+        "api_access": true,
+        "custom_agents": true
+      }
+    },
+
+    "team": {
+      "description": "Team-based access with shared quotas",
+      "identification": "team_id",
+      "tier_priority": 4,
+
+      "rate_limits": {
+        "requests_per_second": 100,
+        "requests_per_minute": 3000,
+        "requests_per_hour": 25000,
+        "requests_per_day": 150000
+      },
+
+      "quotas": {
+        "daily_tokens": 10000000,
+        "monthly_tokens": 100000000,
+        "max_concurrent_requests": 50,
+        "max_request_size_kb": 5000,
+        "max_context_length": 200000,
+        "shared_quota_pool": true
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 2.5,
+        "burst_duration_seconds": 120,
+        "cooldown_period_seconds": 60
+      },
+
+      "restrictions": {
+        "model_access": ["haiku", "sonnet", "opus"],
+        "advanced_features": true,
+        "file_upload": true,
+        "api_access": true,
+        "custom_agents": true,
+        "team_collaboration": true
+      }
+    },
+
+    "enterprise": {
+      "description": "Enterprise customers with maximum access",
+      "identification": "organization_id",
+      "tier_priority": 5,
+
+      "rate_limits": {
+        "requests_per_second": 1000,
+        "requests_per_minute": 30000,
+        "requests_per_hour": 200000,
+        "requests_per_day": 2000000
+      },
+
+      "quotas": {
+        "daily_tokens": 100000000,
+        "monthly_tokens": 1000000000,
+        "max_concurrent_requests": 500,
+        "max_request_size_kb": 20000,
+        "max_context_length": 200000,
+        "shared_quota_pool": true,
+        "reserved_capacity": true
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 2.0,
+        "burst_duration_seconds": 300,
+        "cooldown_period_seconds": 30
+      },
+
+      "restrictions": {
+        "model_access": ["haiku", "sonnet", "opus"],
+        "advanced_features": true,
+        "file_upload": true,
+        "api_access": true,
+        "custom_agents": true,
+        "team_collaboration": true,
+        "priority_processing": true,
+        "dedicated_support": true
+      }
+    },
+
+    "admin": {
+      "description": "Administrative users with elevated access",
+      "identification": "admin_role_verification",
+      "tier_priority": 6,
+
+      "rate_limits": {
+        "requests_per_second": 100,
+        "requests_per_minute": 3000,
+        "requests_per_hour": 20000,
+        "requests_per_day": 100000
+      },
+
+      "quotas": {
+        "daily_tokens": 50000000,
+        "monthly_tokens": 500000000,
+        "max_concurrent_requests": 50,
+        "max_request_size_kb": 10000,
+        "max_context_length": 200000,
+        "bypass_general_limits": true
+      },
+
+      "burst_settings": {
+        "burst_multiplier": 5.0,
+        "burst_duration_seconds": 600,
+        "cooldown_period_seconds": 60
+      },
+
+      "restrictions": {
+        "model_access": ["haiku", "sonnet", "opus"],
+        "advanced_features": true,
+        "file_upload": true,
+        "api_access": true,
+        "custom_agents": true,
+        "administrative_functions": true,
+        "monitoring_access": true,
+        "audit_capabilities": true
+      }
+    }
+  },
+
+  "business_unit_quotas": {
+    "engineering": {
+      "monthly_budget": 500000,
+      "currency": "USD",
+      "allocation_strategy": "team_based_with_overflow",
+
+      "team_allocations": {
+        "platform_engineering": {
+          "percentage": 30,
+          "monthly_tokens": 150000000,
+          "priority": "high",
+          "overflow_allowed": true
+        },
+        "product_engineering": {
+          "percentage": 40,
+          "monthly_tokens": 200000000,
+          "priority": "high",
+          "overflow_allowed": true
+        },
+        "data_engineering": {
+          "percentage": 20,
+          "monthly_tokens": 100000000,
+          "priority": "medium",
+          "overflow_allowed": false
+        },
+        "qa_engineering": {
+          "percentage": 10,
+          "monthly_tokens": 50000000,
+          "priority": "medium",
+          "overflow_allowed": false
+        }
+      },
+
+      "escalation_policies": {
+        "75_percent_usage": {
+          "action": "notify_team_leads",
+          "notification_channels": ["email", "slack"],
+          "frequency": "daily"
+        },
+        "90_percent_usage": {
+          "action": "notify_management_and_throttle",
+          "throttle_percentage": 50,
+          "notification_channels": ["email", "slack", "phone"],
+          "frequency": "immediate"
+        },
+        "100_percent_usage": {
+          "action": "enforce_hard_limit",
+          "exception_approval_required": true,
+          "approvers": ["engineering_director", "finance_director"],
+          "notification_channels": ["email", "slack", "phone", "incident_management"],
+          "frequency": "immediate"
+        }
+      }
+    },
+
+    "data_science": {
+      "monthly_budget": 200000,
+      "currency": "USD",
+      "allocation_strategy": "project_based",
+
+      "project_allocations": {
+        "ml_model_development": {
+          "percentage": 60,
+          "monthly_tokens": 120000000,
+          "priority": "high",
+          "overflow_allowed": true
+        },
+        "data_analysis": {
+          "percentage": 25,
+          "monthly_tokens": 50000000,
+          "priority": "medium",
+          "overflow_allowed": true
+        },
+        "research_experiments": {
+          "percentage": 15,
+          "monthly_tokens": 30000000,
+          "priority": "low",
+          "overflow_allowed": false
+        }
+      }
+    },
+
+    "product_management": {
+      "monthly_budget": 50000,
+      "currency": "USD",
+      "allocation_strategy": "user_based",
+
+      "user_allocations": {
+        "senior_product_managers": {
+          "monthly_tokens_per_user": 5000000,
+          "user_count": 8,
+          "priority": "high"
+        },
+        "product_managers": {
+          "monthly_tokens_per_user": 2000000,
+          "user_count": 15,
+          "priority": "medium"
+        },
+        "associate_product_managers": {
+          "monthly_tokens_per_user": 1000000,
+          "user_count": 10,
+          "priority": "low"
+        }
+      }
+    }
+  },
+
+  "adaptive_rate_limiting": {
+    "enabled": true,
+    "adaptation_algorithm": "machine_learning_based",
+
+    "factors": {
+      "system_load": {
+        "weight": 0.4,
+        "metrics": ["cpu_utilization", "memory_usage", "response_time"],
+        "adjustment_range": [0.5, 1.5]
+      },
+      "user_behavior": {
+        "weight": 0.3,
+        "metrics": ["request_pattern", "burst_frequency", "error_rate"],
+        "adjustment_range": [0.7, 1.3]
+      },
+      "business_priority": {
+        "weight": 0.2,
+        "metrics": ["tier_level", "sla_requirements", "revenue_impact"],
+        "adjustment_range": [0.8, 2.0]
+      },
+      "time_of_day": {
+        "weight": 0.1,
+        "metrics": ["historical_usage", "timezone_distribution", "business_hours"],
+        "adjustment_range": [0.9, 1.2]
+      }
+    },
+
+    "adaptation_rules": {
+      "high_system_load": {
+        "trigger": "cpu_utilization > 80% OR response_time > 2s",
+        "action": "reduce_rate_limits_by_30_percent",
+        "duration": "until_system_recovery",
+        "exceptions": ["admin_tier", "critical_business_operations"]
+      },
+      "low_system_load": {
+        "trigger": "cpu_utilization < 40% AND response_time < 500ms",
+        "action": "increase_rate_limits_by_20_percent",
+        "duration": "30_minutes_maximum",
+        "max_increase": "150_percent_of_baseline"
+      },
+      "abuse_detection": {
+        "trigger": "unusual_request_patterns OR high_error_rates",
+        "action": "temporary_rate_limit_reduction",
+        "severity_based_response": true,
+        "automatic_recovery": true
+      }
+    }
+  },
+
+  "quota_management": {
+    "reset_schedule": {
+      "daily_reset_time": "00:00:00 UTC",
+      "monthly_reset_day": 1,
+      "grace_period_hours": 2
+    },
+
+    "quota_tracking": {
+      "granularity": "real_time",
+      "accuracy": "99.9_percent",
+      "distributed_tracking": true,
+      "eventual_consistency_timeout": "30_seconds"
+    },
+
+    "quota_enforcement": {
+      "soft_limits": {
+        "warning_threshold": 0.8,
+        "throttling_threshold": 0.9,
+        "throttling_percentage": 50
+      },
+      "hard_limits": {
+        "enforcement_threshold": 1.0,
+        "reject_requests": true,
+        "queue_overflow_requests": false
+      }
+    },
+
+    "quota_sharing": {
+      "team_pooling_enabled": true,
+      "cross_team_sharing_enabled": false,
+      "emergency_quota_borrowing": {
+        "enabled": true,
+        "max_borrow_percentage": 20,
+        "approval_required": true,
+        "automatic_repayment": true
+      }
+    }
+  },
+
+  "fair_usage_policies": {
+    "abuse_prevention": {
+      "detection_algorithms": ["statistical_anomaly", "behavioral_analysis", "machine_learning"],
+
+      "abuse_indicators": {
+        "request_pattern_anomalies": {
+          "sudden_spike_multiplier": 10,
+          "sustained_high_usage": "3x_normal_for_1_hour",
+          "unusual_timing": "outside_normal_business_hours"
+        },
+        "content_pattern_abuse": {
+          "repeated_identical_requests": "same_request_10_times_in_5_minutes",
+          "gibberish_content": "low_entropy_text_detection",
+          "excessive_prompt_length": "consistently_max_length_requests"
+        },
+        "technical_abuse": {
+          "bot_behavior": "non_human_request_patterns",
+          "proxy_usage": "multiple_ips_same_session",
+          "rate_limit_probing": "systematic_limit_testing"
+        }
+      },
+
+      "response_actions": {
+        "warning": {
+          "threshold": "first_violation",
+          "action": "send_notification_email",
+          "tracking": "log_incident"
+        },
+        "throttling": {
+          "threshold": "second_violation_or_severe_first",
+          "action": "reduce_rate_limits_by_75_percent",
+          "duration": "24_hours",
+          "appeal_process": "available"
+        },
+        "suspension": {
+          "threshold": "repeated_violations_or_severe_abuse",
+          "action": "temporary_account_suspension",
+          "duration": "7_days",
+          "manual_review": "required"
+        },
+        "permanent_ban": {
+          "threshold": "extreme_abuse_or_security_threat",
+          "action": "permanent_account_termination",
+          "review_board": "required",
+          "appeal_process": "limited"
+        }
+      }
+    },
+
+    "resource_optimization": {
+      "intelligent_queuing": {
+        "enabled": true,
+        "queue_algorithm": "priority_weighted_fair_queuing",
+        "max_queue_size": 10000,
+        "queue_timeout": "5_minutes",
+        "priority_boost_for_interactive": true
+      },
+
+      "request_optimization": {
+        "duplicate_detection": true,
+        "response_caching": true,
+        "request_batching": true,
+        "compression": true
+      },
+
+      "load_shedding": {
+        "enabled": true,
+        "shed_threshold": "95_percent_capacity",
+        "shedding_strategy": "lowest_tier_first",
+        "graceful_degradation": true
+      }
+    }
+  },
+
+  "monitoring_and_alerting": {
+    "metrics_collection": {
+      "real_time_metrics": [
+        "requests_per_second_by_tier",
+        "quota_utilization_percentage",
+        "rate_limit_violations_count",
+        "average_response_time_by_tier",
+        "concurrent_requests_by_tier",
+        "burst_usage_frequency",
+        "cache_hit_ratio",
+        "queue_depth_by_priority"
+      ],
+
+      "business_metrics": [
+        "revenue_per_tier",
+        "cost_per_request",
+        "tier_upgrade_conversions",
+        "customer_satisfaction_scores",
+        "support_ticket_volume",
+        "churn_risk_indicators"
+      ]
+    },
+
+    "alerting_rules": {
+      "system_health": {
+        "high_error_rate": {
+          "threshold": "error_rate > 5%",
+          "severity": "critical",
+          "notification": "immediate"
+        },
+        "quota_exhaustion": {
+          "threshold": "any_tier_quota > 95%",
+          "severity": "warning",
+          "notification": "15_minutes"
+        },
+        "rate_limit_breaches": {
+          "threshold": "violations > 1000_per_hour",
+          "severity": "high",
+          "notification": "immediate"
+        }
+      },
+
+      "business_alerts": {
+        "revenue_impact": {
+          "threshold": "potential_revenue_loss > 1000_per_hour",
+          "severity": "high",
+          "notification": "immediate"
+        },
+        "customer_experience": {
+          "threshold": "tier_downgrade_requests > 50_per_day",
+          "severity": "medium",
+          "notification": "daily_summary"
+        }
+      }
+    },
+
+    "dashboards": {
+      "operational_dashboard": {
+        "real_time_metrics": true,
+        "tier_breakdown": true,
+        "geographic_distribution": true,
+        "alert_status": true
+      },
+      "business_dashboard": {
+        "revenue_metrics": true,
+        "usage_trends": true,
+        "customer_segments": true,
+        "growth_projections": true
+      },
+      "technical_dashboard": {
+        "system_performance": true,
+        "capacity_utilization": true,
+        "error_analysis": true,
+        "optimization_opportunities": true
+      }
+    }
+  },
+
+  "api_responses": {
+    "rate_limit_headers": {
+      "x-ratelimit-limit": "maximum_requests_per_window",
+      "x-ratelimit-remaining": "requests_remaining_in_window",
+      "x-ratelimit-reset": "unix_timestamp_of_window_reset",
+      "x-ratelimit-retry-after": "seconds_until_request_allowed",
+      "x-quota-limit": "maximum_tokens_per_period",
+      "x-quota-remaining": "tokens_remaining_in_period",
+      "x-quota-reset": "unix_timestamp_of_quota_reset",
+      "x-tier": "user_tier_level",
+      "x-burst-available": "burst_tokens_available"
+    },
+
+    "error_responses": {
+      "rate_limit_exceeded": {
+        "http_status": 429,
+        "error_code": "RATE_LIMIT_EXCEEDED",
+        "message": "Request rate limit exceeded. Please retry after the specified delay.",
+        "retry_after_header": true,
+        "documentation_link": "https://docs.company.com/rate-limits"
+      },
+      "quota_exceeded": {
+        "http_status": 402,
+        "error_code": "QUOTA_EXCEEDED",
+        "message": "Monthly quota exceeded. Please upgrade your plan or wait for quota reset.",
+        "quota_reset_time": true,
+        "upgrade_link": true
+      },
+      "tier_restriction": {
+        "http_status": 403,
+        "error_code": "TIER_RESTRICTION",
+        "message": "Feature not available for your current tier. Please upgrade to access this functionality.",
+        "required_tier": true,
+        "upgrade_link": true
+      }
+    }
+  },
+
+  "configuration_management": {
+    "hot_reload": true,
+    "gradual_rollout": true,
+    "a_b_testing_support": true,
+    "rollback_capability": true,
+    "audit_logging": true,
+
+    "deployment_strategy": {
+      "canary_percentage": 5,
+      "canary_duration": "1_hour",
+      "success_criteria": [
+        "error_rate < 0.1%",
+        "response_time < baseline + 10%",
+        "no_quota_calculation_errors"
+      ],
+      "automatic_rollback": true
+    }
+  }
+}

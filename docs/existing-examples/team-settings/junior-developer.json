@@ -1,0 +1,84 @@
+{
+  "description": "Configuration template for junior developers - safety-focused with guided permissions",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(tests/**)",
+      "Edit(docs/**)",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Glob",
+      "Grep",
+      "Bash(npm install)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git log:*)",
+      "WebSearch",
+      "TodoWrite",
+      "TodoRead"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Edit(.claude/settings.json)",
+      "Edit(package.json)",
+      "Edit(.gitignore)",
+      "Bash(rm *)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(npm publish:*)",
+      "Bash(docker:*)",
+      "Bash(kubectl:*)",
+      "Bash(ssh:*)",
+      "Bash(sudo:*)"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Edit(*.config.*)",
+      "Edit(*.json)",
+      "Write(*.config.*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(git merge:*)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "strict"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Running: $CLAUDE_TOOL_COMMAND'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint --silent || true"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🟢 Junior Dev Mode | Safe & Guided"
+}

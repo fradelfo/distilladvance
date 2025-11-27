@@ -1,0 +1,378 @@
+{
+  "description": "GitHub integration configuration for repository management, issues, and pull requests",
+  "version": "1.0.0",
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "config": {
+        "repositories": [
+          "${GITHUB_OWNER}/${GITHUB_REPO}"
+        ],
+        "features": {
+          "issues": true,
+          "pull_requests": true,
+          "discussions": true,
+          "releases": true,
+          "actions": true,
+          "projects": true,
+          "wiki": false
+        },
+        "permissions": {
+          "read": [
+            "issues",
+            "pull_requests",
+            "discussions",
+            "releases",
+            "actions",
+            "contents",
+            "metadata",
+            "repository_projects"
+          ],
+          "write": [
+            "issues",
+            "pull_requests",
+            "discussions",
+            "actions"
+          ]
+        },
+        "automation": {
+          "issue_templates": {
+            "bug_report": {
+              "enabled": true,
+              "auto_assign": true,
+              "labels": ["bug", "needs-investigation"]
+            },
+            "feature_request": {
+              "enabled": true,
+              "auto_assign": false,
+              "labels": ["enhancement", "needs-review"]
+            },
+            "security_issue": {
+              "enabled": true,
+              "auto_assign": true,
+              "labels": ["security", "priority-critical"],
+              "private": true
+            }
+          },
+          "pr_automation": {
+            "auto_assign_reviewers": true,
+            "required_checks": [
+              "ci/tests",
+              "ci/lint",
+              "ci/security-scan",
+              "ci/build"
+            ],
+            "auto_merge": {
+              "enabled": false,
+              "conditions": [
+                "approved_by_required_reviewers",
+                "all_checks_passing",
+                "no_merge_conflicts"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "workflows": {
+    "issue_management": {
+      "bug_triaging": {
+        "priority_assignment": {
+          "critical": "Security issues, data loss, system down",
+          "high": "Major functionality broken, significant user impact",
+          "medium": "Minor functionality issues, enhancement requests",
+          "low": "Documentation updates, minor improvements"
+        },
+        "auto_labeling_rules": [
+          {
+            "condition": "title contains 'security' or body contains 'vulnerability'",
+            "labels": ["security", "priority-critical"],
+            "assignees": ["@security-team"]
+          },
+          {
+            "condition": "title contains 'extension' or body contains 'browser'",
+            "labels": ["browser-extension", "area-frontend"],
+            "assignees": ["@frontend-team"]
+          },
+          {
+            "condition": "title contains 'AI' or 'LLM' or 'prompt'",
+            "labels": ["ai-services", "area-platform"],
+            "assignees": ["@platform-team"]
+          },
+          {
+            "condition": "title contains 'performance' or 'slow' or 'speed'",
+            "labels": ["performance", "area-optimization"],
+            "assignees": ["@performance-team"]
+          }
+        ]
+      },
+
+      "milestone_tracking": {
+        "automatic_milestone_assignment": true,
+        "milestone_rules": [
+          {
+            "condition": "labels include 'priority-critical'",
+            "milestone": "Current Sprint"
+          },
+          {
+            "condition": "labels include 'priority-high'",
+            "milestone": "Next Sprint"
+          },
+          {
+            "condition": "labels include 'enhancement'",
+            "milestone": "Future Enhancements"
+          }
+        ]
+      }
+    },
+
+    "pr_management": {
+      "review_automation": {
+        "reviewer_assignment_rules": [
+          {
+            "files": ["app/packages/browser-extension/**"],
+            "reviewers": ["@frontend-team"],
+            "required_reviewers": 1
+          },
+          {
+            "files": ["app/packages/api-server/**"],
+            "reviewers": ["@backend-team", "@platform-team"],
+            "required_reviewers": 2
+          },
+          {
+            "files": ["k8s/**", ".github/workflows/**"],
+            "reviewers": ["@devops-team"],
+            "required_reviewers": 1
+          },
+          {
+            "files": ["prisma/**", "**/migrations/**"],
+            "reviewers": ["@database-team", "@security-team"],
+            "required_reviewers": 2
+          }
+        ],
+        "auto_approve_conditions": [
+          {
+            "condition": "author is dependabot and files only in package*.json",
+            "reviewers": ["@lead-dev"]
+          }
+        ]
+      },
+
+      "quality_gates": {
+        "required_status_checks": [
+          "ci/tests-unit",
+          "ci/tests-integration",
+          "ci/tests-e2e",
+          "ci/lint-and-format",
+          "ci/security-scan",
+          "ci/performance-check",
+          "ci/build-extension",
+          "ci/build-webapp"
+        ],
+        "dismiss_stale_reviews": true,
+        "require_up_to_date_branches": true
+      }
+    },
+
+    "release_management": {
+      "semantic_versioning": {
+        "enabled": true,
+        "conventional_commits": true,
+        "auto_changelog": true,
+        "version_tags": true
+      },
+      "release_automation": {
+        "create_release_notes": true,
+        "attach_build_artifacts": true,
+        "notify_channels": ["#releases", "#general"],
+        "deployment_triggers": {
+          "staging": "on_prerelease",
+          "production": "on_release"
+        }
+      }
+    }
+  },
+
+  "integrations": {
+    "claude_code_agents": {
+      "issue_analysis": {
+        "auto_analyze_new_issues": true,
+        "classification_agents": [
+          "security-agent",
+          "platform-agent",
+          "frontend-agent",
+          "quality-agent"
+        ],
+        "analysis_output": {
+          "impact_assessment": true,
+          "effort_estimation": true,
+          "suggested_assignees": true,
+          "related_issues": true
+        }
+      },
+      "pr_review": {
+        "auto_review_small_prs": true,
+        "review_agents": [
+          "code-reviewer",
+          "security-agent",
+          "quality-agent"
+        ],
+        "review_criteria": [
+          "code_quality",
+          "security_vulnerabilities",
+          "performance_impact",
+          "test_coverage",
+          "documentation"
+        ]
+      }
+    },
+
+    "external_tools": {
+      "sentry": {
+        "link_issues_to_errors": true,
+        "auto_create_issues": false,
+        "error_tracking": true
+      },
+      "slack": {
+        "notifications": {
+          "new_issues": "#development",
+          "critical_issues": "#alerts",
+          "pr_reviews": "#code-reviews",
+          "releases": "#releases"
+        }
+      }
+    }
+  },
+
+  "security": {
+    "access_controls": {
+      "token_permissions": [
+        "repo:read",
+        "repo:write",
+        "issues:read",
+        "issues:write",
+        "pull_requests:read",
+        "pull_requests:write",
+        "actions:read",
+        "project:read"
+      ],
+      "ip_restrictions": {
+        "enabled": false,
+        "allowed_ips": []
+      }
+    },
+    "audit_logging": {
+      "enabled": true,
+      "log_actions": [
+        "issue_created",
+        "issue_updated",
+        "pr_created",
+        "pr_merged",
+        "release_created"
+      ]
+    }
+  },
+
+  "monitoring": {
+    "metrics": {
+      "issue_resolution_time": true,
+      "pr_merge_time": true,
+      "review_turnaround_time": true,
+      "release_frequency": true
+    },
+    "alerts": {
+      "stale_issues": {
+        "enabled": true,
+        "threshold": "30 days",
+        "exclude_labels": ["on-hold", "waiting-for-feedback"]
+      },
+      "stale_prs": {
+        "enabled": true,
+        "threshold": "7 days",
+        "exclude_drafts": true
+      }
+    }
+  },
+
+  "setup_guide": {
+    "prerequisites": [
+      "GitHub account with repository access",
+      "GitHub Personal Access Token with required permissions"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Create GitHub Personal Access Token",
+        "description": "Go to GitHub Settings > Developer settings > Personal access tokens",
+        "permissions_required": [
+          "repo (Full control of private repositories)",
+          "read:org (Read org and team membership)",
+          "project (Full control of projects)"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Configure Environment Variables",
+        "description": "Set the following environment variables in your .env file",
+        "variables": {
+          "GITHUB_TOKEN": "Your personal access token",
+          "GITHUB_OWNER": "Repository owner (username or organization)",
+          "GITHUB_REPO": "Repository name"
+        }
+      },
+      {
+        "step": 3,
+        "title": "Test Connection",
+        "description": "Run the following command to test the GitHub integration",
+        "command": "claude mcp test github"
+      }
+    ]
+  },
+
+  "best_practices": {
+    "issue_management": [
+      "Use descriptive titles that summarize the problem clearly",
+      "Include reproduction steps for bugs",
+      "Add relevant labels for categorization",
+      "Link related issues and PRs",
+      "Update status regularly with progress comments"
+    ],
+    "pull_requests": [
+      "Create small, focused PRs that address single concerns",
+      "Write clear PR descriptions explaining the changes",
+      "Include screenshots for UI changes",
+      "Ensure all CI checks pass before requesting review",
+      "Respond to review feedback promptly"
+    ],
+    "security": [
+      "Never commit API keys or sensitive data",
+      "Use branch protection rules for main branches",
+      "Enable required status checks",
+      "Regularly rotate access tokens",
+      "Monitor repository access and permissions"
+    ]
+  },
+
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Token authentication failed",
+        "solution": "Verify GITHUB_TOKEN is set correctly and has required permissions"
+      },
+      {
+        "issue": "Repository not accessible",
+        "solution": "Check GITHUB_OWNER and GITHUB_REPO environment variables"
+      },
+      {
+        "issue": "Rate limit exceeded",
+        "solution": "Wait for rate limit reset or use GitHub App for higher limits"
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: distill-production
+  labels:
+    app.kubernetes.io/name: distill
+    environment: production

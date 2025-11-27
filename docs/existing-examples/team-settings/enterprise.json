@@ -1,0 +1,162 @@
+{
+  "description": "Configuration template for enterprise deployments - compliance, cost management, and centralized control",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(tests/**)",
+      "Edit(docs/**)",
+      "Edit(*.md)",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Write(reports/**)",
+      "Write(*.md)",
+      "Glob",
+      "Grep",
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(yarn install)",
+      "Bash(yarn run *)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(git pull)",
+      "Bash(python -m pip list)",
+      "Bash(python -m pytest)",
+      "Bash(make test)",
+      "Bash(make build)",
+      "WebSearch",
+      "TodoWrite",
+      "TodoRead"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(~/.ssh/**)",
+      "Read(**/private_key*)",
+      "Read(**/id_rsa*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Edit(.claude/settings.json)",
+      "Edit(package.json)",
+      "Edit(requirements.txt)",
+      "Edit(Dockerfile)",
+      "Edit(docker-compose.*)",
+      "Edit(.github/workflows/**)",
+      "Edit(.gitlab-ci.yml)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(docker *)",
+      "Bash(kubectl *)",
+      "Bash(terraform *)",
+      "Bash(aws *)",
+      "Bash(gcloud *)",
+      "Bash(az *)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(npm publish:*)",
+      "Bash(pip install:* --user)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(curl:* -X POST)",
+      "Bash(wget:* -O)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(npm install:* --save)",
+      "Bash(pip install:*)",
+      "Edit(*.config.*)",
+      "Edit(*.json)",
+      "Edit(*.yml)",
+      "Edit(*.yaml)",
+      "Write(*.config.*)",
+      "Write(*.json)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(git merge:*)",
+      "Bash(curl:* -H)",
+      "Task",
+      "WebFetch"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "CLAUDE_SAFETY_MODE": "enterprise",
+    "ENTERPRISE_MODE": "true",
+    "AUDIT_LOGGING": "true",
+    "COST_MONITORING": "true",
+    "MAX_CONCURRENT_TASKS": "2",
+    "COMPLIANCE_LEVEL": "strict"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$(date '+%Y-%m-%d %H:%M:%S') - $USER - $CLAUDE_TOOL_NAME: $CLAUDE_TOOL_ARGS\" >> ~/.claude/enterprise-audit.log"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint --silent --fix || true"
+          },
+          {
+            "type": "command",
+            "command": "echo \"$(date '+%Y-%m-%d %H:%M:%S') - File modified: $CLAUDE_TOOL_ARGS\" >> ~/.claude/enterprise-audit.log"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash.*git commit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git log -1 --pretty=format:'✓ Enterprise Commit: %s [%an]' && echo \"\\n📊 Compliance: Files changed: $(git diff-tree --no-commit-id --name-only -r HEAD | wc -l)\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🏢 Enterprise session started. Compliance logging enabled.' && echo \"Session start: $(date)\" >> ~/.claude/enterprise-audit.log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"Session end: $(date)\" >> ~/.claude/enterprise-audit.log && echo '📋 Session logged for compliance audit'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🏢 Enterprise Mode | Compliance & Audit",
+  "maxTokensPerDay": 10000,
+  "costThreshold": {
+    "warning": 5.0,
+    "limit": 10.0
+  }
+}

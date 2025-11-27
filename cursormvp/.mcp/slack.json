@@ -1,0 +1,596 @@
+{
+  "description": "Slack integration configuration for team notifications, alerts, and development workflow collaboration",
+  "version": "1.0.0",
+  "mcpServers": {
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}",
+        "SLACK_SIGNING_SECRET": "${SLACK_SIGNING_SECRET}"
+      },
+      "config": {
+        "bot_permissions": [
+          "channels:read",
+          "channels:write",
+          "chat:write",
+          "files:write",
+          "reactions:write",
+          "users:read",
+          "usergroups:read"
+        ],
+        "channels": {
+          "development": {
+            "name": "#development",
+            "purpose": "General development discussions and updates",
+            "notifications": [
+              "pr_opened",
+              "pr_merged",
+              "deployment_completed",
+              "build_failed"
+            ]
+          },
+          "alerts": {
+            "name": "#alerts",
+            "purpose": "Critical system alerts and incidents",
+            "notifications": [
+              "system_down",
+              "security_alert",
+              "performance_degradation",
+              "error_rate_spike"
+            ]
+          },
+          "ai_experiments": {
+            "name": "#ai-experiments",
+            "purpose": "AI/LLM experiments and results",
+            "notifications": [
+              "new_model_results",
+              "prompt_optimization",
+              "cost_alerts",
+              "ai_performance_reports"
+            ]
+          },
+          "deployments": {
+            "name": "#deployments",
+            "purpose": "Deployment notifications and status",
+            "notifications": [
+              "deployment_started",
+              "deployment_completed",
+              "deployment_failed",
+              "rollback_initiated"
+            ]
+          },
+          "code_reviews": {
+            "name": "#code-reviews",
+            "purpose": "Code review notifications and discussions",
+            "notifications": [
+              "pr_review_requested",
+              "pr_approved",
+              "pr_changes_requested",
+              "security_review_needed"
+            ]
+          },
+          "releases": {
+            "name": "#releases",
+            "purpose": "Release announcements and planning",
+            "notifications": [
+              "release_planned",
+              "release_completed",
+              "hotfix_deployed",
+              "extension_store_approved"
+            ]
+          }
+        },
+        "message_formatting": {
+          "use_blocks": true,
+          "include_links": true,
+          "include_context": true,
+          "max_message_length": 3000
+        }
+      }
+    }
+  },
+
+  "workflows": {
+    "development_notifications": {
+      "pull_request_flow": {
+        "pr_opened": {
+          "channel": "#code-reviews",
+          "message_template": {
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "🔄 *New Pull Request*\n*{title}* by {author}\n{description}"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\n{repository}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Changes:*\n+{additions} -{deletions}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Files:*\n{files_changed}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Priority:*\n{priority}"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "👀 Review"
+                    },
+                    "url": "{pr_url}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🤖 Auto Review"
+                    },
+                    "action_id": "auto_review_pr"
+                  }
+                ]
+              }
+            ]
+          },
+          "mentions": {
+            "reviewers": true,
+            "area_experts": true
+          }
+        },
+        "pr_approved": {
+          "channel": "#development",
+          "message_template": "✅ PR approved: *{title}* by {author} - Ready to merge! {pr_url}"
+        },
+        "pr_merged": {
+          "channel": "#development",
+          "message_template": "🚀 PR merged: *{title}* by {author}\nChanges: +{additions} -{deletions} in {files_changed} files\n{pr_url}"
+        }
+      },
+
+      "build_and_deployment": {
+        "build_started": {
+          "channel": "#deployments",
+          "message_template": "🏗️ Build started for `{branch}` - {commit_message} by {author}"
+        },
+        "build_failed": {
+          "channel": "#alerts",
+          "message_template": {
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "❌ *Build Failed*\n`{branch}` branch - {commit_message}"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Author:*\n{author}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Commit:*\n`{commit_hash}`"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🔍 View Logs"
+                    },
+                    "url": "{build_url}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🤖 Debug"
+                    },
+                    "action_id": "debug_build_failure"
+                  }
+                ]
+              }
+            ]
+          },
+          "mentions": {
+            "author": true,
+            "on_call": true
+          }
+        },
+        "deployment_completed": {
+          "channel": "#deployments",
+          "message_template": "🎉 Deployment completed to `{environment}`\nVersion: `{version}` - Duration: {duration}min\n{deployment_url}"
+        }
+      },
+
+      "ai_workflow_notifications": {
+        "cost_alert": {
+          "channel": "#ai-experiments",
+          "message_template": {
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "💰 *AI Cost Alert*\nDaily spend: ${daily_cost} (Budget: ${daily_budget})\nProjected monthly: ${projected_monthly}"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Top Models:*\n{top_models}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Usage Spike:*\n{usage_increase}% increase"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "📊 View Dashboard"
+                    },
+                    "url": "{dashboard_url}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🔧 Optimize"
+                    },
+                    "action_id": "optimize_ai_usage"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "ai_experiment_results": {
+          "channel": "#ai-experiments",
+          "message_template": "🧪 Experiment results: *{experiment_name}*\nAccuracy: {accuracy}% | Cost: ${cost} | Time: {duration}s\n{results_url}"
+        }
+      }
+    },
+
+    "incident_management": {
+      "security_alerts": {
+        "security_incident": {
+          "channel": "#alerts",
+          "message_template": {
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "🚨 *Security Incident Detected*\n*Type:* {incident_type}\n*Severity:* {severity}\n*Description:* {description}"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Affected System:*\n{affected_system}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Detection Time:*\n{detection_time}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Source:*\n{source_ip}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Status:*\n{status}"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🔍 Investigate"
+                    },
+                    "url": "{incident_url}"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "🛡️ Mitigate"
+                    },
+                    "action_id": "mitigate_security_incident"
+                  }
+                ]
+              }
+            ]
+          },
+          "mentions": {
+            "security_team": true,
+            "on_call": true
+          },
+          "priority": "high"
+        }
+      },
+
+      "performance_alerts": {
+        "high_error_rate": {
+          "channel": "#alerts",
+          "message_template": "⚠️ High error rate detected: {error_rate}% ({threshold}% threshold)\nService: {service} | Environment: {environment}\n{dashboard_url}"
+        },
+        "slow_response_time": {
+          "channel": "#alerts",
+          "message_template": "🐌 Slow response time: {response_time}ms (threshold: {threshold}ms)\nEndpoint: {endpoint} | Environment: {environment}"
+        }
+      }
+    },
+
+    "team_coordination": {
+      "daily_standups": {
+        "standup_reminder": {
+          "channel": "#development",
+          "schedule": "Mon-Fri 9:00 AM",
+          "message_template": "☀️ Good morning team! Time for our daily standup 🏃‍♂️\nShare your:\n• ✅ Yesterday's wins\n• 🎯 Today's focus\n• 🚧 Any blockers\n\nThread replies below! 👇"
+        },
+        "weekly_retrospective": {
+          "channel": "#development",
+          "schedule": "Friday 4:00 PM",
+          "message_template": "🔄 Weekly retrospective time!\nWhat went well this week? What could we improve?\nShare your thoughts in the thread! 💭"
+        }
+      },
+
+      "knowledge_sharing": {
+        "tech_tip_friday": {
+          "channel": "#development",
+          "schedule": "Friday 2:00 PM",
+          "message_template": "💡 Tech Tip Friday! Share something interesting you learned this week:\n• New tool or library\n• Coding technique\n• Problem-solving approach\n• AI/LLM insight"
+        },
+        "agent_usage_tips": {
+          "channel": "#ai-experiments",
+          "schedule": "Wednesday 10:00 AM",
+          "message_template": "🤖 Agent Wednesday! Share your best Claude Code agent tips:\n• Effective agent combinations\n• Workflow optimizations\n• Productivity insights\n• Cool discoveries"
+        }
+      }
+    }
+  },
+
+  "interactive_features": {
+    "slash_commands": {
+      "/deploy": {
+        "description": "Trigger deployment to specified environment",
+        "usage": "/deploy [environment] [version]",
+        "response": "🚀 Deployment initiated to {environment}. Track progress: {deployment_url}"
+      },
+      "/ai-cost": {
+        "description": "Get current AI usage and cost information",
+        "usage": "/ai-cost [timeframe]",
+        "response": "Current AI costs: ${total} | Models: {model_breakdown} | Trend: {trend}"
+      },
+      "/pr-status": {
+        "description": "Get status of open pull requests",
+        "usage": "/pr-status [author]",
+        "response": "Open PRs: {pr_count} | Needs review: {review_count} | Ready to merge: {merge_count}"
+      },
+      "/agent-help": {
+        "description": "Get help with Claude Code agents",
+        "usage": "/agent-help [agent-type]",
+        "response": "Agent guidance: {agent_info} | Best practices: {practices} | Examples: {examples}"
+      }
+    },
+
+    "interactive_buttons": {
+      "auto_review_pr": {
+        "action": "Trigger automated PR review using Claude Code agents",
+        "confirmation": "Start automated review for PR #{pr_number}?",
+        "success_message": "🤖 Automated review started. Results will be posted shortly."
+      },
+      "debug_build_failure": {
+        "action": "Analyze build failure and suggest fixes",
+        "response": "🔍 Build analysis complete. Common issues: {issues} | Suggested fixes: {fixes}"
+      },
+      "optimize_ai_usage": {
+        "action": "Run AI cost optimization analysis",
+        "response": "📊 Optimization suggestions: {suggestions} | Potential savings: ${savings}"
+      }
+    },
+
+    "scheduled_reports": {
+      "daily_summary": {
+        "channel": "#development",
+        "schedule": "Mon-Fri 6:00 PM",
+        "content": {
+          "commits_today": "integer",
+          "prs_merged": "integer",
+          "issues_closed": "integer",
+          "ai_usage": "object",
+          "team_highlights": "array"
+        }
+      },
+      "weekly_metrics": {
+        "channel": "#development",
+        "schedule": "Friday 5:00 PM",
+        "content": {
+          "velocity": "object",
+          "quality_score": "float",
+          "ai_productivity_gain": "percentage",
+          "top_contributors": "array"
+        }
+      },
+      "monthly_ai_report": {
+        "channel": "#ai-experiments",
+        "schedule": "Last day of month 10:00 AM",
+        "content": {
+          "total_cost": "currency",
+          "usage_trends": "object",
+          "model_performance": "object",
+          "optimization_opportunities": "array"
+        }
+      }
+    }
+  },
+
+  "integration_hooks": {
+    "github_webhooks": {
+      "pull_request": ["opened", "closed", "review_requested"],
+      "issues": ["opened", "closed", "labeled"],
+      "push": ["main", "staging", "production"],
+      "release": ["published", "prereleased"]
+    },
+    "ci_cd_webhooks": {
+      "build_status": ["started", "completed", "failed"],
+      "deployment": ["started", "completed", "failed", "rolled_back"],
+      "test_results": ["completed", "failed"]
+    },
+    "monitoring_webhooks": {
+      "alerts": ["security", "performance", "availability"],
+      "metrics": ["threshold_exceeded", "anomaly_detected"]
+    }
+  },
+
+  "security": {
+    "permissions": {
+      "bot_token_scopes": [
+        "channels:read",
+        "channels:write",
+        "chat:write",
+        "files:write",
+        "reactions:write",
+        "users:read"
+      ],
+      "restricted_channels": [
+        "#admin-only",
+        "#security-private"
+      ]
+    },
+    "message_filtering": {
+      "prevent_sensitive_data": true,
+      "filter_patterns": [
+        "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+        "\\b(?:password|secret|key|token)\\s*[:=]\\s*\\S+",
+        "\\b[0-9]{16,}\\b"
+      ]
+    },
+    "audit_logging": {
+      "enabled": true,
+      "log_all_messages": false,
+      "log_commands": true,
+      "log_button_clicks": true
+    }
+  },
+
+  "setup_guide": {
+    "prerequisites": [
+      "Slack workspace with admin permissions",
+      "Ability to create Slack apps and install them"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Create Slack App",
+        "description": "Go to api.slack.com and create a new app",
+        "required_permissions": [
+          "Bot Token Scopes: channels:read, channels:write, chat:write",
+          "Event Subscriptions: Enable and configure webhook URL",
+          "Slash Commands: Create custom commands as needed"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Configure Environment Variables",
+        "variables": {
+          "SLACK_BOT_TOKEN": "Bot User OAuth Token (xoxb-...)",
+          "SLACK_APP_TOKEN": "App-Level Token (xapp-...)",
+          "SLACK_SIGNING_SECRET": "Signing Secret for webhook verification"
+        }
+      },
+      {
+        "step": 3,
+        "title": "Install App to Workspace",
+        "description": "Install the app to your Slack workspace and invite bot to channels"
+      },
+      {
+        "step": 4,
+        "title": "Test Integration",
+        "command": "claude mcp test slack"
+      }
+    ]
+  },
+
+  "best_practices": {
+    "channel_organization": [
+      "Use dedicated channels for different types of notifications",
+      "Set clear channel purposes and pin important information",
+      "Use threading to keep conversations organized",
+      "Establish naming conventions for channels"
+    ],
+    "notification_management": [
+      "Configure appropriate notification levels for each channel",
+      "Use mentions strategically to avoid notification fatigue",
+      "Group related notifications to reduce noise",
+      "Provide actionable information in alerts"
+    ],
+    "security": [
+      "Never post sensitive information in public channels",
+      "Use private channels for security-related discussions",
+      "Regularly review and rotate bot tokens",
+      "Monitor bot activity and permissions"
+    ]
+  },
+
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Bot not receiving messages",
+        "solution": "Check bot permissions and event subscriptions configuration"
+      },
+      {
+        "issue": "Slash commands not working",
+        "solution": "Verify command registration and webhook endpoint configuration"
+      },
+      {
+        "issue": "Unable to post to channel",
+        "solution": "Ensure bot is invited to channel and has write permissions"
+      },
+      {
+        "issue": "Webhook verification failed",
+        "solution": "Check SLACK_SIGNING_SECRET and webhook URL configuration"
+      }
+    ]
+  }
+}

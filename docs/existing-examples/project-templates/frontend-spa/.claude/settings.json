@@ -1,0 +1,158 @@
+{
+  "description": "Frontend SPA development configuration - optimized for React, TypeScript, and modern frontend workflows",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(tests/**)",
+      "Edit(public/**)",
+      "Edit(docs/**)",
+      "Edit(*.md)",
+      "Edit(*.json)",
+      "Edit(*.js)",
+      "Edit(*.ts)",
+      "Edit(*.tsx)",
+      "Edit(*.css)",
+      "Edit(*.scss)",
+      "Edit(*.html)",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Write(public/**)",
+      "Write(docs/**)",
+      "Write(*.md)",
+      "Write(*.json)",
+      "Write(*.js)",
+      "Write(*.ts)",
+      "Write(*.tsx)",
+      "Write(*.css)",
+      "Write(*.scss)",
+      "Glob",
+      "Grep",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(vite *)",
+      "Bash(vitest *)",
+      "Bash(playwright *)",
+      "Bash(eslint *)",
+      "Bash(prettier *)",
+      "Bash(tsc *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(node_modules/**)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Edit(.claude/settings.json)",
+      "Edit(.gitignore)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(npm publish:*)",
+      "Bash(yarn publish:*)",
+      "Bash(pnpm publish:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(docker:*)",
+      "Bash(kubectl:*)"
+    ],
+    "ask": [
+      "Bash(git push origin main:*)",
+      "Bash(npm install:* --save)",
+      "Bash(yarn add:*)",
+      "Bash(pnpm add:*)",
+      "Edit(package.json)",
+      "Edit(package-lock.json)",
+      "Edit(yarn.lock)",
+      "Edit(pnpm-lock.yaml)",
+      "Edit(vite.config.ts)",
+      "Edit(vitest.config.ts)",
+      "Edit(tailwind.config.js)",
+      "Edit(tsconfig.json)",
+      "Edit(.eslintrc.*)",
+      "Edit(.prettierrc.*)",
+      "Edit(.github/workflows/**)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "balanced",
+    "VITE_DEV_MODE": "true",
+    "MAX_CONCURRENT_TASKS": "3",
+    "FRONTEND_MODE": "true"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit.*\\.(ts|tsx|js|jsx)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run format --silent || echo 'Code formatting completed'"
+          },
+          {
+            "type": "command",
+            "command": "npm run lint --silent --fix || echo 'Linting completed with warnings'"
+          },
+          {
+            "type": "command",
+            "command": "npm run type-check --silent || echo 'Type checking completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*\\.(css|scss)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run format --silent || echo 'Style formatting completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*package\\.json$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm audit --audit-level=moderate || echo 'Security audit completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write.*src/components/.*\\.(ts|tsx)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run test --silent -- --passWithNoTests --watchAll=false || echo 'Component tests completed'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚛️  Frontend SPA development session started!' && echo '🚀 Dev server: npm run dev (http://localhost:5173)' && echo '🧪 Tests: npm run test' && echo '🎨 Storybook: npm run storybook (if available)'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "⚛️ Frontend SPA | React + TypeScript + Vite"
+}

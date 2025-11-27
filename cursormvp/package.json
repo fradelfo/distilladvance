@@ -1,0 +1,84 @@
+{
+  "name": "distill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser Extension + AI Web Application for Chat Conversation Distillation",
+  "type": "module",
+  "workspaces": [
+    "app/packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --parallel ext:dev web:dev api:dev",
+    "build": "bun run --parallel ext:build web:build api:build",
+    "test": "bun run test:all",
+    "lint": "biome check .",
+    "lint:fix": "biome check --apply .",
+    "type-check": "tsc --noEmit",
+    "ext:dev": "bun --cwd app/packages/browser-extension run dev",
+    "ext:build": "bun --cwd app/packages/browser-extension run build",
+    "ext:test": "bun --cwd app/packages/browser-extension run test",
+    "ext:lint": "web-ext lint --source-dir app/packages/browser-extension/dist",
+    "ext:package": "bun --cwd app/packages/browser-extension run package",
+    "web:dev": "bun --cwd app/packages/web-app run dev",
+    "web:build": "bun --cwd app/packages/web-app run build",
+    "web:test": "bun --cwd app/packages/web-app run test",
+    "web:analyze": "bun --cwd app/packages/web-app run analyze",
+    "api:dev": "bun --cwd app/packages/api run dev",
+    "api:build": "bun --cwd app/packages/api run build",
+    "api:test": "bun --cwd app/packages/api run test",
+    "db:migrate": "bun --cwd app/packages/api run db:migrate",
+    "db:seed": "bun --cwd app/packages/api run db:seed",
+    "db:studio": "bun --cwd app/packages/api run db:studio",
+    "ai:test": "vitest run --config tests/config/vitest.ai.config.ts",
+    "ai:benchmark": "bun scripts/testing/ai-benchmark.ts",
+    "ai:optimize": "bun scripts/testing/ai-optimize.ts",
+    "test:all": "vitest run && bun run test:e2e",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:integration": "vitest run --config tests/config/vitest.integration.config.ts",
+    "test:security": "bun scripts/testing/security-scan.ts",
+    "test:performance": "bun scripts/testing/performance-test.ts",
+    "deploy:staging": "bun scripts/deployment/deploy-staging.ts",
+    "deploy:prod": "bun scripts/deployment/deploy-prod.ts",
+    "deploy:extension": "bun scripts/deployment/deploy-extension.ts",
+    "k8s:apply": "kubectl apply -k k8s/production",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@playwright/test": "^1.48.0",
+    "@types/bun": "^1.1.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "web-ext": "^8.3.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "biome check --apply"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/distill.git"
+  },
+  "keywords": [
+    "browser-extension",
+    "ai",
+    "llm",
+    "chat-distillation",
+    "claude",
+    "openai"
+  ],
+  "author": "Your Team",
+  "license": "MIT"
+}

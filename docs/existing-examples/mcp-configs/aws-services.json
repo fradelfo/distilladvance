@@ -1,0 +1,308 @@
+{
+  "description": "AWS services integration for cloud infrastructure management, monitoring, and automation",
+  "mcpServers": {
+    "aws-cli": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws-cli"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_DEFAULT_REGION": "${AWS_DEFAULT_REGION}",
+        "AWS_SESSION_TOKEN": "${AWS_SESSION_TOKEN}",
+        "AWS_PROFILE": "${AWS_PROFILE}"
+      },
+      "description": "AWS CLI integration for cloud service management"
+    }
+  },
+  "authenticationMethods": {
+    "accessKeys": {
+      "description": "IAM user access keys (for development/testing)",
+      "required": [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_DEFAULT_REGION"
+      ],
+      "security": "Not recommended for production. Use IAM roles instead."
+    },
+    "iamRoles": {
+      "description": "IAM roles with temporary credentials (recommended)",
+      "required": [
+        "AWS_DEFAULT_REGION"
+      ],
+      "optional": [
+        "AWS_SESSION_TOKEN"
+      ],
+      "note": "Automatically uses IAM role credentials when running on EC2, ECS, or Lambda"
+    },
+    "awsProfile": {
+      "description": "AWS CLI profile configuration",
+      "required": [
+        "AWS_PROFILE",
+        "AWS_DEFAULT_REGION"
+      ],
+      "setup": "Configure with 'aws configure --profile profile-name'"
+    }
+  },
+  "iamPolicyTemplates": {
+    "readOnlyAccess": {
+      "description": "Safe read-only access for monitoring and analysis",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ec2:Describe*",
+              "s3:GetObject",
+              "s3:ListBucket",
+              "rds:Describe*",
+              "cloudwatch:GetMetricStatistics",
+              "cloudwatch:ListMetrics",
+              "logs:DescribeLogGroups",
+              "logs:DescribeLogStreams",
+              "logs:GetLogEvents",
+              "iam:GetUser",
+              "iam:ListRoles",
+              "lambda:ListFunctions",
+              "lambda:GetFunction"
+            ],
+            "Resource": "*"
+          }
+        ]
+      }
+    },
+    "developmentAccess": {
+      "description": "Development environment access with limited write permissions",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ec2:*",
+              "s3:*",
+              "rds:*",
+              "cloudwatch:*",
+              "logs:*",
+              "lambda:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:RequestedRegion": ["us-east-1", "us-west-2"]
+              },
+              "ForAllValues:StringLike": {
+                "aws:TagKeys": ["Environment"]
+              },
+              "StringEquals": {
+                "aws:ResourceTag/Environment": ["development", "staging"]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "supportedServices": [
+    {
+      "service": "EC2",
+      "capabilities": [
+        "Instance management and monitoring",
+        "Security group analysis",
+        "VPC and subnet information",
+        "AMI and snapshot details"
+      ]
+    },
+    {
+      "service": "S3",
+      "capabilities": [
+        "Bucket management and analysis",
+        "Object operations and metadata",
+        "Access policy review",
+        "Storage cost analysis"
+      ]
+    },
+    {
+      "service": "RDS",
+      "capabilities": [
+        "Database instance monitoring",
+        "Performance metrics analysis",
+        "Backup and snapshot management",
+        "Parameter group configuration"
+      ]
+    },
+    {
+      "service": "CloudWatch",
+      "capabilities": [
+        "Metrics collection and analysis",
+        "Log aggregation and search",
+        "Alarm configuration",
+        "Dashboard creation"
+      ]
+    },
+    {
+      "service": "Lambda",
+      "capabilities": [
+        "Function deployment and management",
+        "Execution monitoring",
+        "Log analysis",
+        "Performance optimization"
+      ]
+    },
+    {
+      "service": "IAM",
+      "capabilities": [
+        "User and role management",
+        "Policy analysis",
+        "Access review",
+        "Security auditing"
+      ]
+    }
+  ],
+  "useCases": [
+    {
+      "category": "Infrastructure Monitoring",
+      "examples": [
+        "Monitor EC2 instance health and performance",
+        "Analyze S3 storage usage and costs",
+        "Review CloudWatch metrics and alarms",
+        "Check RDS database performance"
+      ]
+    },
+    {
+      "category": "Cost Optimization",
+      "examples": [
+        "Identify unused resources",
+        "Analyze storage costs and usage patterns",
+        "Review instance sizing recommendations",
+        "Monitor billing and usage trends"
+      ]
+    },
+    {
+      "category": "Security Analysis",
+      "examples": [
+        "Audit IAM permissions and policies",
+        "Review security group configurations",
+        "Check S3 bucket policies and access",
+        "Analyze CloudTrail logs for suspicious activity"
+      ]
+    },
+    {
+      "category": "Operational Automation",
+      "examples": [
+        "Automate backup procedures",
+        "Scale resources based on demand",
+        "Deploy applications and updates",
+        "Manage log retention and cleanup"
+      ]
+    }
+  ],
+  "securityConsiderations": [
+    "Use IAM roles instead of access keys when possible",
+    "Follow principle of least privilege for permissions",
+    "Enable CloudTrail for audit logging",
+    "Rotate access keys regularly (every 90 days)",
+    "Use MFA for sensitive operations",
+    "Tag resources for cost and access management",
+    "Monitor unusual API activity patterns"
+  ],
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "Access denied errors",
+        "cause": "Insufficient IAM permissions",
+        "solution": "Review and update IAM policies to include required permissions"
+      },
+      {
+        "issue": "Invalid credentials",
+        "cause": "Expired or incorrect AWS credentials",
+        "solution": "Refresh credentials or verify AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+      },
+      {
+        "issue": "Region not found errors",
+        "cause": "Invalid or unsupported AWS region",
+        "solution": "Set AWS_DEFAULT_REGION to a valid AWS region code"
+      },
+      {
+        "issue": "Rate limiting",
+        "cause": "Exceeded AWS API rate limits",
+        "solution": "Implement request throttling and retry logic with exponential backoff"
+      },
+      {
+        "issue": "Resource not found",
+        "cause": "Resource doesn't exist or is in different region",
+        "solution": "Verify resource exists and check region configuration"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "description": "Analyze EC2 costs and optimization opportunities",
+      "prompt": "Review all EC2 instances and identify opportunities for cost optimization including rightsizing and reserved instances"
+    },
+    {
+      "description": "Security audit of S3 buckets",
+      "prompt": "Audit all S3 buckets for security best practices including public access, encryption, and access policies"
+    },
+    {
+      "description": "Database performance analysis",
+      "prompt": "Analyze RDS database performance metrics and provide recommendations for optimization"
+    },
+    {
+      "description": "Lambda function monitoring",
+      "prompt": "Review Lambda function performance, errors, and costs across all regions"
+    }
+  ],
+  "commonCommands": {
+    "ec2": [
+      "aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,InstanceType,State.Name,PublicIpAddress]'",
+      "aws ec2 describe-security-groups --query 'SecurityGroups[*].[GroupId,GroupName,Description]'",
+      "aws ec2 describe-volumes --query 'Volumes[*].[VolumeId,Size,VolumeType,State]'"
+    ],
+    "s3": [
+      "aws s3 ls --recursive s3://bucket-name --human-readable --summarize",
+      "aws s3api get-bucket-policy --bucket bucket-name",
+      "aws s3api get-bucket-encryption --bucket bucket-name"
+    ],
+    "cloudwatch": [
+      "aws cloudwatch list-metrics --namespace AWS/EC2",
+      "aws logs describe-log-groups --query 'logGroups[*].[logGroupName,storedBytes]'",
+      "aws cloudwatch describe-alarms --query 'MetricAlarms[*].[AlarmName,StateValue,MetricName]'"
+    ],
+    "rds": [
+      "aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,DBInstanceStatus,Engine,DBInstanceClass]'",
+      "aws rds describe-db-snapshots --query 'DBSnapshots[*].[DBSnapshotIdentifier,Status,SnapshotCreateTime]'"
+    ]
+  },
+  "costOptimization": {
+    "strategies": [
+      "Use AWS Cost Explorer API for detailed cost analysis",
+      "Implement tagging strategy for cost allocation",
+      "Monitor unused resources with AWS Config",
+      "Use Reserved Instances for predictable workloads",
+      "Implement lifecycle policies for S3 storage",
+      "Right-size instances based on CloudWatch metrics"
+    ],
+    "tools": [
+      "AWS Cost Explorer",
+      "AWS Budgets",
+      "AWS Trusted Advisor",
+      "AWS Compute Optimizer"
+    ]
+  },
+  "limits": {
+    "apiRateLimits": "Varies by service (typically 5-100 requests per second)",
+    "dataTransfer": "May incur charges for data transfer between regions",
+    "storageAccess": "S3 request charges apply for object operations"
+  },
+  "bestPractices": [
+    "Use least-privilege IAM policies",
+    "Enable CloudTrail for all regions",
+    "Implement resource tagging strategy",
+    "Monitor costs and set up billing alerts",
+    "Use CloudWatch for monitoring and alerting",
+    "Regularly review and rotate access keys",
+    "Use AWS Organizations for multi-account management",
+    "Implement backup and disaster recovery procedures"
+  ]
+}

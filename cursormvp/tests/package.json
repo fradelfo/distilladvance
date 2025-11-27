@@ -1,0 +1,138 @@
+{
+  "name": "distill-testing-infrastructure",
+  "version": "1.0.0",
+  "description": "Comprehensive testing infrastructure for browser extension + AI web application",
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:ci": "npm run test:unit:ci && npm run test:integration:ci && npm run test:e2e:ci",
+
+    "test:unit": "vitest run --config ./config/vitest.config.ts",
+    "test:unit:watch": "vitest --config ./config/vitest.config.ts",
+    "test:unit:ci": "vitest run --config ./config/vitest.config.ts --coverage --reporter=json --reporter=html",
+    "test:unit:coverage": "vitest run --config ./config/vitest.config.ts --coverage",
+
+    "test:integration": "vitest run --config ./config/vitest.config.ts integration/",
+    "test:integration:watch": "vitest --config ./config/vitest.config.ts integration/",
+    "test:integration:ci": "vitest run --config ./config/vitest.config.ts integration/ --coverage",
+
+    "test:e2e": "playwright test --config ./config/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config ./config/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config ./config/playwright.config.ts --debug",
+    "test:e2e:ci": "playwright test --config ./config/playwright.config.ts --reporter=html",
+    "test:e2e:report": "playwright show-report",
+
+    "test:extension": "npm run test:extension:unit && npm run test:extension:e2e",
+    "test:extension:unit": "jest --config ./config/jest-extension.config.js",
+    "test:extension:content": "jest --config ./config/jest-extension.config.js --testPathPattern=content",
+    "test:extension:background": "jest --config ./config/jest-extension.config.js --testPathPattern=background",
+    "test:extension:popup": "jest --config ./config/jest-extension.config.js --testPathPattern=popup",
+    "test:extension:e2e": "playwright test --config ./config/playwright.config.ts --grep @extension",
+    "test:extension:cross-browser": "playwright test --config ./config/playwright.config.ts --grep \"@extension|@cross-platform\"",
+
+    "test:ai": "vitest run --config ./config/vitest.config.ts --testNamePattern=\"AI|prompt|distill\"",
+    "test:ai:watch": "vitest --config ./config/vitest.config.ts --testNamePattern=\"AI|prompt|distill\"",
+    "test:ai:benchmark": "vitest run --config ./config/vitest.config.ts performance/ --testNamePattern=\"AI|benchmark\"",
+    "test:ai:safety": "vitest run --config ./config/vitest.config.ts --testNamePattern=\"safety|security|injection\"",
+    "test:ai:cost": "vitest run --config ./config/vitest.config.ts --testNamePattern=\"cost|token|usage\"",
+
+    "test:performance": "playwright test --config ./config/playwright.config.ts --grep @performance",
+    "test:performance:load": "k6 run performance/load-testing/api-load-test.js",
+    "test:performance:browser": "lighthouse-ci autorun",
+
+    "test:security": "npm run test:security:unit && npm run test:security:e2e",
+    "test:security:unit": "vitest run --config ./config/vitest.config.ts security/ --testNamePattern=\"security|auth|permission\"",
+    "test:security:e2e": "playwright test --config ./config/playwright.config.ts --grep @security",
+    "test:security:extension": "vitest run --config ./config/vitest.config.ts --testNamePattern=\"extension.*security\"",
+    "test:security:audit": "npm audit && snyk test",
+
+    "test:visual": "playwright test --config ./config/playwright.config.ts visual/",
+    "test:visual:update": "playwright test --config ./config/playwright.config.ts visual/ --update-snapshots",
+
+    "test:accessibility": "playwright test --config ./config/playwright.config.ts --grep @a11y",
+
+    "test:mobile": "playwright test --config ./config/playwright.config.ts --grep @mobile",
+
+    "test:cross-platform": "playwright test --config ./config/playwright.config.ts --grep @cross-platform",
+
+    "test:debug": "vitest --config ./config/vitest.config.ts --inspect-brk",
+    "test:debug:e2e": "playwright test --config ./config/playwright.config.ts --debug",
+
+    "test:watch:all": "concurrently \"npm run test:unit:watch\" \"npm run test:e2e\"",
+
+    "test:clean": "rm -rf coverage/ playwright-report/ test-results/ node_modules/.vitest/",
+    "test:setup": "npm run test:clean && npm install",
+
+    "test:validate": "npm run test:lint && npm run test:type-check",
+    "test:lint": "eslint tests/ --ext .ts,.tsx,.js,.jsx",
+    "test:type-check": "tsc --noEmit --project tests/tsconfig.json",
+
+    "test:docker": "docker-compose -f docker-compose.test.yml up --abort-on-container-exit",
+    "test:docker:build": "docker-compose -f docker-compose.test.yml build",
+
+    "test:parallel": "npm-run-all --parallel test:unit test:integration",
+    "test:sequential": "npm-run-all test:unit test:integration test:e2e",
+
+    "test:profile": "vitest run --config ./config/vitest.config.ts --reporter=verbose --run",
+
+    "test:smoke": "npm run test:unit -- --testNamePattern=\"smoke\" && npm run test:e2e -- --grep @smoke",
+
+    "test:regression": "npm run test:all && npm run test:performance && npm run test:security",
+
+    "coverage:merge": "nyc merge coverage/ coverage/merged.json",
+    "coverage:report": "nyc report --reporter=html --reporter=text",
+    "coverage:check": "nyc check-coverage --lines 85 --functions 85 --branches 80",
+
+    "test:env:dev": "cross-env NODE_ENV=test npm run test:unit",
+    "test:env:ci": "cross-env NODE_ENV=test CI=true npm run test:ci",
+    "test:env:production": "cross-env NODE_ENV=production npm run test:smoke"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "@testing-library/react": "^14.1.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/chrome": "^0.0.251",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-html-reporter": "^3.10.0",
+    "jest-junit": "^16.0.0",
+    "jsdom": "^23.0.0",
+    "k6": "^0.47.0",
+    "lighthouse-ci": "^0.12.0",
+    "msw": "^2.0.0",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^15.1.0",
+    "playwright": "^1.40.0",
+    "snyk": "^1.1249.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "web-ext": "^7.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/utils/test-setup.ts"]
+  },
+  "nyc": {
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "include": ["../app/**/*.{ts,tsx}"],
+    "exclude": ["**/*.d.ts", "**/*.test.*", "**/node_modules/**"],
+    "reporter": ["html", "text", "json"],
+    "report-dir": "./coverage"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  }
+}

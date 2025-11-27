@@ -1,0 +1,219 @@
+// Prisma Schema for Distill API
+// Documentation: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User Management
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  conversations  Conversation[]
+  prompts        Prompt[]
+  collections    Collection[]
+  apiKeys        ApiKey[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// Core Domain Models
+// ============================================================================
+
+model Conversation {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  source      String   // e.g., "chatgpt", "claude", "gemini"
+  sourceUrl   String?
+  rawContent  Json     // Original conversation data
+  metadata    Json?    // Additional metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompts Prompt[]
+
+  @@index([userId])
+  @@index([source])
+  @@map("conversations")
+}
+
+model Prompt {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  title          String
+  content        String   @db.Text
+  distilledFrom  String?  @db.Text // Original conversation excerpt
+  model          String?  // AI model used for distillation
+  tags           String[] // Searchable tags
+  isPublic       Boolean  @default(false)
+  usageCount     Int      @default(0)
+  rating         Float?   // User rating
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  collections  CollectionPrompt[]
+  embeddings   PromptEmbedding[]
+
+  @@index([userId])
+  @@index([conversationId])
+  @@index([tags])
+  @@map("prompts")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompts CollectionPrompt[]
+
+  @@index([userId])
+  @@map("collections")
+}
+
+model CollectionPrompt {
+  id           String   @id @default(cuid())
+  collectionId String
+  promptId     String
+  order        Int      @default(0)
+  addedAt      DateTime @default(now())
+
+  // Relations
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  prompt     Prompt     @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, promptId])
+  @@map("collection_prompts")
+}
+
+// ============================================================================
+// AI & Vector Storage
+// ============================================================================
+
+model PromptEmbedding {
+  id        String   @id @default(cuid())
+  promptId  String
+  model     String   // Embedding model used
+  vector    Float[]  // Embedding vector (for small vectors, consider external vector DB for large scale)
+  createdAt DateTime @default(now())
+
+  // Relations
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, model])
+  @@map("prompt_embeddings")
+}
+
+model AiUsageLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  model       String
+  provider    String
+  promptTokens Int
+  completionTokens Int
+  totalTokens Int
+  cost        Float?
+  operation   String   // e.g., "distill", "search", "embed"
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
+}
+
+// ============================================================================
+// API & Integration
+// ============================================================================
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  keyHash     String    @unique // Hashed API key
+  keyPrefix   String    // First 8 chars for identification
+  permissions String[]
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@map("api_keys")
+}

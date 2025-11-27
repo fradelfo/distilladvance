@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "./.memory.jsonl"
+      }
+    },
+    "filesystem": {
+      "command": "npx", 
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "obsidian-mcp"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "/Users/delfo/Documents/delf0"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@distill/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API server for Distill with AI/LLM integration",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
+  },
+  "dependencies": {
+    "@distill/shared-types": "workspace:*",
+    "@prisma/client": "^5.20.0",
+    "@trpc/server": "^11.0.0-rc.0",
+    "ai": "^3.4.0",
+    "bullmq": "^5.13.0",
+    "chromadb": "^1.8.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "ioredis": "^5.4.0",
+    "openai": "^4.67.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.7.0",
+    "prisma": "^5.20.0",
+    "tsc-alias": "^1.8.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

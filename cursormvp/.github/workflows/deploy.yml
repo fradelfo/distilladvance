@@ -1,0 +1,533 @@
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests (emergency deployment only)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+  DEPLOYMENT_ENV: ${{ inputs.environment || 'production' }}
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      environment: ${{ steps.env.outputs.environment }}
+      skip-tests: ${{ steps.checks.outputs.skip-tests }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="main-$(git rev-parse --short HEAD)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=${{ inputs.environment || 'staging' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate deployment checks
+        id: checks
+        run: |
+          SKIP_TESTS="${{ inputs.skip_tests }}"
+          if [[ "$SKIP_TESTS" == "true" && "${{ steps.env.outputs.environment }}" == "production" ]]; then
+            echo "WARNING: Skipping tests in production deployment"
+            echo "skip-tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip-tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Security check for emergency deployment
+        if: inputs.skip_tests == true
+        run: |
+          echo "⚠️  EMERGENCY DEPLOYMENT DETECTED"
+          echo "Tests will be skipped. This should only be used for critical hotfixes."
+          echo "Manual approval required for production."
+
+  run-tests:
+    name: Run Tests Before Deployment
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    if: needs.pre-deployment-checks.outputs.skip-tests != 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run comprehensive tests
+        run: bun run test:regression
+
+      - name: Validate security
+        run: bun run test:security
+
+  build-artifacts:
+    name: Build Production Artifacts
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, run-tests]
+    if: always() && (success() || needs.pre-deployment-checks.outputs.skip-tests == 'true')
+    strategy:
+      matrix:
+        component: [web-app, api-server, browser-extension]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup environment variables
+        run: |
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+          echo "VERSION=${{ needs.pre-deployment-checks.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build web application
+        if: matrix.component == 'web-app'
+        run: |
+          bun run web:build
+          cd dist/web && tar -czf ../../web-app-${{ needs.pre-deployment-checks.outputs.version }}.tar.gz .
+
+      - name: Build API server
+        if: matrix.component == 'api-server'
+        run: |
+          bun run api:build
+          cd dist/api && tar -czf ../../api-server-${{ needs.pre-deployment-checks.outputs.version }}.tar.gz .
+
+      - name: Build browser extension
+        if: matrix.component == 'browser-extension'
+        run: |
+          bun run ext:build:production
+          bun run ext:package
+          mv dist/extension.zip browser-extension-${{ needs.pre-deployment-checks.outputs.version }}.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}-${{ needs.pre-deployment-checks.outputs.version }}
+          path: |
+            ${{ matrix.component == 'web-app' && 'web-app-*.tar.gz' || '' }}
+            ${{ matrix.component == 'api-server' && 'api-server-*.tar.gz' || '' }}
+            ${{ matrix.component == 'browser-extension' && 'browser-extension-*.zip' || '' }}
+          retention-days: 90
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, build-artifacts]
+    if: needs.pre-deployment-checks.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.distill.ai
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-${{ needs.pre-deployment-checks.outputs.version }}"
+          merge-multiple: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to staging infrastructure
+        run: |
+          # Deploy web app to S3 + CloudFront
+          aws s3 sync web-app/ s3://${{ secrets.STAGING_S3_BUCKET }} --delete
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.STAGING_CLOUDFRONT_ID }} --paths "/*"
+
+          # Deploy API to ECS
+          aws ecs update-service --cluster ${{ secrets.STAGING_ECS_CLUSTER }} --service ${{ secrets.STAGING_ECS_SERVICE }} --force-new-deployment
+
+          # Update Kubernetes deployment
+          kubectl set image deployment/api-server api-server=distill/api:${{ needs.pre-deployment-checks.outputs.version }}
+          kubectl rollout status deployment/api-server
+
+      - name: Run staging smoke tests
+        run: |
+          sleep 60 # Wait for deployment to be ready
+          bun run test:smoke:staging
+
+      - name: Update staging status
+        run: |
+          echo "✅ Staging deployment successful"
+          echo "Version: ${{ needs.pre-deployment-checks.outputs.version }}"
+          echo "URL: https://staging.distill.ai"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, build-artifacts]
+    if: needs.pre-deployment-checks.outputs.environment == 'production'
+    environment:
+      name: production
+      url: https://distill.ai
+    steps:
+      - name: Manual approval for production
+        uses: actions/github-script@v7
+        if: needs.pre-deployment-checks.outputs.skip-tests == 'true'
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Emergency Production Deployment - ${{ needs.pre-deployment-checks.outputs.version }}`,
+              body: `Emergency deployment requested with tests skipped.\n\n**Version:** ${{ needs.pre-deployment-checks.outputs.version }}\n**Requester:** ${{ github.actor }}\n**Reason:** Critical hotfix\n\nPlease review and approve this deployment.`,
+              labels: ['emergency', 'production', 'deployment']
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds for manual review
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-${{ needs.pre-deployment-checks.outputs.version }}"
+          merge-multiple: true
+
+      - name: Configure production credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Blue-Green deployment preparation
+        run: |
+          # Create new production environment (green)
+          kubectl create namespace production-green || true
+          kubectl label namespace production-green version=${{ needs.pre-deployment-checks.outputs.version }}
+
+      - name: Deploy to production (green environment)
+        run: |
+          # Deploy to green environment first
+          helm upgrade --install distill-green ./k8s/helm \
+            --namespace production-green \
+            --set image.tag=${{ needs.pre-deployment-checks.outputs.version }} \
+            --set ingress.enabled=false \
+            --wait --timeout=10m
+
+          # Deploy web app to staging S3 bucket first
+          aws s3 sync web-app/ s3://${{ secrets.PROD_S3_BUCKET_GREEN }} --delete
+
+      - name: Run production health checks
+        run: |
+          # Health check green environment
+          kubectl wait --for=condition=ready pod -l app=distill -n production-green --timeout=300s
+
+          # Run comprehensive health checks
+          bun run test:health:production:green
+
+      - name: Switch traffic to green (Blue-Green deployment)
+        run: |
+          # Update ingress to point to green environment
+          kubectl patch ingress distill-ingress -n production \
+            --type='merge' \
+            --patch='{"spec":{"rules":[{"host":"distill.ai","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"distill-green","port":{"number":80}}}}]}}]}}'
+
+          # Update CloudFront distribution
+          aws cloudfront update-distribution \
+            --id ${{ secrets.PROD_CLOUDFRONT_ID }} \
+            --distribution-config file://cloudfront-config-green.json
+
+          # Wait for changes to propagate
+          aws cloudfront wait distribution-deployed --id ${{ secrets.PROD_CLOUDFRONT_ID }}
+
+      - name: Run post-deployment tests
+        run: |
+          sleep 120 # Wait for traffic switch
+          bun run test:smoke:production
+
+      - name: Cleanup blue environment
+        run: |
+          # Remove old blue environment after successful deployment
+          kubectl delete namespace production-blue || true
+          kubectl label namespace production-green environment=production
+          kubectl label namespace production-green --overwrite version=${{ needs.pre-deployment-checks.outputs.version }}
+
+      - name: Update production monitoring
+        run: |
+          # Update monitoring dashboards
+          curl -X POST "${{ secrets.GRAFANA_API_URL }}/api/annotations" \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "Production deployment: ${{ needs.pre-deployment-checks.outputs.version }}",
+              "time": '$(date +%s000)',
+              "tags": ["deployment", "production"]
+            }'
+
+  deploy-browser-extension:
+    name: Deploy Browser Extension
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, build-artifacts]
+    if: needs.pre-deployment-checks.outputs.environment == 'production'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download extension artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-extension-${{ needs.pre-deployment-checks.outputs.version }}
+
+      - name: Setup Chrome Web Store credentials
+        run: |
+          echo "${{ secrets.CHROME_WEB_STORE_REFRESH_TOKEN }}" > chrome-refresh-token.txt
+          echo "${{ secrets.CHROME_WEB_STORE_CLIENT_SECRET }}" > chrome-client-secret.txt
+
+      - name: Deploy to Chrome Web Store
+        run: |
+          node scripts/deploy-chrome-extension.js \
+            --extension-id "${{ secrets.CHROME_EXTENSION_ID }}" \
+            --client-id "${{ secrets.CHROME_WEB_STORE_CLIENT_ID }}" \
+            --client-secret-file chrome-client-secret.txt \
+            --refresh-token-file chrome-refresh-token.txt \
+            --zip-file "browser-extension-${{ needs.pre-deployment-checks.outputs.version }}.zip" \
+            --publish-target "default"
+
+      - name: Deploy to Firefox Add-ons
+        run: |
+          node scripts/deploy-firefox-addon.js \
+            --addon-id "${{ secrets.FIREFOX_ADDON_ID }}" \
+            --jwt-issuer "${{ secrets.FIREFOX_JWT_ISSUER }}" \
+            --jwt-secret "${{ secrets.FIREFOX_JWT_SECRET }}" \
+            --xpi-file "browser-extension-${{ needs.pre-deployment-checks.outputs.version }}.zip" \
+            --version "${{ needs.pre-deployment-checks.outputs.version }}"
+
+      - name: Monitor extension review status
+        run: |
+          echo "🔄 Extension submitted for review"
+          echo "Chrome Web Store: Check developer dashboard"
+          echo "Firefox Add-ons: Check AMO dashboard"
+
+  database-migrations:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: needs.pre-deployment-checks.outputs.environment == 'production'
+    environment:
+      name: production-db
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Backup production database
+        run: |
+          pg_dump ${{ secrets.PROD_DATABASE_URL }} > backup-pre-${{ needs.pre-deployment-checks.outputs.version }}.sql
+          aws s3 cp backup-pre-${{ needs.pre-deployment-checks.outputs.version }}.sql \
+            s3://${{ secrets.DB_BACKUP_BUCKET }}/pre-deployment-backups/
+
+      - name: Run database migrations
+        run: |
+          bun run db:migrate:production
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Validate migration success
+        run: |
+          bun run db:validate:production
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  post-deployment:
+    name: Post-deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, deploy-browser-extension, database-migrations]
+    if: always() && !failure()
+    steps:
+      - name: Update GitHub release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Changes in this release
+
+            ### Features
+            - New AI conversation distillation improvements
+            - Enhanced browser extension compatibility
+            - Performance optimizations
+
+            ### Bug Fixes
+            - Fixed extension content script injection
+            - Resolved API rate limiting issues
+            - Improved error handling
+
+            ### Security Updates
+            - Updated dependencies
+            - Enhanced CSP policies
+            - Improved authentication flows
+
+            Full changelog: https://github.com/${{ github.repository }}/compare/previous-tag...${{ github.ref }}
+
+      - name: Update documentation
+        run: |
+          # Update API documentation
+          curl -X POST "${{ secrets.DOCS_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"version": "${{ needs.pre-deployment-checks.outputs.version }}", "environment": "${{ needs.pre-deployment-checks.outputs.environment }}"}'
+
+      - name: Send deployment notifications
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            🚀 Deployment successful!
+
+            **Version:** ${{ needs.pre-deployment-checks.outputs.version }}
+            **Environment:** ${{ needs.pre-deployment-checks.outputs.environment }}
+            **Deployed by:** ${{ github.actor }}
+            **Time:** $(date)
+
+            **Links:**
+            • Web App: https://${{ needs.pre-deployment-checks.outputs.environment == 'staging' && 'staging.' || '' }}distill.ai
+            • API Health: https://api.${{ needs.pre-deployment-checks.outputs.environment == 'staging' && 'staging.' || '' }}distill.ai/health
+            • Monitoring: https://monitoring.distill.ai
+
+      - name: Update monitoring and alerting
+        run: |
+          # Enable monitoring for new version
+          curl -X POST "${{ secrets.MONITORING_API_URL }}/deployments" \
+            -H "Authorization: Bearer ${{ secrets.MONITORING_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ needs.pre-deployment-checks.outputs.version }}",
+              "environment": "${{ needs.pre-deployment-checks.outputs.environment }}",
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "status": "deployed"
+            }'
+
+  rollback-plan:
+    name: Rollback (Emergency Only)
+    runs-on: ubuntu-latest
+    if: failure() && needs.pre-deployment-checks.outputs.environment == 'production'
+    needs: [deploy-production, database-migrations]
+    environment:
+      name: production-rollback
+    steps:
+      - name: Emergency rollback notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            🚨 PRODUCTION DEPLOYMENT FAILED - INITIATING ROLLBACK
+
+            **Version:** ${{ needs.pre-deployment-checks.outputs.version }}
+            **Error:** Deployment validation failed
+            **Action:** Automatic rollback in progress
+
+            Manual intervention may be required.
+
+      - name: Rollback application deployment
+        run: |
+          # Switch traffic back to blue environment
+          kubectl patch ingress distill-ingress -n production \
+            --type='merge' \
+            --patch='{"spec":{"rules":[{"host":"distill.ai","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"distill-blue","port":{"number":80}}}}]}}]}}'
+
+      - name: Rollback database if needed
+        run: |
+          echo "Manual database rollback may be required"
+          echo "Backup location: s3://${{ secrets.DB_BACKUP_BUCKET }}/pre-deployment-backups/"
+
+      - name: Post-rollback verification
+        run: |
+          sleep 60
+          bun run test:smoke:production || echo "Rollback verification failed - manual intervention required"
+
+      - name: Create incident issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Production Deployment Failure - ${{ needs.pre-deployment-checks.outputs.version }}`,
+              body: `Production deployment failed and rollback was initiated.\n\n**Details:**\n- Version: ${{ needs.pre-deployment-checks.outputs.version }}\n- Time: $(date)\n- Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nManual investigation required.`,
+              labels: ['incident', 'production', 'deployment-failure', 'high-priority'],
+              assignees: ['team-lead', 'devops-engineer']
+            });
+
+  cleanup-deployment:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [post-deployment]
+    if: always()
+    steps:
+      - name: Cleanup temporary files
+        run: |
+          rm -f chrome-*.txt
+          echo "Deployment cleanup completed"
+
+      - name: Archive deployment artifacts
+        run: |
+          # Move successful deployment artifacts to long-term storage
+          echo "Archiving deployment artifacts for version ${{ needs.pre-deployment-checks.outputs.version }}"

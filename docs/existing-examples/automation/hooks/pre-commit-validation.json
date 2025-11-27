@@ -1,0 +1,237 @@
+{
+  "name": "pre-commit-validation",
+  "description": "Comprehensive pre-commit validation ensuring code quality and standards compliance",
+  "version": "1.0.0",
+  "trigger": "before_tool_call",
+  "enabled": true,
+  "conditions": {
+    "tools": ["Edit", "Write"],
+    "file_patterns": [
+      "src/**/*.js",
+      "src/**/*.ts",
+      "src/**/*.jsx",
+      "src/**/*.tsx",
+      "src/**/*.py",
+      "src/**/*.go",
+      "src/**/*.rs",
+      "src/**/*.java",
+      "lib/**/*.js",
+      "lib/**/*.ts",
+      "components/**/*.js",
+      "components/**/*.ts",
+      "components/**/*.jsx",
+      "components/**/*.tsx"
+    ],
+    "path_excludes": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      "*.min.js",
+      "*.bundle.js"
+    ],
+    "file_size_max": "5MB",
+    "git_status": ["modified", "added"]
+  },
+  "actions": [
+    {
+      "name": "format-check",
+      "description": "Check code formatting with Prettier",
+      "command": "npx prettier --check ${MODIFIED_FILES}",
+      "timeout": 30,
+      "required": true,
+      "continue_on_failure": false,
+      "auto_fix": {
+        "enabled": true,
+        "command": "npx prettier --write ${MODIFIED_FILES}",
+        "confirm": false
+      },
+      "success_message": "✅ Code formatting is correct",
+      "failure_message": "❌ Code formatting issues found - auto-fixing..."
+    },
+    {
+      "name": "lint-check",
+      "description": "Run ESLint for code quality and standards",
+      "command": "npx eslint ${MODIFIED_FILES} --ext .js,.ts,.jsx,.tsx",
+      "timeout": 60,
+      "required": true,
+      "continue_on_failure": false,
+      "auto_fix": {
+        "enabled": true,
+        "command": "npx eslint ${MODIFIED_FILES} --ext .js,.ts,.jsx,.tsx --fix",
+        "confirm": true,
+        "confirm_message": "ESLint found fixable issues. Apply automatic fixes?"
+      },
+      "success_message": "✅ Linting passed",
+      "failure_message": "❌ Linting issues found",
+      "depends_on": ["format-check"]
+    },
+    {
+      "name": "type-check",
+      "description": "TypeScript type checking",
+      "command": "npx tsc --noEmit --skipLibCheck",
+      "timeout": 120,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": ["**/*.ts", "**/*.tsx"],
+        "project_files": ["tsconfig.json"]
+      },
+      "success_message": "✅ TypeScript type checking passed",
+      "failure_message": "❌ TypeScript type errors found",
+      "depends_on": ["lint-check"]
+    },
+    {
+      "name": "unit-tests",
+      "description": "Run unit tests for affected files",
+      "command": "npm run test:affected -- --findRelatedTests ${MODIFIED_FILES} --passWithNoTests --silent",
+      "timeout": 180,
+      "required": false,
+      "continue_on_failure": true,
+      "async": true,
+      "conditions": {
+        "project_files": ["jest.config.js", "jest.config.ts", "package.json"],
+        "script_exists": "test:affected"
+      },
+      "success_message": "✅ Unit tests passed",
+      "failure_message": "⚠️ Some unit tests failed - review test output",
+      "depends_on": ["type-check"]
+    },
+    {
+      "name": "security-scan",
+      "description": "Security vulnerability scanning",
+      "command": "npx audit-ci --moderate",
+      "timeout": 60,
+      "required": false,
+      "continue_on_failure": true,
+      "async": true,
+      "conditions": {
+        "project_files": ["package.json", "package-lock.json", "yarn.lock"]
+      },
+      "success_message": "✅ No security vulnerabilities found",
+      "failure_message": "⚠️ Security vulnerabilities detected - review and update dependencies"
+    }
+  ],
+  "notifications": {
+    "success": {
+      "message": "🎉 All pre-commit validation checks passed! Code is ready for commit.",
+      "channels": ["console"]
+    },
+    "failure": {
+      "message": "💥 Pre-commit validation failed. Please fix the issues above before proceeding.",
+      "channels": ["console"],
+      "include_logs": true
+    },
+    "partial_success": {
+      "message": "⚠️ Some non-critical checks failed but commit can proceed. Consider reviewing warnings.",
+      "channels": ["console"]
+    }
+  },
+  "failure_action": "block",
+  "retry": {
+    "enabled": true,
+    "max_attempts": 2,
+    "retry_on": ["timeout", "non_zero_exit"]
+  },
+  "environment": {
+    "NODE_ENV": "test",
+    "CI": "true",
+    "FORCE_COLOR": "1"
+  },
+  "cache": {
+    "enabled": true,
+    "key_template": "pre-commit-${GIT_COMMIT_HASH}-${MODIFIED_FILES_HASH}",
+    "ttl": 3600
+  },
+  "metrics": {
+    "collect": true,
+    "track": [
+      "execution_time",
+      "success_rate",
+      "failure_types",
+      "auto_fix_rate"
+    ]
+  },
+  "customization": {
+    "python": {
+      "actions": [
+        {
+          "name": "python-format",
+          "command": "black --check ${MODIFIED_FILES}",
+          "auto_fix": {
+            "command": "black ${MODIFIED_FILES}"
+          }
+        },
+        {
+          "name": "python-lint",
+          "command": "flake8 ${MODIFIED_FILES}"
+        },
+        {
+          "name": "python-type-check",
+          "command": "mypy ${MODIFIED_FILES}"
+        }
+      ]
+    },
+    "go": {
+      "actions": [
+        {
+          "name": "go-format",
+          "command": "gofmt -l ${MODIFIED_FILES}",
+          "auto_fix": {
+            "command": "gofmt -w ${MODIFIED_FILES}"
+          }
+        },
+        {
+          "name": "go-lint",
+          "command": "golangci-lint run ${MODIFIED_FILES}"
+        },
+        {
+          "name": "go-test",
+          "command": "go test ./... -short"
+        }
+      ]
+    },
+    "rust": {
+      "actions": [
+        {
+          "name": "rust-format",
+          "command": "cargo fmt --check",
+          "auto_fix": {
+            "command": "cargo fmt"
+          }
+        },
+        {
+          "name": "rust-lint",
+          "command": "cargo clippy -- -D warnings"
+        },
+        {
+          "name": "rust-test",
+          "command": "cargo test"
+        }
+      ]
+    }
+  },
+  "documentation": {
+    "description": "This hook runs comprehensive validation before any code changes are made. It includes formatting, linting, type checking, testing, and security scanning to maintain high code quality standards.",
+    "requirements": [
+      "Node.js and npm installed",
+      "Prettier and ESLint configured",
+      "TypeScript for type checking (if using TypeScript)",
+      "Jest or similar test framework",
+      "audit-ci for security scanning"
+    ],
+    "configuration": {
+      "customize_file_patterns": "Update file_patterns array to match your project structure",
+      "adjust_timeouts": "Modify timeout values based on your project size",
+      "enable_auto_fix": "Set auto_fix.enabled to true for automatic issue resolution",
+      "configure_notifications": "Customize notification channels and messages"
+    },
+    "troubleshooting": {
+      "timeout_issues": "Increase timeout values for large projects or slow systems",
+      "permission_errors": "Ensure Claude Code has necessary file permissions",
+      "tool_not_found": "Verify all required tools are installed and in PATH",
+      "false_positives": "Add specific files or patterns to path_excludes"
+    }
+  }
+}

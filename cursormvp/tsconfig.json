@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@distill/shared/*": ["app/packages/shared-types/src/*"],
+      "@distill/extension/*": ["app/packages/browser-extension/src/*"],
+      "@distill/web/*": ["app/packages/web-app/src/*"],
+      "@distill/api/*": ["app/packages/api/src/*"]
+    }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "tests/**/*.ts"],
+  "exclude": ["node_modules", "**/dist/**", "**/*.test.ts"]
+}

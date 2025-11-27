@@ -1,0 +1,325 @@
+{
+  "projectMetadata": {
+    "name": "distill",
+    "type": "browser-extension-ai-webapp",
+    "description": "AI-powered browser extension for chat conversation distillation with web application backend",
+    "version": "1.0.0",
+    "architecture": "browser-extension + web-app + ai-backend",
+    "primaryTechnologies": [
+      "TypeScript",
+      "React",
+      "Chrome Extension APIs",
+      "OpenAI/Anthropic APIs",
+      "Node.js",
+      "Vector Databases"
+    ]
+  },
+
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(src/**)",
+      "Edit(app/**)",
+      "Edit(tests/**)",
+      "Edit(docs/**)",
+      "Edit(*.md)",
+      "Edit(*.json)",
+      "Edit(*.ts)",
+      "Edit(*.tsx)",
+      "Edit(*.js)",
+      "Edit(*.jsx)",
+      "Edit(*.css)",
+      "Edit(*.html)",
+      "Edit(package.json)",
+      "Edit(manifest.json)",
+      "Edit(tsconfig.json)",
+      "Edit(.github/workflows/**)",
+      "Edit(.vscode/**)",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(bun *)",
+      "Bash(git *)",
+      "Bash(node *)",
+      "Bash(npx *)",
+      "Bash(bunx *)",
+      "Bash(docker *)",
+      "Bash(kubectl *)",
+      "Bash(python *)",
+      "Bash(pip *)",
+      "Bash(pytest *)",
+      "Bash(web-ext *)",
+      "Bash(chromium *)",
+      "Bash(playwright *)",
+      "Write(src/**)",
+      "Write(app/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Write(scripts/**)",
+      "Write(.github/**)",
+      "Write(k8s/**)",
+      "Write(deployment/**)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(.secrets*)",
+      "Read(**/secrets/**)",
+      "Read(**/*secret*)",
+      "Read(**/*key*)",
+      "Read(**/*password*)",
+      "Edit(.env*)",
+      "Edit(.secrets*)",
+      "Edit(.claude/settings.json)",
+      "Edit(.claude/config.json)",
+      "Edit(node_modules/**)",
+      "Edit(.git/**)",
+      "Edit(dist/**)",
+      "Edit(build/**)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(chmod +x *)",
+      "Bash(*; rm *)",
+      "Bash(* && rm *)"
+    ]
+  },
+
+  "model": "sonnet",
+  "modelPreferences": {
+    "default": "sonnet",
+    "quickTasks": "haiku",
+    "complexReasoning": "sonnet",
+    "codeGeneration": "sonnet",
+    "documentation": "haiku",
+    "architecture": "sonnet",
+    "security": "sonnet"
+  },
+
+  "env": {
+    "NODE_ENV": "development",
+    "PROJECT_TYPE": "browser-extension-ai-webapp",
+    "BROWSER_TARGET": "chrome",
+    "AI_PROVIDER": "anthropic",
+    "VECTOR_DB": "chroma",
+    "DEPLOYMENT_ENV": "development"
+  },
+
+  "browserExtensionConfig": {
+    "manifestVersion": 3,
+    "targetBrowsers": ["chrome", "firefox", "edge"],
+    "contentScripts": {
+      "supportedSites": [
+        "chat.openai.com",
+        "claude.ai",
+        "gemini.google.com",
+        "perplexity.ai"
+      ],
+      "injectionStrategy": "dynamic",
+      "isolationLevel": "shadow-dom"
+    },
+    "permissions": {
+      "required": ["storage", "activeTab"],
+      "optional": ["tabs", "cookies"],
+      "hostPermissions": ["*://chat.openai.com/*", "*://claude.ai/*"]
+    },
+    "securityPolicy": {
+      "csp": "script-src 'self'; object-src 'none';",
+      "permissions": "minimal",
+      "dataHandling": "privacy-first"
+    }
+  },
+
+  "aiConfiguration": {
+    "providers": {
+      "anthropic": {
+        "models": ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"],
+        "defaultModel": "claude-3-5-sonnet-20241022",
+        "maxTokens": 4000,
+        "temperature": 0.3
+      },
+      "openai": {
+        "models": ["gpt-4o", "gpt-4o-mini", "text-embedding-3-large"],
+        "defaultModel": "gpt-4o",
+        "maxTokens": 4000,
+        "temperature": 0.3
+      }
+    },
+    "promptEngineering": {
+      "caching": "enabled",
+      "optimization": "cost-aware",
+      "safety": "strict"
+    },
+    "vectorDatabase": {
+      "provider": "chroma",
+      "dimensions": 3072,
+      "distance": "cosine",
+      "collections": ["prompts", "conversations", "templates"]
+    }
+  },
+
+  "developmentEnvironment": {
+    "packageManager": "bun",
+    "nodeVersion": "20+",
+    "typescript": {
+      "version": "5.2+",
+      "strict": true,
+      "experimental": ["decorators"]
+    },
+    "testing": {
+      "unit": "vitest",
+      "e2e": "playwright",
+      "extension": "web-ext",
+      "coverage": "c8"
+    },
+    "buildTools": {
+      "bundler": "vite",
+      "linter": "biome",
+      "formatter": "biome",
+      "typeChecker": "tsc"
+    }
+  },
+
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "features": ["issues", "prs", "actions", "releases"]
+    },
+    "slack": {
+      "enabled": false,
+      "channels": ["#dev-notifications", "#deployments"]
+    },
+    "monitoring": {
+      "errorTracking": "sentry",
+      "analytics": "posthog",
+      "performance": "web-vitals"
+    }
+  },
+
+  "qualityGates": {
+    "codeReview": {
+      "required": true,
+      "minApprovals": 1,
+      "securityReview": "auto"
+    },
+    "testing": {
+      "unitCoverage": 80,
+      "e2eCoverage": 70,
+      "performanceBudget": {
+        "bundleSize": "500KB",
+        "loadTime": "2s"
+      }
+    },
+    "security": {
+      "vulnerabilityScanning": "required",
+      "dependencyAudit": "weekly",
+      "licenseCompliance": "strict"
+    }
+  },
+
+  "deployment": {
+    "environments": ["development", "staging", "production"],
+    "strategies": {
+      "webApp": "blue-green",
+      "extension": "gradual-rollout"
+    },
+    "stores": {
+      "chrome": {
+        "enabled": true,
+        "autoPublish": false
+      },
+      "firefox": {
+        "enabled": true,
+        "autoPublish": false
+      },
+      "edge": {
+        "enabled": false,
+        "autoPublish": false
+      }
+    }
+  },
+
+  "teamSettings": {
+    "roles": {
+      "frontend": {
+        "permissions": "frontend-focused",
+        "agents": ["frontend", "quality"]
+      },
+      "backend": {
+        "permissions": "backend-focused",
+        "agents": ["platform-agent", "devops"]
+      },
+      "fullstack": {
+        "permissions": "full-access",
+        "agents": ["frontend", "platform-agent", "devops", "quality"]
+      },
+      "lead": {
+        "permissions": "architecture-access",
+        "agents": ["tech-lead", "security", "code-reviewer"]
+      }
+    },
+    "workflowPreferences": {
+      "defaultWorkflow": "feature-development",
+      "codeReview": "required",
+      "testing": "comprehensive",
+      "deployment": "automated"
+    }
+  },
+
+  "costManagement": {
+    "aiUsage": {
+      "dailyBudget": 50,
+      "monthlyBudget": 1000,
+      "alertThreshold": 0.8
+    },
+    "infrastructure": {
+      "environment": "development",
+      "autoScaling": "enabled",
+      "costOptimization": "standard"
+    }
+  },
+
+  "observability": {
+    "logging": {
+      "level": "info",
+      "format": "structured",
+      "retention": "30d"
+    },
+    "metrics": {
+      "performance": "enabled",
+      "usage": "enabled",
+      "errors": "enabled"
+    },
+    "alerts": {
+      "channels": ["email", "slack"],
+      "severity": ["error", "critical"]
+    }
+  },
+
+  "extensions": [
+    {
+      "name": "github-integration",
+      "enabled": true,
+      "config": {
+        "repositories": ["organization/*"],
+        "features": ["issues", "prs", "actions"]
+      }
+    },
+    {
+      "name": "mcp-postgresql",
+      "enabled": false,
+      "config": {
+        "connectionString": "${DATABASE_URL}",
+        "schema": "public"
+      }
+    }
+  ],
+
+  "statusLine": "🚀 Distill Extension + AI Dev Mode",
+
+  "workspaceSettings": {
+    "autoSave": true,
+    "formatOnSave": true,
+    "lintOnSave": true,
+    "autoImport": true
+  },
+
+  "notes": "Comprehensive settings for browser extension + AI web application development. Configured for Distill project with modern tooling, security-first approach, and multi-agent coordination support."
+}

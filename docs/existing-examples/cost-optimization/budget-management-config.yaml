@@ -1,0 +1,510 @@
+# Budget Management Configuration for Claude Code Enterprise
+# Hierarchical budget setup with automated controls and approval workflows
+
+name: "Enterprise Budget Management Configuration"
+version: "1.0.0"
+description: "Multi-level budget hierarchy with automated controls, alerts, and approval workflows"
+last_updated: "2024-01-15T00:00:00Z"
+
+# Global Budget Settings
+global_settings:
+  fiscal_year_start: "2024-01-01"
+  currency: "USD"
+  timezone: "UTC"
+  budget_period: "monthly"
+  rollover_policy: "no_rollover"  # Options: no_rollover, partial_rollover, full_rollover
+  variance_tolerance: 5  # Percentage variance allowed before alerts
+
+# Budget Hierarchy Definition
+budget_hierarchy:
+  enterprise_level:
+    name: "Enterprise Total Budget"
+    annual_budget: 6000000
+    monthly_budget: 500000
+    quarterly_budget: 1500000
+
+    # Reserve funds for contingencies
+    reserve_fund:
+      percentage: 10
+      amount: 50000  # Monthly reserve
+      usage_requires_approval: true
+      approvers: ["cfo", "cto"]
+      max_reserve_usage_per_month: 25000
+
+  # Business Unit Level Budgets
+  business_units:
+    engineering:
+      name: "Engineering Division"
+      budget_allocation:
+        percentage_of_total: 60
+        monthly_amount: 300000
+        quarterly_amount: 900000
+        annual_amount: 3600000
+
+      budget_manager: "vp.engineering@company.com"
+      cost_center: "CC_ENG_001"
+
+      # Sub-allocation to departments
+      departments:
+        platform_engineering:
+          percentage: 30
+          monthly_budget: 90000
+          manager: "platform.director@company.com"
+          cost_center: "CC_PLAT_001"
+
+          teams:
+            devops_team:
+              percentage: 40
+              monthly_budget: 36000
+              team_lead: "devops.lead@company.com"
+              approval_threshold: 1000  # Dollar amount requiring approval
+
+            infrastructure_team:
+              percentage: 35
+              monthly_budget: 31500
+              team_lead: "infra.lead@company.com"
+              approval_threshold: 1000
+
+            security_team:
+              percentage: 25
+              monthly_budget: 22500
+              team_lead: "security.lead@company.com"
+              approval_threshold: 500  # Lower threshold for security
+              enhanced_monitoring: true
+
+        product_engineering:
+          percentage: 50
+          monthly_budget: 150000
+          manager: "product.director@company.com"
+          cost_center: "CC_PROD_001"
+
+          teams:
+            frontend_teams:
+              percentage: 35
+              monthly_budget: 52500
+              team_count: 3
+              budget_per_team: 17500
+
+            backend_teams:
+              percentage: 45
+              monthly_budget: 67500
+              team_count: 4
+              budget_per_team: 16875
+
+            mobile_teams:
+              percentage: 20
+              monthly_budget: 30000
+              team_count: 2
+              budget_per_team: 15000
+
+        qa_engineering:
+          percentage: 20
+          monthly_budget: 60000
+          manager: "qa.director@company.com"
+          cost_center: "CC_QA_001"
+
+    data_science:
+      name: "Data Science Division"
+      budget_allocation:
+        percentage_of_total: 20
+        monthly_amount: 100000
+        quarterly_amount: 300000
+        annual_amount: 1200000
+
+      budget_manager: "chief.data.officer@company.com"
+      cost_center: "CC_DATA_001"
+
+      # Project-based allocation for data science
+      projects:
+        machine_learning_platform:
+          monthly_budget: 40000
+          project_manager: "ml.lead@company.com"
+          duration_months: 12
+
+        data_analytics_tools:
+          monthly_budget: 25000
+          project_manager: "analytics.lead@company.com"
+          duration_months: 6
+
+        research_experiments:
+          monthly_budget: 35000
+          project_manager: "research.lead@company.com"
+          flexible_allocation: true
+
+    product_management:
+      name: "Product Management Division"
+      budget_allocation:
+        percentage_of_total: 10
+        monthly_amount: 50000
+        quarterly_amount: 150000
+        annual_amount: 600000
+
+      budget_manager: "chief.product.officer@company.com"
+      cost_center: "CC_PM_001"
+
+    sales_marketing:
+      name: "Sales & Marketing Division"
+      budget_allocation:
+        percentage_of_total: 5
+        monthly_amount: 25000
+        quarterly_amount: 75000
+        annual_amount: 300000
+
+      budget_manager: "vp.sales@company.com"
+      cost_center: "CC_SALES_001"
+
+    other:
+      name: "Other Departments"
+      budget_allocation:
+        percentage_of_total: 5
+        monthly_amount: 25000
+        quarterly_amount: 75000
+        annual_amount: 300000
+
+      budget_manager: "finance.director@company.com"
+      cost_center: "CC_OTHER_001"
+
+# Budget Controls and Enforcement
+budget_controls:
+  # Threshold-based controls
+  thresholds:
+    soft_limit:
+      percentage: 80  # Warning at 80% of budget
+      actions:
+        - send_notification
+        - increase_monitoring_frequency
+        - require_justification_for_large_expenses
+      notification_channels:
+        - email
+        - slack
+      recipients:
+        - budget_manager
+        - team_leads
+
+    hard_limit:
+      percentage: 95  # Hard stop at 95% of budget
+      actions:
+        - restrict_usage
+        - require_approval_for_all_requests
+        - escalate_to_management
+      notification_channels:
+        - email
+        - slack
+        - phone
+        - incident_management
+      recipients:
+        - budget_manager
+        - department_head
+        - finance_team
+        - executive_team
+
+    critical_limit:
+      percentage: 100  # Budget exhausted
+      actions:
+        - stop_all_usage
+        - emergency_approval_required
+        - executive_intervention
+      notification_channels:
+        - email
+        - slack
+        - phone
+        - incident_management
+        - board_notification
+      recipients:
+        - all_stakeholders
+
+  # Time-based controls
+  time_based_limits:
+    daily_burn_rate:
+      max_percentage_of_monthly: 5  # Maximum 5% of monthly budget per day
+      monitoring_window: "24h"
+      alert_threshold: 7  # Alert if exceeding 7% in a day
+
+    weekly_burn_rate:
+      max_percentage_of_monthly: 25  # Maximum 25% of monthly budget per week
+      monitoring_window: "7d"
+      alert_threshold: 30  # Alert if exceeding 30% in a week
+
+    monthly_tracking:
+      mid_month_checkpoint: 50  # Expected 50% usage by mid-month
+      variance_tolerance: 15  # ±15% variance acceptable
+      reforecasting_trigger: 20  # Reforecast if >20% variance
+
+# Approval Workflows
+approval_workflows:
+  budget_modification:
+    increase_request:
+      triggers:
+        - budget_exhaustion_projected
+        - new_project_requirements
+        - business_critical_needs
+
+      approval_matrix:
+        amount_0_to_10000:
+          approvers: ["budget_manager"]
+          approval_time_sla: "4_hours"
+          auto_approve_if_reserve_available: true
+
+        amount_10001_to_50000:
+          approvers: ["budget_manager", "department_head"]
+          approval_time_sla: "24_hours"
+          business_justification_required: true
+
+        amount_50001_to_100000:
+          approvers: ["budget_manager", "department_head", "finance_director"]
+          approval_time_sla: "48_hours"
+          detailed_business_case_required: true
+          impact_analysis_required: true
+
+        amount_above_100000:
+          approvers: ["budget_manager", "department_head", "finance_director", "cfo"]
+          approval_time_sla: "5_business_days"
+          executive_committee_review: true
+          board_notification: true
+
+  emergency_procedures:
+    business_critical_override:
+      conditions:
+        - production_outage
+        - security_incident_response
+        - regulatory_compliance_urgent
+        - customer_escalation_critical
+
+      emergency_approvers:
+        - on_call_manager
+        - finance_director_or_delegate
+
+      time_limits:
+        initial_approval: "2_hours"
+        formal_ratification: "48_hours"
+
+      audit_requirements:
+        - incident_documentation
+        - cost_impact_assessment
+        - lessons_learned_report
+        - process_improvement_plan
+
+# Budget Monitoring and Alerting
+monitoring:
+  # Real-time monitoring
+  real_time_tracking:
+    enabled: true
+    update_frequency: "5_minutes"
+    metrics:
+      - current_spend
+      - burn_rate
+      - projected_month_end
+      - budget_utilization_percentage
+      - variance_from_plan
+
+  # Automated alerting
+  alerting_rules:
+    budget_threshold_alerts:
+      - name: "Budget Warning - 80%"
+        condition: "budget_utilization >= 80"
+        severity: "warning"
+        notification_delay: "0_minutes"
+        escalation_timer: "2_hours"
+
+      - name: "Budget Critical - 95%"
+        condition: "budget_utilization >= 95"
+        severity: "critical"
+        notification_delay: "0_minutes"
+        escalation_timer: "30_minutes"
+
+      - name: "Budget Exceeded"
+        condition: "budget_utilization > 100"
+        severity: "emergency"
+        notification_delay: "0_minutes"
+        immediate_escalation: true
+
+    usage_pattern_alerts:
+      - name: "High Burn Rate"
+        condition: "daily_spend > monthly_budget / 30 * 1.5"
+        severity: "warning"
+        lookback_period: "24_hours"
+
+      - name: "Unusual Spike"
+        condition: "hourly_spend > avg_hourly_spend_7d * 3"
+        severity: "info"
+        lookback_period: "1_hour"
+
+# Reporting and Analytics
+reporting:
+  # Automated reports
+  scheduled_reports:
+    daily_budget_status:
+      enabled: true
+      schedule: "0 9 * * *"  # 9 AM daily
+      recipients:
+        - budget_managers
+      content:
+        - current_spend
+        - burn_rate_analysis
+        - projected_month_end
+        - alerts_summary
+
+    weekly_variance_report:
+      enabled: true
+      schedule: "0 9 * * 1"  # 9 AM Mondays
+      recipients:
+        - department_heads
+        - finance_team
+      content:
+        - budget_vs_actual
+        - variance_analysis
+        - trend_forecasting
+        - optimization_recommendations
+
+    monthly_comprehensive_report:
+      enabled: true
+      schedule: "0 9 1 * *"  # 9 AM first day of month
+      recipients:
+        - executive_team
+        - board_members
+      content:
+        - full_budget_analysis
+        - roi_metrics
+        - efficiency_analysis
+        - strategic_recommendations
+
+  # On-demand analytics
+  analytics_capabilities:
+    cost_attribution:
+      - by_user
+      - by_team
+      - by_project
+      - by_business_unit
+      - by_model_type
+      - by_feature_usage
+
+    trend_analysis:
+      - historical_spending_patterns
+      - seasonal_variations
+      - growth_projections
+      - efficiency_trends
+
+    predictive_analytics:
+      - budget_exhaustion_forecasting
+      - usage_pattern_prediction
+      - optimization_opportunity_identification
+      - risk_assessment
+
+# Integration Configuration
+integrations:
+  # Financial systems
+  financial_systems:
+    erp_system:
+      type: "SAP"
+      endpoint: "https://sap.company.com/api"
+      sync_frequency: "daily"
+      data_mapping:
+        cost_center: "sap_cost_center_field"
+        budget_code: "sap_budget_code_field"
+        expense_category: "sap_expense_category"
+
+    procurement_system:
+      type: "Ariba"
+      endpoint: "https://ariba.company.com/api"
+      approval_integration: true
+      purchase_order_automation: true
+
+  # Notification systems
+  notification_systems:
+    email:
+      smtp_server: "smtp.company.com"
+      authentication: "oauth2"
+      templates_path: "/config/email_templates"
+
+    slack:
+      webhook_url: "https://hooks.slack.com/services/..."
+      channels:
+        budget_alerts: "#finance-alerts"
+        management_updates: "#management-updates"
+        emergency_notifications: "#emergency-response"
+
+    incident_management:
+      pagerduty:
+        integration_key: "PAGERDUTY_INTEGRATION_KEY"
+        service_id: "PAGERDUTY_SERVICE_ID"
+
+# Audit and Compliance
+audit_configuration:
+  audit_logging:
+    enabled: true
+    retention_period: "7_years"
+    log_events:
+      - budget_modifications
+      - approval_actions
+      - threshold_breaches
+      - emergency_overrides
+      - system_configuration_changes
+
+  compliance_requirements:
+    sox_compliance:
+      enabled: true
+      segregation_of_duties: true
+      approval_trail_required: true
+      automated_controls_documentation: true
+
+    internal_audit:
+      monthly_reconciliation: true
+      variance_investigation_threshold: 1000  # Investigate variances >$1000
+      approval_audit_sampling: 10  # Audit 10% of approvals
+
+# Security Configuration
+security:
+  access_control:
+    role_based_permissions:
+      budget_viewer:
+        - view_budget_status
+        - view_spending_reports
+
+      budget_manager:
+        - view_budget_status
+        - modify_team_budgets
+        - approve_small_increases
+        - generate_reports
+
+      department_head:
+        - all_budget_manager_permissions
+        - approve_medium_increases
+        - reallocate_department_budgets
+        - access_predictive_analytics
+
+      finance_director:
+        - all_department_head_permissions
+        - approve_large_increases
+        - modify_global_settings
+        - access_audit_logs
+
+      executive:
+        - full_system_access
+        - emergency_overrides
+        - policy_modifications
+        - strategic_analytics
+
+  data_protection:
+    encryption_at_rest: true
+    encryption_in_transit: true
+    pii_anonymization: true
+    gdpr_compliance: true
+
+# Performance Configuration
+performance:
+  caching:
+    budget_data_cache_ttl: "5_minutes"
+    report_cache_ttl: "1_hour"
+    analytics_cache_ttl: "4_hours"
+
+  database_optimization:
+    connection_pooling: true
+    query_optimization: true
+    indexing_strategy: "composite_indexes"
+    archival_policy: "monthly_partition"
+
+  scalability:
+    auto_scaling_enabled: true
+    max_concurrent_users: 1000
+    response_time_target: "500ms"
+    availability_target: "99.9%"

@@ -1,0 +1,160 @@
+{
+  "description": "Configuration template for security-focused roles - emphasis on security analysis and compliance",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(security/**)",
+      "Edit(tests/security/**)",
+      "Edit(docs/security/**)",
+      "Edit(.github/workflows/security.yml)",
+      "Edit(*.security.*)",
+      "Edit(.eslintrc*)",
+      "Edit(.bandit)",
+      "Edit(.safety)",
+      "Edit(requirements-security.txt)",
+      "Write(security/**)",
+      "Write(tests/security/**)",
+      "Write(docs/security/**)",
+      "Write(security-reports/**)",
+      "Write(*.security.*)",
+      "Glob",
+      "Grep",
+      "Bash(npm audit:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(yarn audit:*)",
+      "Bash(pip-audit:*)",
+      "Bash(bandit:*)",
+      "Bash(safety:*)",
+      "Bash(semgrep:*)",
+      "Bash(eslint:*)",
+      "Bash(sonarqube:*)",
+      "Bash(snyk:*)",
+      "Bash(trivy:*)",
+      "Bash(git *)",
+      "Bash(docker scan:*)",
+      "Bash(hadolint:*)",
+      "Bash(checkov:*)",
+      "Bash(tfsec:*)",
+      "Bash(kube-score:*)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(openssl *)",
+      "Bash(gpg *)",
+      "Bash(ssh-keygen:*)",
+      "Bash(age:*)",
+      "Bash(sops:*)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(~/.ssh/id_*)",
+      "Read(**/private_key*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Edit(package.json)",
+      "Edit(requirements.txt)",
+      "Bash(rm *)",
+      "Bash(sudo *)",
+      "Bash(chmod 777:*)",
+      "Bash(npm install:* --save)",
+      "Bash(pip install:* --save)",
+      "Bash(docker run:* --privileged)",
+      "Bash(kubectl create secret:*)",
+      "Bash(openssl genrsa:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)"
+    ],
+    "ask": [
+      "Edit(src/**)",
+      "Edit(*.js)",
+      "Edit(*.py)",
+      "Edit(*.ts)",
+      "Edit(Dockerfile)",
+      "Edit(docker-compose.*)",
+      "Edit(*.yml)",
+      "Edit(*.yaml)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "Bash(pip install:*)",
+      "Write(src/**)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "security",
+    "CLAUDE_SAFETY_MODE": "strict",
+    "SECURITY_AUDIT_MODE": "true",
+    "MAX_CONCURRENT_TASKS": "3"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔒 Security mode: Changes will be audited for security implications'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit.*\\.(js|ts|py|go|java|rb)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔍 Running security linters...' && (eslint --ext .js,.ts . --quiet || true) && (bandit -r . -f json -o /dev/null || true) && echo '✓ Security scan completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*package\\.json$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm audit --audit-level=high || echo '⚠️  Vulnerability audit completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*requirements.*\\.txt$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "safety check --json || echo '⚠️  Python security audit completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*Dockerfile$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hadolint Dockerfile || echo '⚠️  Dockerfile security scan completed'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🛡️  Security-focused session started. All changes will be audited for security compliance.'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🔒 Security Mode | Audit & Compliance"
+}

@@ -1,0 +1,285 @@
+# Kubernetes Services for Blog API System
+# Exposes applications and provides service discovery
+
+# === BLOG API SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-api-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3000
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: backend
+  sessionAffinity: None
+
+---
+# === BLOG API HEADLESS SERVICE (for pod discovery) ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-api-headless
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 3000
+    targetPort: http
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: backend
+
+---
+# === POSTGRESQL SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+
+---
+# === REDIS SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  type: ClusterIP
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+
+---
+# === NGINX SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: proxy
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account-id:certificate/cert-id"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: proxy
+  loadBalancerSourceRanges:
+  - 0.0.0.0/0
+
+---
+# === PROMETHEUS SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9090
+    targetPort: web
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+
+---
+# === GRAFANA SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 3000
+    targetPort: web
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+
+---
+# === EXTERNAL SERVICE FOR RDS (if using managed database) ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-external
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database-external
+spec:
+  type: ExternalName
+  externalName: your-rds-endpoint.region.rds.amazonaws.com
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+    protocol: TCP
+
+---
+# === EXTERNAL SERVICE FOR ELASTICACHE (if using managed Redis) ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-external
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache-external
+spec:
+  type: ExternalName
+  externalName: your-elasticache-cluster.cache.amazonaws.com
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+
+---
+# === SERVICE MONITOR FOR PROMETHEUS (Custom Resource) ===
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blog-api-servicemonitor
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: blog-api
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: blog-api
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    honorLabels: true
+  - port: metrics
+    interval: 30s
+    path: /health
+    honorLabels: true
+    params:
+      format: ['prometheus']
+
+---
+# === SERVICE MONITOR FOR NGINX ===
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-servicemonitor
+  namespace: blog-system
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    honorLabels: true
+
+---
+# === ENDPOINTS FOR EXTERNAL DATABASES (manual configuration) ===
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: postgres-external
+  namespace: blog-system
+subsets:
+- addresses:
+  - ip: 10.0.1.100  # Replace with actual RDS IP
+  ports:
+  - name: postgres
+    port: 5432
+    protocol: TCP
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: redis-external
+  namespace: blog-system
+subsets:
+- addresses:
+  - ip: 10.0.1.101  # Replace with actual ElastiCache IP
+  ports:
+  - name: redis
+    port: 6379
+    protocol: TCP

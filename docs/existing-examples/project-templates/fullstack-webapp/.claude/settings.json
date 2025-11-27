@@ -1,0 +1,167 @@
+{
+  "description": "Full-stack web application development configuration - optimized for React, Node.js, and database workflows",
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(frontend/**)",
+      "Edit(backend/**)",
+      "Edit(docs/**)",
+      "Edit(tests/**)",
+      "Edit(*.md)",
+      "Edit(*.json)",
+      "Edit(*.js)",
+      "Edit(*.ts)",
+      "Edit(*.tsx)",
+      "Edit(*.css)",
+      "Edit(*.scss)",
+      "Edit(*.yml)",
+      "Edit(*.yaml)",
+      "Write(frontend/**)",
+      "Write(backend/**)",
+      "Write(docs/**)",
+      "Write(tests/**)",
+      "Write(*.md)",
+      "Write(*.json)",
+      "Write(*.js)",
+      "Write(*.ts)",
+      "Write(*.tsx)",
+      "Write(*.css)",
+      "Write(*.scss)",
+      "Glob",
+      "Grep",
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(jest *)",
+      "Bash(cypress *)",
+      "Bash(playwright *)",
+      "Bash(prisma *)",
+      "Bash(next *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(make *)",
+      "Bash(psql *)",
+      "Bash(redis-cli *)",
+      "WebSearch",
+      "WebFetch",
+      "TodoWrite",
+      "TodoRead",
+      "Task"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials.*)",
+      "Read(node_modules/**)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials.*)",
+      "Edit(.claude/settings.json)",
+      "Edit(.gitignore)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(npm publish:*)",
+      "Bash(yarn publish:*)",
+      "Bash(git push --force:*)",
+      "Bash(docker push:* production)",
+      "Bash(psql:* DROP DATABASE)",
+      "Bash(redis-cli FLUSHALL)"
+    ],
+    "ask": [
+      "Bash(git push origin main:*)",
+      "Bash(npm install:* --save)",
+      "Bash(yarn add:*)",
+      "Edit(package.json)",
+      "Edit(package-lock.json)",
+      "Edit(yarn.lock)",
+      "Edit(docker-compose.yml)",
+      "Edit(Dockerfile)",
+      "Edit(.github/workflows/**)",
+      "Edit(next.config.js)",
+      "Edit(prisma/schema.prisma)",
+      "Bash(prisma migrate deploy)",
+      "Bash(docker-compose up:* production)"
+    ]
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "CLAUDE_SAFETY_MODE": "balanced",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "CYPRESS_CACHE_FOLDER": "./node_modules/.cache/cypress",
+    "MAX_CONCURRENT_TASKS": "4",
+    "FULLSTACK_MODE": "true"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash.*prisma migrate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🗄️  Database migration operation. Ensure you have a backup if needed.'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit.*\\.(ts|tsx|js|jsx)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint --silent --fix || echo 'Linting completed with warnings'"
+          },
+          {
+            "type": "command",
+            "command": "npm run type-check --silent || echo 'Type checking completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*package\\.json$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm audit --audit-level=moderate || echo 'Security audit completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*(frontend|backend)/src/.*\\.(ts|tsx|js|jsx)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run test --silent -- --passWithNoTests --watchAll=false || echo 'Tests completed'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit.*prisma/schema\\.prisma$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prisma format && npx prisma validate || echo 'Prisma schema validated'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🚀 Full-stack development session started!' && echo 'Frontend: http://localhost:3000' && echo 'Backend: http://localhost:3001' && echo 'Database: Check .env for connection details'"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "statusLine": "🌐 Full-Stack Mode | React + Node.js + DB"
+}

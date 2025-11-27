@@ -1,0 +1,6 @@
+openapi: 3.0.0
+info:
+  title: Distill API
+  version: "0.0.1"
+  description: Placeholder for Distill API definition.
+paths: {}

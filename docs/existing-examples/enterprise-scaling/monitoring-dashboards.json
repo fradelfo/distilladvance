@@ -1,0 +1,720 @@
+{
+  "name": "Enterprise Monitoring Dashboards Configuration",
+  "description": "Comprehensive monitoring and observability dashboards for Claude Code enterprise deployments with real-time analytics, performance tracking, and business intelligence",
+  "version": "1.0.0",
+  "dashboard_platform": "grafana_enterprise",
+  "data_sources": ["prometheus", "elasticsearch", "cloudwatch", "datadog", "custom_metrics"],
+  "update_frequency": "real_time",
+  "retention_period": "90_days",
+
+  "dashboard_categories": {
+    "executive": {
+      "description": "High-level business metrics for C-level executives",
+      "audience": ["ceo", "cto", "cfo", "ciso"],
+      "update_frequency": "hourly",
+      "access_control": "executive_only"
+    },
+    "operational": {
+      "description": "Real-time system health and performance metrics",
+      "audience": ["sre", "devops", "platform_engineering"],
+      "update_frequency": "real_time",
+      "access_control": "operations_team"
+    },
+    "business": {
+      "description": "Usage analytics and business intelligence metrics",
+      "audience": ["product_managers", "business_analysts", "finance"],
+      "update_frequency": "daily",
+      "access_control": "business_stakeholders"
+    },
+    "security": {
+      "description": "Security monitoring and compliance dashboards",
+      "audience": ["security_team", "compliance_officers", "auditors"],
+      "update_frequency": "real_time",
+      "access_control": "security_team"
+    },
+    "development": {
+      "description": "Development team productivity and code quality metrics",
+      "audience": ["engineering_managers", "tech_leads", "developers"],
+      "update_frequency": "daily",
+      "access_control": "development_teams"
+    }
+  },
+
+  "dashboards": {
+    "executive_overview": {
+      "category": "executive",
+      "title": "Claude Code Enterprise Overview",
+      "description": "Executive dashboard showing key business metrics, ROI, and strategic insights",
+      "refresh_interval": "1h",
+      "time_range": "30d",
+
+      "panels": {
+        "kpi_summary": {
+          "type": "stat_panel",
+          "title": "Key Performance Indicators",
+          "position": {"x": 0, "y": 0, "w": 24, "h": 4},
+          "metrics": [
+            {
+              "name": "total_active_users",
+              "display_name": "Active Users",
+              "unit": "count",
+              "target": 5000,
+              "query": "sum(claude_active_users_total)",
+              "trend_comparison": "30d_ago"
+            },
+            {
+              "name": "productivity_gain",
+              "display_name": "Productivity Improvement",
+              "unit": "percent",
+              "target": 25,
+              "query": "avg(claude_productivity_improvement_percent)",
+              "trend_comparison": "30d_ago"
+            },
+            {
+              "name": "monthly_cost",
+              "display_name": "Monthly Cost",
+              "unit": "currency",
+              "target": 500000,
+              "query": "sum(claude_monthly_cost_usd)",
+              "trend_comparison": "30d_ago"
+            },
+            {
+              "name": "roi_percentage",
+              "display_name": "ROI",
+              "unit": "percent",
+              "target": 150,
+              "query": "claude_roi_percentage",
+              "trend_comparison": "30d_ago"
+            }
+          ]
+        },
+
+        "usage_trends": {
+          "type": "time_series",
+          "title": "Usage Trends (30 Days)",
+          "position": {"x": 0, "y": 4, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "daily_requests",
+              "display_name": "Daily Requests",
+              "query": "sum(rate(claude_requests_total[1d]))",
+              "color": "#3274D9"
+            },
+            {
+              "name": "daily_active_users",
+              "display_name": "Daily Active Users",
+              "query": "count(claude_daily_active_users)",
+              "color": "#FF6B6B"
+            },
+            {
+              "name": "daily_cost",
+              "display_name": "Daily Cost ($)",
+              "query": "sum(claude_daily_cost_usd)",
+              "color": "#96D982"
+            }
+          ]
+        },
+
+        "business_unit_breakdown": {
+          "type": "pie_chart",
+          "title": "Usage by Business Unit",
+          "position": {"x": 12, "y": 4, "w": 12, "h": 8},
+          "metric": {
+            "query": "sum by (business_unit) (claude_requests_total)",
+            "legend": "{{business_unit}}"
+          }
+        },
+
+        "cost_optimization": {
+          "type": "table",
+          "title": "Cost Optimization Opportunities",
+          "position": {"x": 0, "y": 12, "w": 24, "h": 6},
+          "columns": [
+            "business_unit",
+            "current_monthly_cost",
+            "projected_savings",
+            "optimization_recommendation",
+            "implementation_effort"
+          ],
+          "query": "claude_cost_optimization_opportunities"
+        }
+      }
+    },
+
+    "operational_health": {
+      "category": "operational",
+      "title": "System Health & Performance",
+      "description": "Real-time operational metrics for system health monitoring",
+      "refresh_interval": "30s",
+      "time_range": "1h",
+
+      "panels": {
+        "system_status": {
+          "type": "stat_panel",
+          "title": "System Status",
+          "position": {"x": 0, "y": 0, "w": 24, "h": 3},
+          "metrics": [
+            {
+              "name": "uptime",
+              "display_name": "Uptime",
+              "unit": "percent",
+              "query": "claude_uptime_percentage",
+              "thresholds": [{"value": 99.9, "color": "green"}, {"value": 99.5, "color": "yellow"}, {"value": 99.0, "color": "red"}]
+            },
+            {
+              "name": "response_time_p95",
+              "display_name": "Response Time (P95)",
+              "unit": "ms",
+              "query": "histogram_quantile(0.95, claude_request_duration_seconds)",
+              "thresholds": [{"value": 500, "color": "green"}, {"value": 1000, "color": "yellow"}, {"value": 2000, "color": "red"}]
+            },
+            {
+              "name": "error_rate",
+              "display_name": "Error Rate",
+              "unit": "percent",
+              "query": "rate(claude_errors_total[5m]) / rate(claude_requests_total[5m]) * 100",
+              "thresholds": [{"value": 0.1, "color": "green"}, {"value": 1.0, "color": "yellow"}, {"value": 5.0, "color": "red"}]
+            },
+            {
+              "name": "throughput",
+              "display_name": "Throughput",
+              "unit": "rps",
+              "query": "rate(claude_requests_total[1m])",
+              "thresholds": [{"value": 1000, "color": "green"}, {"value": 500, "color": "yellow"}, {"value": 100, "color": "red"}]
+            }
+          ]
+        },
+
+        "response_time_heatmap": {
+          "type": "heatmap",
+          "title": "Response Time Distribution",
+          "position": {"x": 0, "y": 3, "w": 12, "h": 8},
+          "query": "sum(rate(claude_request_duration_seconds_bucket[5m])) by (le)",
+          "unit": "ms",
+          "color_scheme": "interpolateSpectral"
+        },
+
+        "error_rate_by_endpoint": {
+          "type": "time_series",
+          "title": "Error Rate by Endpoint",
+          "position": {"x": 12, "y": 3, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "error_rate_api",
+              "display_name": "API Errors",
+              "query": "rate(claude_errors_total{endpoint=\"api\"}[5m])",
+              "color": "#FF6B6B"
+            },
+            {
+              "name": "error_rate_auth",
+              "display_name": "Auth Errors",
+              "query": "rate(claude_errors_total{endpoint=\"auth\"}[5m])",
+              "color": "#FFD93D"
+            },
+            {
+              "name": "error_rate_model",
+              "display_name": "Model Errors",
+              "query": "rate(claude_errors_total{endpoint=\"model\"}[5m])",
+              "color": "#A8E6CF"
+            }
+          ]
+        },
+
+        "infrastructure_metrics": {
+          "type": "time_series",
+          "title": "Infrastructure Metrics",
+          "position": {"x": 0, "y": 11, "w": 24, "h": 6},
+          "metrics": [
+            {
+              "name": "cpu_usage",
+              "display_name": "CPU Usage",
+              "query": "avg(claude_cpu_usage_percent)",
+              "color": "#3274D9",
+              "unit": "percent"
+            },
+            {
+              "name": "memory_usage",
+              "display_name": "Memory Usage",
+              "query": "avg(claude_memory_usage_percent)",
+              "color": "#FF6B6B",
+              "unit": "percent"
+            },
+            {
+              "name": "disk_usage",
+              "display_name": "Disk Usage",
+              "query": "avg(claude_disk_usage_percent)",
+              "color": "#96D982",
+              "unit": "percent"
+            },
+            {
+              "name": "network_io",
+              "display_name": "Network I/O",
+              "query": "avg(rate(claude_network_bytes_total[5m]))",
+              "color": "#FFAB00",
+              "unit": "Bps"
+            }
+          ]
+        }
+      }
+    },
+
+    "business_analytics": {
+      "category": "business",
+      "title": "Usage Analytics & Business Intelligence",
+      "description": "Business metrics, user behavior, and revenue analytics",
+      "refresh_interval": "15m",
+      "time_range": "30d",
+
+      "panels": {
+        "user_engagement": {
+          "type": "time_series",
+          "title": "User Engagement Metrics",
+          "position": {"x": 0, "y": 0, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "daily_active_users",
+              "display_name": "Daily Active Users",
+              "query": "claude_daily_active_users",
+              "color": "#3274D9"
+            },
+            {
+              "name": "weekly_active_users",
+              "display_name": "Weekly Active Users",
+              "query": "claude_weekly_active_users",
+              "color": "#FF6B6B"
+            },
+            {
+              "name": "monthly_active_users",
+              "display_name": "Monthly Active Users",
+              "query": "claude_monthly_active_users",
+              "color": "#96D982"
+            }
+          ]
+        },
+
+        "feature_adoption": {
+          "type": "bar_chart",
+          "title": "Feature Adoption Rates",
+          "position": {"x": 12, "y": 0, "w": 12, "h": 8},
+          "query": "sum by (feature) (claude_feature_usage_total)",
+          "orientation": "horizontal"
+        },
+
+        "usage_by_model": {
+          "type": "pie_chart",
+          "title": "Usage Distribution by Model",
+          "position": {"x": 0, "y": 8, "w": 8, "h": 6},
+          "metric": {
+            "query": "sum by (model) (claude_model_requests_total)",
+            "legend": "{{model}}"
+          }
+        },
+
+        "cost_per_business_unit": {
+          "type": "bar_chart",
+          "title": "Cost per Business Unit",
+          "position": {"x": 8, "y": 8, "w": 8, "h": 6},
+          "query": "sum by (business_unit) (claude_cost_usd)",
+          "unit": "currency"
+        },
+
+        "productivity_metrics": {
+          "type": "table",
+          "title": "Team Productivity Metrics",
+          "position": {"x": 16, "y": 8, "w": 8, "h": 6},
+          "columns": [
+            "team",
+            "avg_tasks_per_day",
+            "code_quality_score",
+            "ai_assistance_rate",
+            "productivity_improvement"
+          ],
+          "query": "claude_team_productivity_metrics"
+        },
+
+        "user_satisfaction": {
+          "type": "gauge",
+          "title": "User Satisfaction Score",
+          "position": {"x": 0, "y": 14, "w": 12, "h": 6},
+          "query": "avg(claude_user_satisfaction_score)",
+          "min": 0,
+          "max": 10,
+          "thresholds": [
+            {"value": 8.0, "color": "green"},
+            {"value": 6.0, "color": "yellow"},
+            {"value": 4.0, "color": "red"}
+          ]
+        },
+
+        "retention_cohort": {
+          "type": "heatmap",
+          "title": "User Retention Cohort Analysis",
+          "position": {"x": 12, "y": 14, "w": 12, "h": 6},
+          "query": "claude_user_retention_cohort",
+          "unit": "percent",
+          "color_scheme": "interpolateGreens"
+        }
+      }
+    },
+
+    "security_monitoring": {
+      "category": "security",
+      "title": "Security & Compliance Monitoring",
+      "description": "Security events, compliance status, and threat detection",
+      "refresh_interval": "1m",
+      "time_range": "24h",
+
+      "panels": {
+        "security_alerts": {
+          "type": "stat_panel",
+          "title": "Security Status",
+          "position": {"x": 0, "y": 0, "w": 24, "h": 3},
+          "metrics": [
+            {
+              "name": "active_threats",
+              "display_name": "Active Threats",
+              "unit": "count",
+              "query": "sum(claude_active_security_threats)",
+              "thresholds": [{"value": 0, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 5, "color": "red"}]
+            },
+            {
+              "name": "failed_logins",
+              "display_name": "Failed Logins (1h)",
+              "unit": "count",
+              "query": "sum(increase(claude_failed_logins_total[1h]))",
+              "thresholds": [{"value": 10, "color": "green"}, {"value": 50, "color": "yellow"}, {"value": 100, "color": "red"}]
+            },
+            {
+              "name": "policy_violations",
+              "display_name": "Policy Violations (24h)",
+              "unit": "count",
+              "query": "sum(increase(claude_policy_violations_total[24h]))",
+              "thresholds": [{"value": 0, "color": "green"}, {"value": 5, "color": "yellow"}, {"value": 20, "color": "red"}]
+            },
+            {
+              "name": "compliance_score",
+              "display_name": "Compliance Score",
+              "unit": "percent",
+              "query": "claude_compliance_score_percent",
+              "thresholds": [{"value": 95, "color": "green"}, {"value": 90, "color": "yellow"}, {"value": 85, "color": "red"}]
+            }
+          ]
+        },
+
+        "authentication_events": {
+          "type": "time_series",
+          "title": "Authentication Events",
+          "position": {"x": 0, "y": 3, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "successful_logins",
+              "display_name": "Successful Logins",
+              "query": "rate(claude_successful_logins_total[5m])",
+              "color": "#96D982"
+            },
+            {
+              "name": "failed_logins",
+              "display_name": "Failed Logins",
+              "query": "rate(claude_failed_logins_total[5m])",
+              "color": "#FF6B6B"
+            },
+            {
+              "name": "mfa_challenges",
+              "display_name": "MFA Challenges",
+              "query": "rate(claude_mfa_challenges_total[5m])",
+              "color": "#FFAB00"
+            }
+          ]
+        },
+
+        "security_incidents": {
+          "type": "table",
+          "title": "Recent Security Incidents",
+          "position": {"x": 12, "y": 3, "w": 12, "h": 8},
+          "columns": [
+            "timestamp",
+            "incident_type",
+            "severity",
+            "affected_users",
+            "status",
+            "response_time"
+          ],
+          "query": "claude_security_incidents",
+          "sort_by": "timestamp",
+          "sort_order": "desc"
+        },
+
+        "compliance_framework_status": {
+          "type": "bar_chart",
+          "title": "Compliance Framework Status",
+          "position": {"x": 0, "y": 11, "w": 12, "h": 6},
+          "query": "claude_compliance_framework_score by (framework)",
+          "unit": "percent",
+          "orientation": "horizontal"
+        },
+
+        "data_access_patterns": {
+          "type": "heatmap",
+          "title": "Data Access Patterns",
+          "position": {"x": 12, "y": 11, "w": 12, "h": 6},
+          "query": "sum by (data_classification, access_time) (claude_data_access_events)",
+          "unit": "count"
+        }
+      }
+    },
+
+    "development_productivity": {
+      "category": "development",
+      "title": "Development Team Productivity",
+      "description": "Development metrics, code quality, and team performance",
+      "refresh_interval": "1h",
+      "time_range": "7d",
+
+      "panels": {
+        "team_velocity": {
+          "type": "time_series",
+          "title": "Team Velocity Metrics",
+          "position": {"x": 0, "y": 0, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "commits_per_day",
+              "display_name": "Commits per Day",
+              "query": "sum(rate(claude_commits_total[1d]))",
+              "color": "#3274D9"
+            },
+            {
+              "name": "pull_requests_merged",
+              "display_name": "PRs Merged per Day",
+              "query": "sum(rate(claude_prs_merged_total[1d]))",
+              "color": "#96D982"
+            },
+            {
+              "name": "lines_of_code",
+              "display_name": "Lines of Code per Day",
+              "query": "sum(rate(claude_loc_total[1d]))",
+              "color": "#FFAB00"
+            }
+          ]
+        },
+
+        "code_quality_trends": {
+          "type": "time_series",
+          "title": "Code Quality Trends",
+          "position": {"x": 12, "y": 0, "w": 12, "h": 8},
+          "metrics": [
+            {
+              "name": "bug_rate",
+              "display_name": "Bug Rate",
+              "query": "claude_bug_rate_per_kloc",
+              "color": "#FF6B6B"
+            },
+            {
+              "name": "test_coverage",
+              "display_name": "Test Coverage",
+              "query": "claude_test_coverage_percent",
+              "color": "#96D982"
+            },
+            {
+              "name": "code_review_score",
+              "display_name": "Code Review Score",
+              "query": "claude_code_review_score",
+              "color": "#3274D9"
+            }
+          ]
+        },
+
+        "ai_assistance_metrics": {
+          "type": "stat_panel",
+          "title": "AI Assistance Impact",
+          "position": {"x": 0, "y": 8, "w": 24, "h": 4},
+          "metrics": [
+            {
+              "name": "ai_assisted_commits",
+              "display_name": "AI-Assisted Commits",
+              "unit": "percent",
+              "query": "claude_ai_assisted_commits_percent",
+              "target": 60
+            },
+            {
+              "name": "time_saved_hours",
+              "display_name": "Time Saved (Hours/Week)",
+              "unit": "hours",
+              "query": "sum(claude_time_saved_hours_per_week)",
+              "target": 8
+            },
+            {
+              "name": "suggestion_acceptance",
+              "display_name": "Suggestion Acceptance Rate",
+              "unit": "percent",
+              "query": "claude_suggestion_acceptance_rate",
+              "target": 70
+            },
+            {
+              "name": "developer_satisfaction",
+              "display_name": "Developer Satisfaction",
+              "unit": "score",
+              "query": "claude_developer_satisfaction_score",
+              "target": 8.5
+            }
+          ]
+        },
+
+        "team_performance_breakdown": {
+          "type": "table",
+          "title": "Team Performance Breakdown",
+          "position": {"x": 0, "y": 12, "w": 24, "h": 8},
+          "columns": [
+            "team",
+            "velocity_story_points",
+            "code_quality_score",
+            "ai_usage_rate",
+            "deployment_frequency",
+            "lead_time_hours",
+            "mttr_hours"
+          ],
+          "query": "claude_team_performance_metrics",
+          "sort_by": "velocity_story_points",
+          "sort_order": "desc"
+        }
+      }
+    }
+  },
+
+  "alerting_rules": {
+    "critical_alerts": [
+      {
+        "name": "SystemDown",
+        "condition": "claude_uptime_percentage < 99.0",
+        "duration": "2m",
+        "severity": "critical",
+        "message": "Claude Code system availability below 99%",
+        "notifications": ["pagerduty", "slack_critical", "email_executives"]
+      },
+      {
+        "name": "HighErrorRate",
+        "condition": "rate(claude_errors_total[5m]) / rate(claude_requests_total[5m]) > 0.05",
+        "duration": "5m",
+        "severity": "critical",
+        "message": "Error rate exceeds 5% for 5 minutes",
+        "notifications": ["pagerduty", "slack_critical", "email_engineering"]
+      },
+      {
+        "name": "SecurityBreach",
+        "condition": "increase(claude_security_incidents_total{severity=\"critical\"}[1m]) > 0",
+        "duration": "0s",
+        "severity": "critical",
+        "message": "Critical security incident detected",
+        "notifications": ["pagerduty", "slack_security", "email_security_team", "phone_ciso"]
+      }
+    ],
+
+    "warning_alerts": [
+      {
+        "name": "HighResponseTime",
+        "condition": "histogram_quantile(0.95, claude_request_duration_seconds) > 2.0",
+        "duration": "10m",
+        "severity": "warning",
+        "message": "95th percentile response time above 2 seconds",
+        "notifications": ["slack_operations", "email_sre"]
+      },
+      {
+        "name": "QuotaExhaustion",
+        "condition": "claude_quota_usage_percent > 80",
+        "duration": "5m",
+        "severity": "warning",
+        "message": "User quota exceeds 80% usage",
+        "notifications": ["slack_business", "email_finance"]
+      },
+      {
+        "name": "ComplianceViolation",
+        "condition": "increase(claude_compliance_violations_total[1h]) > 10",
+        "duration": "1m",
+        "severity": "warning",
+        "message": "Multiple compliance violations detected",
+        "notifications": ["slack_compliance", "email_legal"]
+      }
+    ]
+  },
+
+  "data_retention": {
+    "metrics_retention": {
+      "raw_metrics": "7d",
+      "1m_aggregates": "30d",
+      "5m_aggregates": "90d",
+      "1h_aggregates": "1y",
+      "1d_aggregates": "3y"
+    },
+
+    "logs_retention": {
+      "application_logs": "30d",
+      "audit_logs": "7y",
+      "security_logs": "3y",
+      "performance_logs": "90d"
+    },
+
+    "backup_strategy": {
+      "automated_backups": true,
+      "backup_frequency": "daily",
+      "backup_retention": "1y",
+      "cross_region_replication": true,
+      "point_in_time_recovery": true
+    }
+  },
+
+  "access_control": {
+    "role_based_access": true,
+    "dashboard_permissions": {
+      "executive_overview": ["c_level", "vp_level"],
+      "operational_health": ["sre", "devops", "platform_engineering", "management"],
+      "business_analytics": ["product_management", "business_analysts", "finance", "management"],
+      "security_monitoring": ["security_team", "compliance_officers", "management"],
+      "development_productivity": ["engineering_managers", "tech_leads", "senior_developers"]
+    },
+
+    "data_privacy": {
+      "pii_anonymization": true,
+      "gdpr_compliance": true,
+      "audit_trail": true,
+      "data_export_controls": true
+    }
+  },
+
+  "customization": {
+    "theme_support": true,
+    "custom_branding": true,
+    "configurable_layouts": true,
+    "dynamic_panels": true,
+    "conditional_visibility": true,
+
+    "template_variables": [
+      "environment",
+      "region",
+      "business_unit",
+      "team",
+      "time_range",
+      "model_type"
+    ]
+  },
+
+  "integration": {
+    "external_systems": [
+      "jira",
+      "slack",
+      "pagerduty",
+      "servicenow",
+      "tableau",
+      "power_bi"
+    ],
+
+    "api_endpoints": [
+      "/api/v1/dashboards/{dashboard_id}/data",
+      "/api/v1/metrics/custom",
+      "/api/v1/alerts/rules",
+      "/api/v1/reports/generate"
+    ],
+
+    "webhook_notifications": true,
+    "scheduled_reports": true,
+    "real_time_streaming": true
+  }
+}

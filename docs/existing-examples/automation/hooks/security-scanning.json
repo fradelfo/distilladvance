@@ -1,0 +1,348 @@
+{
+  "name": "security-scanning",
+  "description": "Comprehensive security scanning and vulnerability detection for code and dependencies",
+  "version": "1.0.0",
+  "trigger": "before_tool_call",
+  "enabled": true,
+  "conditions": {
+    "any": [
+      {
+        "tools": ["Edit", "Write"],
+        "file_patterns": [
+          "src/**/*.js",
+          "src/**/*.ts",
+          "src/**/*.py",
+          "src/**/*.go",
+          "src/**/*.java",
+          "src/**/*.php",
+          "src/**/*.rb",
+          "package.json",
+          "requirements.txt",
+          "go.mod",
+          "Cargo.toml",
+          "pom.xml",
+          "Gemfile"
+        ]
+      },
+      {
+        "tools": ["Bash"],
+        "command_patterns": [
+          "npm install.*",
+          "yarn add.*",
+          "pip install.*",
+          "go get.*",
+          "composer install.*"
+        ]
+      }
+    ]
+  },
+  "actions": [
+    {
+      "name": "dependency-vulnerability-scan",
+      "description": "Scan dependencies for known vulnerabilities",
+      "command": "npm audit --audit-level=moderate --json > audit-report.json && npx audit-ci --moderate",
+      "timeout": 120,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": ["package.json", "package-lock.json"],
+        "project_type": "node"
+      },
+      "success_message": "✅ No dependency vulnerabilities found",
+      "failure_message": "🚨 Dependency vulnerabilities detected",
+      "output_parsing": {
+        "extract_vulnerabilities": true,
+        "severity_levels": ["critical", "high", "moderate"]
+      }
+    },
+    {
+      "name": "python-security-scan",
+      "description": "Scan Python dependencies for vulnerabilities",
+      "command": "safety check --json --output safety-report.json",
+      "timeout": 90,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": ["requirements.txt", "Pipfile", "pyproject.toml"],
+        "project_type": "python"
+      },
+      "success_message": "✅ No Python dependency vulnerabilities found",
+      "failure_message": "🚨 Python dependency vulnerabilities detected"
+    },
+    {
+      "name": "secrets-detection",
+      "description": "Scan for secrets and sensitive information in code",
+      "command": "docker run --rm -v \"$(pwd):/code\" trufflesecurity/trufflehog:latest filesystem /code --only-verified --json > secrets-report.json",
+      "timeout": 180,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "tools": ["Edit", "Write"],
+        "file_patterns": ["**/*.js", "**/*.ts", "**/*.py", "**/*.go", "**/*.java", "**/*.yaml", "**/*.json", "**/*.env"]
+      },
+      "success_message": "✅ No secrets detected in code",
+      "failure_message": "🚨 Potential secrets detected in code",
+      "alternative_commands": [
+        "git secrets --scan ${MODIFIED_FILES}",
+        "detect-secrets scan ${MODIFIED_FILES}"
+      ]
+    },
+    {
+      "name": "sast-code-analysis",
+      "description": "Static Application Security Testing (SAST)",
+      "command": "semgrep --config=auto --json --output=sast-report.json ${MODIFIED_FILES}",
+      "timeout": 300,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "tools": ["Edit", "Write"],
+        "file_patterns": ["**/*.js", "**/*.ts", "**/*.py", "**/*.go", "**/*.java", "**/*.php"]
+      },
+      "success_message": "✅ SAST scan completed with no critical issues",
+      "failure_message": "⚠️ SAST scan found potential security issues",
+      "severity_threshold": "ERROR"
+    },
+    {
+      "name": "license-compliance",
+      "description": "Check for license compliance issues",
+      "command": "npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD;ISC;GPL-3.0' --excludePrivatePackages --json > license-report.json",
+      "timeout": 60,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": ["package.json"],
+        "project_type": "node"
+      },
+      "success_message": "✅ All licenses are compliant",
+      "failure_message": "⚠️ License compliance issues found"
+    },
+    {
+      "name": "container-security-scan",
+      "description": "Scan Docker images for vulnerabilities",
+      "command": "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --format json --output container-scan.json ${DOCKER_IMAGE}",
+      "timeout": 300,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": ["Dockerfile", "docker-compose.yml"],
+        "environment_vars": ["DOCKER_IMAGE"]
+      },
+      "success_message": "✅ Container security scan passed",
+      "failure_message": "⚠️ Container vulnerabilities found"
+    },
+    {
+      "name": "infrastructure-security",
+      "description": "Scan infrastructure as code for security misconfigurations",
+      "command": "checkov -f ${MODIFIED_FILES} --framework terraform kubernetes docker --output json > iac-security.json",
+      "timeout": 120,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": ["*.tf", "kubernetes/*.yaml", "Dockerfile", "*.k8s.yaml"]
+      },
+      "success_message": "✅ Infrastructure security scan passed",
+      "failure_message": "⚠️ Infrastructure security issues found"
+    },
+    {
+      "name": "api-security-check",
+      "description": "Check API endpoints for security best practices",
+      "command": "node scripts/api-security-check.js --files ${MODIFIED_FILES} --output api-security.json",
+      "timeout": 60,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": ["**/routes/*.js", "**/api/*.js", "**/controllers/*.js", "**/*api*.ts"],
+        "file_exists": ["scripts/api-security-check.js"]
+      },
+      "success_message": "✅ API security check passed",
+      "failure_message": "⚠️ API security issues found"
+    }
+  ],
+  "notifications": {
+    "success": {
+      "message": "🔒 Security scanning completed successfully - no critical issues found",
+      "channels": ["console"]
+    },
+    "failure": {
+      "message": "🚨 SECURITY ALERT: Critical security issues detected. Review required before proceeding.",
+      "channels": ["console", "slack"],
+      "slack": {
+        "channel": "#security-alerts",
+        "mention": ["@security-team"],
+        "priority": "high"
+      },
+      "include_logs": true,
+      "include_report": true
+    },
+    "warning": {
+      "message": "⚠️ Security scan found non-critical issues. Review recommended.",
+      "channels": ["console"]
+    }
+  },
+  "failure_action": "block",
+  "severity_handling": {
+    "critical": {
+      "action": "block",
+      "notify": ["slack", "email"],
+      "escalate": true
+    },
+    "high": {
+      "action": "block",
+      "notify": ["slack"],
+      "require_approval": true
+    },
+    "medium": {
+      "action": "warn",
+      "notify": ["console"],
+      "allow_override": true
+    },
+    "low": {
+      "action": "log",
+      "notify": ["console"]
+    }
+  },
+  "reporting": {
+    "generate_report": true,
+    "report_format": "json",
+    "report_location": "security-reports/",
+    "include_remediation": true,
+    "aggregate_findings": true,
+    "send_to": {
+      "slack": "#security-reports",
+      "email": ["security@company.com"],
+      "dashboard": "https://security-dashboard.company.com"
+    }
+  },
+  "whitelist": {
+    "vulnerabilities": [
+      {
+        "cve": "CVE-2023-XXXXX",
+        "reason": "False positive - not applicable to our usage",
+        "expires": "2024-12-31",
+        "approved_by": "security-team"
+      }
+    ],
+    "files": [
+      "tests/**/*",
+      "docs/**/*",
+      "*.test.js"
+    ],
+    "dependencies": [
+      {
+        "name": "legacy-package",
+        "version": "1.0.0",
+        "reason": "Required for legacy system compatibility",
+        "expires": "2024-06-30"
+      }
+    ]
+  },
+  "integration": {
+    "jira": {
+      "enabled": true,
+      "create_tickets": true,
+      "project": "SEC",
+      "issue_type": "Security Issue",
+      "severity_mapping": {
+        "critical": "Highest",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      }
+    },
+    "sonarqube": {
+      "enabled": false,
+      "url": "https://sonar.company.com",
+      "project_key": "${PROJECT_NAME}",
+      "quality_gate": "security-gate"
+    },
+    "defectdojo": {
+      "enabled": false,
+      "url": "https://defectdojo.company.com",
+      "product_id": 1,
+      "engagement_id": 1
+    }
+  },
+  "automation": {
+    "auto_fix": {
+      "enabled": true,
+      "npm_vulnerabilities": {
+        "command": "npm audit fix",
+        "require_approval": false,
+        "severity_threshold": "moderate"
+      },
+      "outdated_dependencies": {
+        "command": "npm update",
+        "require_approval": true,
+        "exclude_major_versions": true
+      }
+    },
+    "dependency_updates": {
+      "schedule": "weekly",
+      "auto_merge_patch": true,
+      "auto_merge_minor": false,
+      "notify_major": true
+    }
+  },
+  "compliance": {
+    "frameworks": ["OWASP", "NIST", "SOC2", "PCI-DSS"],
+    "required_scans": [
+      "dependency-vulnerability-scan",
+      "secrets-detection",
+      "sast-code-analysis"
+    ],
+    "documentation": {
+      "generate_compliance_report": true,
+      "evidence_collection": true,
+      "audit_trail": true
+    }
+  },
+  "performance": {
+    "cache_results": true,
+    "cache_duration": 3600,
+    "parallel_scans": true,
+    "max_concurrent": 3,
+    "timeout_handling": "graceful_degradation"
+  },
+  "environment": {
+    "required_vars": [],
+    "optional_vars": [
+      "SECURITY_SCANNER_TOKEN",
+      "SLACK_SECURITY_WEBHOOK",
+      "SONAR_TOKEN",
+      "SNYK_TOKEN",
+      "DOCKER_IMAGE"
+    ],
+    "scan_environment": {
+      "NODE_ENV": "security-scan",
+      "SECURITY_SCAN": "true",
+      "CI": "true"
+    }
+  },
+  "documentation": {
+    "description": "This hook provides comprehensive security scanning including dependency vulnerabilities, secrets detection, static analysis, license compliance, container security, and infrastructure security checks.",
+    "requirements": [
+      "Node.js for npm audit and related tools",
+      "Docker for container scanning and some security tools",
+      "Internet access for vulnerability database updates",
+      "Security scanning tools (semgrep, trufflehog, etc.)"
+    ],
+    "setup": {
+      "install_tools": "npm install -g audit-ci semgrep && docker pull trufflesecurity/trufflehog:latest",
+      "configure_tokens": "Set up API tokens for security services if using advanced features",
+      "customize_rules": "Modify scan configurations and whitelists for your project"
+    },
+    "security_considerations": [
+      "Never commit security reports to version control",
+      "Use secure channels for security notifications",
+      "Regularly update security scanning tools",
+      "Review and update whitelists periodically",
+      "Ensure security scan results are properly handled and not leaked"
+    ],
+    "troubleshooting": {
+      "tool_installation": "Ensure all security tools are properly installed and accessible",
+      "network_issues": "Check internet connectivity for vulnerability database updates",
+      "false_positives": "Add false positives to whitelist with proper justification",
+      "performance_issues": "Reduce scan scope or increase timeouts for large projects"
+    }
+  }
+}

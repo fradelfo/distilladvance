@@ -1,0 +1,522 @@
+{
+  "name": "Enterprise Performance Tuning Configuration",
+  "description": "Comprehensive performance optimization settings for Claude Code enterprise deployments supporting high-scale concurrent usage",
+  "version": "1.0.0",
+  "target_scale": "500-5000_concurrent_users",
+  "optimization_focus": ["latency", "throughput", "resource_efficiency", "cost_optimization"],
+
+  "api_gateway_optimization": {
+    "connection_pooling": {
+      "max_connections_per_route": 200,
+      "max_total_connections": 1000,
+      "connection_timeout_ms": 5000,
+      "socket_timeout_ms": 30000,
+      "connection_ttl_ms": 300000,
+      "idle_connection_timeout_ms": 60000,
+      "validate_connections": true,
+      "retry_on_connection_failure": true
+    },
+
+    "request_handling": {
+      "max_concurrent_requests": 10000,
+      "request_queue_size": 50000,
+      "request_timeout_ms": 120000,
+      "keepalive_timeout_ms": 65000,
+      "max_request_size_mb": 100,
+      "compression_enabled": true,
+      "compression_threshold_bytes": 1024,
+      "compression_algorithms": ["gzip", "deflate", "br"]
+    },
+
+    "rate_limiting": {
+      "algorithm": "sliding_window_counter",
+      "window_size_seconds": 60,
+      "requests_per_window": {
+        "anonymous": 100,
+        "authenticated": 1000,
+        "premium": 5000,
+        "enterprise": 20000
+      },
+      "burst_allowance": {
+        "anonymous": 10,
+        "authenticated": 50,
+        "premium": 200,
+        "enterprise": 500
+      },
+      "rate_limit_headers": true,
+      "reject_on_limit": false,
+      "queue_on_limit": true,
+      "queue_timeout_ms": 30000
+    },
+
+    "circuit_breaker": {
+      "failure_threshold": 50,
+      "success_threshold": 10,
+      "timeout_ms": 60000,
+      "half_open_max_calls": 5,
+      "rolling_window_size": 100,
+      "minimum_request_threshold": 20
+    }
+  },
+
+  "claude_api_optimization": {
+    "model_routing": {
+      "intelligent_routing": true,
+      "routing_strategy": "latency_based",
+      "model_affinity": true,
+      "load_balancing_algorithm": "weighted_round_robin",
+
+      "model_specific_settings": {
+        "haiku": {
+          "max_concurrent_requests": 1000,
+          "request_timeout_ms": 10000,
+          "cache_enabled": true,
+          "cache_ttl_seconds": 300,
+          "preferred_regions": ["us-east-1", "us-west-2"]
+        },
+        "sonnet": {
+          "max_concurrent_requests": 500,
+          "request_timeout_ms": 45000,
+          "cache_enabled": true,
+          "cache_ttl_seconds": 600,
+          "preferred_regions": ["us-east-1", "eu-west-1"]
+        },
+        "opus": {
+          "max_concurrent_requests": 100,
+          "request_timeout_ms": 120000,
+          "cache_enabled": false,
+          "queue_priority": "high",
+          "preferred_regions": ["us-east-1"]
+        }
+      }
+    },
+
+    "request_optimization": {
+      "prompt_compression": {
+        "enabled": true,
+        "algorithm": "claude_optimized",
+        "min_size_threshold": 1000,
+        "compression_ratio_target": 0.7
+      },
+
+      "context_management": {
+        "max_context_length": 200000,
+        "context_compression_threshold": 150000,
+        "intelligent_truncation": true,
+        "preserve_recent_messages": 10,
+        "preserve_system_messages": true,
+        "context_sliding_window": true
+      },
+
+      "response_streaming": {
+        "enabled": true,
+        "chunk_size": 512,
+        "buffer_size": 2048,
+        "flush_interval_ms": 100,
+        "compression_per_chunk": false
+      },
+
+      "batch_processing": {
+        "enabled": true,
+        "max_batch_size": 50,
+        "batch_timeout_ms": 1000,
+        "batch_priority_grouping": true,
+        "parallel_batch_execution": true
+      }
+    }
+  },
+
+  "caching_strategy": {
+    "multi_layer_caching": {
+      "l1_cache": {
+        "type": "in_memory",
+        "size_mb": 512,
+        "ttl_seconds": 300,
+        "algorithm": "lru",
+        "compression": false,
+        "metrics_enabled": true
+      },
+
+      "l2_cache": {
+        "type": "redis_cluster",
+        "size_gb": 50,
+        "ttl_seconds": 3600,
+        "compression": true,
+        "replication_factor": 2,
+        "sharding_enabled": true,
+        "eviction_policy": "allkeys-lru"
+      },
+
+      "l3_cache": {
+        "type": "distributed_cache",
+        "size_gb": 500,
+        "ttl_seconds": 86400,
+        "compression": true,
+        "persistence": "rdb_and_aof",
+        "cross_region_replication": true
+      }
+    },
+
+    "cache_patterns": {
+      "response_caching": {
+        "enabled": true,
+        "cache_key_strategy": "prompt_hash_with_model",
+        "cache_similar_prompts": true,
+        "similarity_threshold": 0.95,
+        "cache_headers": ["model", "temperature", "max_tokens"],
+        "invalidation_strategy": "ttl_with_manual_override"
+      },
+
+      "user_context_caching": {
+        "enabled": true,
+        "cache_user_sessions": true,
+        "session_ttl_seconds": 14400,
+        "cache_user_preferences": true,
+        "preferences_ttl_seconds": 604800,
+        "cross_session_caching": false
+      },
+
+      "model_metadata_caching": {
+        "enabled": true,
+        "cache_model_info": true,
+        "model_info_ttl_seconds": 3600,
+        "cache_usage_quotas": true,
+        "quota_ttl_seconds": 300
+      }
+    },
+
+    "cache_warming": {
+      "enabled": true,
+      "strategies": ["predictive", "scheduled", "user_triggered"],
+      "warm_popular_prompts": true,
+      "warm_user_contexts": true,
+      "warming_schedule": "0 */4 * * *",
+      "max_warming_requests": 1000,
+      "warming_priority": "background"
+    },
+
+    "cache_monitoring": {
+      "hit_ratio_target": 0.8,
+      "miss_ratio_alerting": 0.3,
+      "latency_monitoring": true,
+      "size_monitoring": true,
+      "eviction_monitoring": true,
+      "performance_analytics": true
+    }
+  },
+
+  "database_optimization": {
+    "connection_management": {
+      "connection_pool_size": 100,
+      "max_connection_lifetime_ms": 1800000,
+      "connection_timeout_ms": 30000,
+      "idle_timeout_ms": 600000,
+      "validation_query": "SELECT 1",
+      "test_on_borrow": true,
+      "test_on_return": false,
+      "test_while_idle": true
+    },
+
+    "query_optimization": {
+      "prepared_statements": true,
+      "statement_caching": true,
+      "statement_cache_size": 1000,
+      "batch_size": 1000,
+      "fetch_size": 1000,
+      "query_timeout_seconds": 30,
+      "slow_query_threshold_ms": 1000,
+      "query_plan_caching": true
+    },
+
+    "indexing_strategy": {
+      "auto_index_creation": false,
+      "index_usage_monitoring": true,
+      "unused_index_detection": true,
+      "index_maintenance_schedule": "0 2 * * 0",
+      "statistics_update_schedule": "0 1 * * *",
+      "index_rebuild_threshold": 0.3
+    },
+
+    "partitioning": {
+      "enabled": true,
+      "partition_strategy": "time_based",
+      "partition_interval": "monthly",
+      "retention_policy": "7_years",
+      "auto_partition_creation": true,
+      "partition_pruning": true
+    }
+  },
+
+  "load_balancing": {
+    "algorithm": "least_connections_with_weights",
+    "health_check_interval_seconds": 30,
+    "health_check_timeout_seconds": 10,
+    "unhealthy_threshold": 3,
+    "healthy_threshold": 2,
+
+    "server_weights": {
+      "us_east_1": 100,
+      "us_west_2": 80,
+      "eu_west_1": 90,
+      "ap_southeast_2": 70
+    },
+
+    "session_affinity": {
+      "enabled": true,
+      "affinity_type": "user_based",
+      "cookie_name": "CLAUDE_SESSION",
+      "cookie_duration_seconds": 86400,
+      "failover_enabled": true
+    },
+
+    "traffic_shaping": {
+      "enabled": true,
+      "priority_queues": {
+        "critical": {
+          "weight": 50,
+          "max_concurrent": 1000,
+          "timeout_ms": 5000
+        },
+        "high": {
+          "weight": 30,
+          "max_concurrent": 2000,
+          "timeout_ms": 15000
+        },
+        "normal": {
+          "weight": 15,
+          "max_concurrent": 3000,
+          "timeout_ms": 30000
+        },
+        "low": {
+          "weight": 5,
+          "max_concurrent": 1000,
+          "timeout_ms": 60000
+        }
+      }
+    }
+  },
+
+  "resource_management": {
+    "cpu_optimization": {
+      "thread_pool_size": "cpu_cores * 2",
+      "max_thread_pool_size": "cpu_cores * 4",
+      "thread_keepalive_seconds": 60,
+      "cpu_affinity_enabled": true,
+      "numa_awareness": true,
+      "cpu_governor": "performance"
+    },
+
+    "memory_optimization": {
+      "heap_size_mb": "memory_gb * 0.7 * 1024",
+      "gc_algorithm": "G1GC",
+      "gc_tuning": {
+        "max_gc_pause_ms": 200,
+        "gc_threads": "cpu_cores / 4",
+        "concurrent_gc_threads": "cpu_cores / 8",
+        "young_generation_size": "30%",
+        "old_generation_size": "70%"
+      },
+      "memory_mapped_files": true,
+      "off_heap_caching": true
+    },
+
+    "io_optimization": {
+      "async_io": true,
+      "io_threads": "cpu_cores",
+      "buffer_size_kb": 64,
+      "direct_io": true,
+      "io_scheduler": "deadline",
+      "read_ahead_kb": 128
+    },
+
+    "network_optimization": {
+      "tcp_window_size": 65536,
+      "tcp_nodelay": true,
+      "tcp_keepalive": true,
+      "tcp_keepalive_time": 600,
+      "tcp_keepalive_interval": 60,
+      "tcp_keepalive_probes": 3,
+      "socket_buffer_size": 262144
+    }
+  },
+
+  "auto_scaling": {
+    "horizontal_scaling": {
+      "enabled": true,
+      "min_instances": 3,
+      "max_instances": 100,
+      "target_cpu_utilization": 70,
+      "target_memory_utilization": 80,
+      "target_response_time_ms": 500,
+      "scale_up_cooldown_seconds": 300,
+      "scale_down_cooldown_seconds": 600,
+      "scale_up_step_size": 2,
+      "scale_down_step_size": 1
+    },
+
+    "vertical_scaling": {
+      "enabled": false,
+      "cpu_threshold_increase": 80,
+      "memory_threshold_increase": 85,
+      "scale_up_factor": 1.5,
+      "scale_down_threshold": 40,
+      "scale_down_factor": 0.75,
+      "cooldown_seconds": 1800
+    },
+
+    "predictive_scaling": {
+      "enabled": true,
+      "algorithm": "machine_learning",
+      "forecast_horizon_minutes": 60,
+      "training_data_days": 30,
+      "accuracy_threshold": 0.85,
+      "proactive_scaling": true
+    }
+  },
+
+  "monitoring_and_alerting": {
+    "performance_metrics": {
+      "collection_interval_seconds": 10,
+      "retention_days": 90,
+      "aggregation_intervals": ["1m", "5m", "1h", "1d"],
+
+      "key_metrics": [
+        "response_time_p95",
+        "response_time_p99",
+        "throughput_requests_per_second",
+        "error_rate_percentage",
+        "cpu_utilization_percentage",
+        "memory_utilization_percentage",
+        "cache_hit_ratio",
+        "database_connection_pool_usage",
+        "active_concurrent_requests"
+      ]
+    },
+
+    "alerting_rules": {
+      "response_time_p95": {
+        "warning_threshold_ms": 1000,
+        "critical_threshold_ms": 2000,
+        "evaluation_period_minutes": 5
+      },
+      "error_rate": {
+        "warning_threshold_percent": 1,
+        "critical_threshold_percent": 5,
+        "evaluation_period_minutes": 3
+      },
+      "throughput_drop": {
+        "warning_threshold_percent": 20,
+        "critical_threshold_percent": 50,
+        "evaluation_period_minutes": 10
+      }
+    },
+
+    "performance_dashboards": {
+      "real_time_dashboard": true,
+      "historical_trends": true,
+      "capacity_planning": true,
+      "cost_optimization": true,
+      "user_experience_metrics": true
+    }
+  },
+
+  "cost_optimization": {
+    "resource_scheduling": {
+      "scale_down_schedule": "0 18 * * 1-5",
+      "scale_up_schedule": "0 8 * * 1-5",
+      "weekend_scaling": "minimal",
+      "holiday_scaling": "minimal"
+    },
+
+    "instance_optimization": {
+      "spot_instances_enabled": true,
+      "spot_instance_percentage": 30,
+      "reserved_instances_enabled": true,
+      "reserved_instance_percentage": 50,
+      "instance_rightsizing": "automatic",
+      "rightsizing_schedule": "weekly"
+    },
+
+    "storage_optimization": {
+      "intelligent_tiering": true,
+      "lifecycle_policies": true,
+      "compression_enabled": true,
+      "deduplication_enabled": true,
+      "cold_storage_threshold_days": 90
+    }
+  },
+
+  "regional_optimization": {
+    "traffic_routing": {
+      "latency_based_routing": true,
+      "health_based_routing": true,
+      "cost_based_routing": false,
+      "user_location_awareness": true
+    },
+
+    "regional_caching": {
+      "edge_caching_enabled": true,
+      "regional_cache_warming": true,
+      "cross_region_cache_sync": false,
+      "cache_invalidation_propagation": "immediate"
+    },
+
+    "data_locality": {
+      "prefer_local_data": true,
+      "cross_region_data_penalty": 100,
+      "data_replication_strategy": "lazy",
+      "consistency_model": "eventual"
+    }
+  },
+
+  "experimental_optimizations": {
+    "ml_based_optimization": {
+      "enabled": false,
+      "optimization_targets": ["latency", "cost", "user_satisfaction"],
+      "learning_period_days": 30,
+      "confidence_threshold": 0.90
+    },
+
+    "adaptive_batching": {
+      "enabled": false,
+      "dynamic_batch_sizing": true,
+      "batch_size_range": [1, 100],
+      "optimization_metric": "throughput"
+    },
+
+    "intelligent_prefetching": {
+      "enabled": false,
+      "prefetch_algorithm": "collaborative_filtering",
+      "prefetch_confidence_threshold": 0.80,
+      "max_prefetch_requests": 1000
+    }
+  },
+
+  "benchmarking": {
+    "performance_targets": {
+      "api_response_time_p95_ms": 500,
+      "api_response_time_p99_ms": 1000,
+      "throughput_requests_per_second": 10000,
+      "error_rate_percentage": 0.1,
+      "availability_percentage": 99.95,
+      "cache_hit_ratio": 0.85
+    },
+
+    "load_testing": {
+      "regular_testing_enabled": true,
+      "testing_schedule": "weekly",
+      "max_concurrent_users": 5000,
+      "ramp_up_duration_minutes": 10,
+      "sustained_duration_minutes": 30,
+      "scenarios": ["normal_load", "peak_load", "stress_test", "spike_test"]
+    },
+
+    "performance_regression_detection": {
+      "enabled": true,
+      "baseline_period_days": 7,
+      "regression_threshold_percent": 10,
+      "automatic_rollback": false,
+      "notification_channels": ["email", "slack", "pagerduty"]
+    }
+  }
+}

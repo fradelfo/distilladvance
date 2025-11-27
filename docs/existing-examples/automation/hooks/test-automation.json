@@ -1,0 +1,455 @@
+{
+  "name": "test-automation",
+  "description": "Intelligent test execution based on code changes with comprehensive test coverage analysis",
+  "version": "1.0.0",
+  "trigger": "after_tool_call",
+  "enabled": true,
+  "conditions": {
+    "tools": ["Edit", "Write"],
+    "file_patterns": [
+      "src/**/*.js",
+      "src/**/*.ts",
+      "src/**/*.jsx",
+      "src/**/*.tsx",
+      "src/**/*.py",
+      "src/**/*.go",
+      "src/**/*.java",
+      "lib/**/*.js",
+      "lib/**/*.ts",
+      "components/**/*.js",
+      "components/**/*.ts",
+      "components/**/*.jsx",
+      "components/**/*.tsx"
+    ],
+    "path_excludes": [
+      "**/*.test.js",
+      "**/*.test.ts",
+      "**/*.spec.js",
+      "**/*.spec.ts",
+      "test/**/*",
+      "tests/**/*",
+      "__tests__/**/*",
+      "*.config.js",
+      "*.config.ts"
+    ]
+  },
+  "actions": [
+    {
+      "name": "related-unit-tests",
+      "description": "Run unit tests related to changed files",
+      "command": "npm run test -- --findRelatedTests ${MODIFIED_FILES} --coverage --coverageReporters=text-summary --passWithNoTests",
+      "timeout": 300,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "project_files": ["package.json"],
+        "script_exists": "test"
+      },
+      "success_message": "✅ Related unit tests passed",
+      "failure_message": "❌ Related unit tests failed",
+      "output_parsing": {
+        "extract_coverage": true,
+        "coverage_threshold": 80,
+        "extract_test_results": true
+      }
+    },
+    {
+      "name": "python-unit-tests",
+      "description": "Run Python unit tests for changed modules",
+      "command": "python -m pytest ${RELATED_TEST_FILES} --cov=${MODIFIED_PYTHON_MODULES} --cov-report=term-missing --cov-fail-under=80 -v",
+      "timeout": 300,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": ["**/*.py"],
+        "project_files": ["pytest.ini", "pyproject.toml", "setup.cfg"],
+        "exclude_patterns": ["**/__pycache__/**", "**/.pytest_cache/**"]
+      },
+      "success_message": "✅ Python unit tests passed",
+      "failure_message": "❌ Python unit tests failed",
+      "preprocessing": {
+        "find_related_tests": "python scripts/find-related-tests.py ${MODIFIED_FILES}"
+      }
+    },
+    {
+      "name": "go-unit-tests",
+      "description": "Run Go unit tests for changed packages",
+      "command": "go test -v -cover -coverprofile=coverage.out ${GO_PACKAGES}",
+      "timeout": 180,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": ["**/*.go"],
+        "project_files": ["go.mod"]
+      },
+      "success_message": "✅ Go unit tests passed",
+      "failure_message": "❌ Go unit tests failed",
+      "preprocessing": {
+        "find_packages": "go list ./... | grep -E '$(echo ${MODIFIED_FILES} | sed 's/ /|/g' | sed 's|\\.go||g')'"
+      }
+    },
+    {
+      "name": "integration-tests",
+      "description": "Run integration tests if core modules changed",
+      "command": "npm run test:integration -- --grep=\"${INTEGRATION_TEST_PATTERN}\" --timeout=60000",
+      "timeout": 600,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": [
+          "src/api/**/*",
+          "src/services/**/*",
+          "src/database/**/*",
+          "src/integrations/**/*"
+        ],
+        "script_exists": "test:integration"
+      },
+      "success_message": "✅ Integration tests passed",
+      "failure_message": "⚠️ Integration tests failed",
+      "async": true,
+      "preprocessing": {
+        "determine_pattern": "node scripts/integration-test-pattern.js ${MODIFIED_FILES}"
+      }
+    },
+    {
+      "name": "component-tests",
+      "description": "Run React/Vue component tests for UI changes",
+      "command": "npm run test:components -- --testPathPattern=\"${COMPONENT_TEST_PATTERN}\" --coverage",
+      "timeout": 240,
+      "required": true,
+      "continue_on_failure": false,
+      "conditions": {
+        "file_patterns": [
+          "src/components/**/*.jsx",
+          "src/components/**/*.tsx",
+          "src/components/**/*.vue"
+        ],
+        "script_exists": "test:components"
+      },
+      "success_message": "✅ Component tests passed",
+      "failure_message": "❌ Component tests failed",
+      "preprocessing": {
+        "generate_pattern": "echo ${MODIFIED_FILES} | sed 's|src/components/||g' | sed 's|\\.[jt]sx\\?$||g' | tr ' ' '|'"
+      }
+    },
+    {
+      "name": "e2e-smoke-tests",
+      "description": "Run end-to-end smoke tests for critical paths",
+      "command": "npx playwright test --grep=\"@smoke\" --reporter=line",
+      "timeout": 900,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": [
+          "src/pages/**/*",
+          "src/routes/**/*",
+          "src/api/**/*"
+        ],
+        "project_files": ["playwright.config.js", "playwright.config.ts"],
+        "environment_vars": ["E2E_BASE_URL"]
+      },
+      "success_message": "✅ E2E smoke tests passed",
+      "failure_message": "⚠️ E2E smoke tests failed",
+      "async": true,
+      "retry": {
+        "max_attempts": 2,
+        "retry_on": ["timeout", "flaky_test"]
+      }
+    },
+    {
+      "name": "performance-tests",
+      "description": "Run performance tests if performance-critical code changed",
+      "command": "npm run test:performance -- --config=performance.config.js",
+      "timeout": 600,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": [
+          "src/services/**/*",
+          "src/utils/**/*",
+          "src/algorithms/**/*",
+          "src/database/**/*"
+        ],
+        "script_exists": "test:performance",
+        "file_size_threshold": "100KB"
+      },
+      "success_message": "✅ Performance tests passed",
+      "failure_message": "⚠️ Performance regression detected",
+      "async": true
+    },
+    {
+      "name": "security-tests",
+      "description": "Run security tests if security-sensitive code changed",
+      "command": "npm run test:security -- --verbose",
+      "timeout": 300,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": [
+          "src/auth/**/*",
+          "src/security/**/*",
+          "src/middleware/auth*",
+          "src/middleware/security*"
+        ],
+        "script_exists": "test:security"
+      },
+      "success_message": "✅ Security tests passed",
+      "failure_message": "🚨 Security tests failed",
+      "async": false
+    },
+    {
+      "name": "database-tests",
+      "description": "Run database tests if schema or models changed",
+      "command": "npm run test:database -- --verbose --detect-open-handles",
+      "timeout": 180,
+      "required": false,
+      "continue_on_failure": true,
+      "conditions": {
+        "file_patterns": [
+          "src/models/**/*",
+          "src/database/**/*",
+          "migrations/**/*",
+          "src/repositories/**/*"
+        ],
+        "script_exists": "test:database"
+      },
+      "success_message": "✅ Database tests passed",
+      "failure_message": "❌ Database tests failed",
+      "preprocessing": {
+        "setup_test_db": "npm run db:test:setup"
+      },
+      "postprocessing": {
+        "cleanup_test_db": "npm run db:test:cleanup"
+      }
+    }
+  ],
+  "test_selection": {
+    "strategy": "smart",
+    "algorithms": {
+      "dependency_analysis": {
+        "enabled": true,
+        "depth": 3,
+        "include_reverse_dependencies": true
+      },
+      "code_coverage_analysis": {
+        "enabled": true,
+        "minimum_coverage": 80,
+        "focus_on_changed_lines": true
+      },
+      "test_history_analysis": {
+        "enabled": true,
+        "consider_flaky_tests": true,
+        "weight_recent_failures": 2.0
+      }
+    },
+    "optimization": {
+      "parallel_execution": true,
+      "max_parallel_workers": 4,
+      "cache_test_results": true,
+      "skip_unchanged_tests": true
+    }
+  },
+  "coverage_analysis": {
+    "enabled": true,
+    "minimum_threshold": 80,
+    "fail_on_coverage_drop": true,
+    "coverage_drop_threshold": 5,
+    "exclude_patterns": [
+      "**/*.test.js",
+      "**/*.spec.js",
+      "**/node_modules/**",
+      "**/coverage/**"
+    ],
+    "report_formats": ["text-summary", "lcov", "json"],
+    "upload_to": {
+      "codecov": {
+        "enabled": false,
+        "token": "${CODECOV_TOKEN}"
+      },
+      "sonarqube": {
+        "enabled": false,
+        "url": "${SONAR_URL}",
+        "token": "${SONAR_TOKEN}"
+      }
+    }
+  },
+  "notifications": {
+    "success": {
+      "message": "✅ All tests passed successfully! Coverage: ${COVERAGE_PERCENTAGE}%",
+      "channels": ["console"],
+      "include_summary": true
+    },
+    "failure": {
+      "message": "❌ Test failures detected. Please review and fix failing tests.",
+      "channels": ["console", "slack"],
+      "slack": {
+        "channel": "#test-failures",
+        "mention_author": true
+      },
+      "include_logs": true,
+      "include_failure_details": true
+    },
+    "coverage_drop": {
+      "message": "⚠️ Code coverage dropped by ${COVERAGE_DROP}%. Current: ${COVERAGE_PERCENTAGE}%",
+      "channels": ["console", "slack"],
+      "slack": {
+        "channel": "#code-quality"
+      }
+    },
+    "flaky_tests": {
+      "message": "⚠️ Flaky tests detected: ${FLAKY_TEST_COUNT} tests are unstable",
+      "channels": ["console"],
+      "escalate_after": 3
+    }
+  },
+  "failure_handling": {
+    "unit_tests": {
+      "action": "block",
+      "allow_retry": true,
+      "max_retries": 1
+    },
+    "integration_tests": {
+      "action": "warn",
+      "allow_override": true,
+      "require_approval": false
+    },
+    "e2e_tests": {
+      "action": "warn",
+      "allow_override": true,
+      "require_approval": false
+    },
+    "performance_tests": {
+      "action": "warn",
+      "threshold_degradation": 20,
+      "require_approval": true
+    }
+  },
+  "test_data_management": {
+    "setup_test_data": {
+      "enabled": true,
+      "command": "npm run test:data:setup",
+      "timeout": 60
+    },
+    "cleanup_test_data": {
+      "enabled": true,
+      "command": "npm run test:data:cleanup",
+      "timeout": 30,
+      "run_on_failure": true
+    },
+    "isolation": {
+      "database": "test-specific",
+      "redis": "test-specific",
+      "filesystem": "temporary"
+    }
+  },
+  "reporting": {
+    "generate_reports": true,
+    "report_formats": ["junit", "json", "html"],
+    "output_directory": "test-reports/",
+    "archive_reports": true,
+    "retention_days": 30,
+    "dashboard_integration": {
+      "allure": {
+        "enabled": false,
+        "generate_report": true
+      },
+      "jest_html_reporter": {
+        "enabled": true,
+        "output_path": "test-reports/jest-report.html"
+      }
+    }
+  },
+  "performance_monitoring": {
+    "track_execution_time": true,
+    "alert_on_slow_tests": true,
+    "slow_test_threshold": 30,
+    "optimize_test_order": true,
+    "cache_dependencies": true
+  },
+  "environment": {
+    "test_environment": {
+      "NODE_ENV": "test",
+      "TEST_MODE": "automated",
+      "CI": "true",
+      "FORCE_COLOR": "1"
+    },
+    "required_vars": [],
+    "optional_vars": [
+      "CODECOV_TOKEN",
+      "SONAR_URL",
+      "SONAR_TOKEN",
+      "E2E_BASE_URL",
+      "TEST_DATABASE_URL"
+    ],
+    "database_config": {
+      "use_test_database": true,
+      "auto_migrate": true,
+      "seed_test_data": true
+    }
+  },
+  "integrations": {
+    "ci_cd": {
+      "github_actions": {
+        "update_pr_status": true,
+        "comment_on_pr": true
+      },
+      "gitlab_ci": {
+        "update_merge_request": true
+      }
+    },
+    "test_management": {
+      "testmo": {
+        "enabled": false,
+        "project_id": "${TESTMO_PROJECT_ID}",
+        "upload_results": true
+      }
+    },
+    "issue_tracking": {
+      "auto_create_issues": true,
+      "issue_template": "test-failure",
+      "assign_to_author": true
+    }
+  },
+  "debugging": {
+    "debug_mode": {
+      "enabled": false,
+      "verbose_output": true,
+      "save_screenshots": true,
+      "save_logs": true
+    },
+    "test_isolation": {
+      "run_in_band": false,
+      "max_workers": "50%",
+      "detect_leaks": true
+    }
+  },
+  "documentation": {
+    "description": "This hook intelligently runs relevant tests based on code changes, providing comprehensive test coverage analysis and performance monitoring.",
+    "test_types": [
+      "Unit tests for individual functions and components",
+      "Integration tests for service interactions",
+      "Component tests for UI components",
+      "End-to-end tests for critical user flows",
+      "Performance tests for performance-critical code",
+      "Security tests for authentication and authorization",
+      "Database tests for data layer changes"
+    ],
+    "setup": {
+      "install_dependencies": "npm install --save-dev jest @testing-library/react playwright",
+      "configure_scripts": "Add test scripts to package.json for different test types",
+      "setup_test_database": "Configure test database and seeding scripts"
+    },
+    "optimization_tips": [
+      "Use test.only() and test.skip() for focused testing during development",
+      "Implement proper test data management for reliable tests",
+      "Use mocking appropriately to isolate units under test",
+      "Keep tests fast and focused on single responsibilities"
+    ],
+    "troubleshooting": {
+      "flaky_tests": "Identify and fix flaky tests by improving test isolation and data management",
+      "slow_tests": "Profile and optimize slow tests, consider splitting large test suites",
+      "coverage_issues": "Review coverage reports to identify untested code paths",
+      "environment_issues": "Ensure test environment is properly isolated and configured"
+    }
+  }
+}

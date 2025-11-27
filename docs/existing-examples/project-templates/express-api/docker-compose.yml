@@ -1,0 +1,328 @@
+# Docker Compose for Express.js TypeScript API
+# Complete development and production environment with all services
+
+version: '3.8'
+
+services:
+  # === EXPRESS.JS API ===
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: express-blog-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-blogdb}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis-pass}@redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-jwt-secret-key-change-in-production}
+      SESSION_SECRET: ${SESSION_SECRET:-session-secret-change-in-production}
+      CORS_ORIGINS: '["http://localhost:3001", "https://yourdomain.com"]'
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@yourdomain.com}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MONITORING_ENABLED: true
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - blog-network
+    volumes:
+      - api-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # === POSTGRESQL DATABASE ===
+  db:
+    image: postgres:16-alpine
+    container_name: express-blog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-blogdb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_INITDB_ARGS: "--auth-local=trust"
+    ports:
+      - "5432:5432"
+    networks:
+      - blog-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./scripts/create-extensions.sql:/docker-entrypoint-initdb.d/02-extensions.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # === REDIS CACHE ===
+  redis:
+    image: redis:7-alpine
+    container_name: express-blog-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-redis-pass}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - blog-network
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis-pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # === NGINX REVERSE PROXY ===
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: express-blog-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    networks:
+      - blog-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # === PROMETHEUS MONITORING ===
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: express-blog-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    networks:
+      - blog-network
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # === GRAFANA DASHBOARD ===
+  grafana:
+    image: grafana/grafana:latest
+    container_name: express-blog-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_SECURITY_ALLOW_EMBEDDING: true
+      GF_AUTH_ANONYMOUS_ENABLED: false
+    networks:
+      - blog-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # === ELASTICSEARCH FOR LOGS ===
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: express-blog-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - blog-network
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # === KIBANA FOR LOG VISUALIZATION ===
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    container_name: express-blog-kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    networks:
+      - blog-network
+    depends_on:
+      - elasticsearch
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # === JAEGER TRACING ===
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: express-blog-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - blog-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+# === DEVELOPMENT OVERRIDE ===
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+---
+version: '3.8'
+
+services:
+  # Development API with hot reload
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: express-blog-api-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:password@db:5432/blogdb_dev
+      REDIS_URL: redis://:redis-pass@redis:6379/1
+      JWT_SECRET: dev-jwt-secret-key
+      SESSION_SECRET: dev-session-secret-key
+      LOG_LEVEL: debug
+      DATABASE_LOGGING: true
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - dev-logs:/app/logs
+    networks:
+      - blog-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # Development database
+  db:
+    environment:
+      POSTGRES_DB: blogdb_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+
+# === NETWORKS ===
+networks:
+  blog-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# === VOLUMES ===
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  api-logs:
+    driver: local
+  dev-logs:
+    driver: local
+  nginx-logs:
+    driver: local

@@ -1,0 +1,114 @@
+{
+  "skill": {
+    "name": "code-analysis",
+    "version": "1.0.0",
+    "description": "Advanced static code analysis and quality assessment using modern tooling",
+    "category": "development",
+    "subcategory": "quality-assurance",
+    "tags": ["code-quality", "static-analysis", "security", "performance", "technical-debt"],
+    "author": "Claude Code Team",
+    "license": "MIT"
+  },
+  "capabilities": {
+    "primary": [
+      "static-code-analysis",
+      "security-vulnerability-detection",
+      "performance-bottleneck-identification",
+      "technical-debt-assessment",
+      "code-quality-metrics"
+    ],
+    "secondary": [
+      "dependency-analysis",
+      "architecture-evaluation",
+      "test-coverage-analysis",
+      "documentation-assessment",
+      "compliance-checking"
+    ],
+    "languages": [
+      "javascript", "typescript", "python", "java", "csharp",
+      "go", "rust", "php", "ruby", "cpp", "kotlin", "swift", "dart"
+    ],
+    "frameworks": [
+      "react", "vue", "angular", "svelte", "express", "fastapi",
+      "django", "spring-boot", "aspnet-core", "rails"
+    ]
+  },
+  "tools": {
+    "linters": [
+      "eslint", "biome", "ruff", "mypy", "bandit", "sonarqube",
+      "semgrep", "snyk", "codeql", "checkmarx"
+    ],
+    "formatters": [
+      "prettier", "black", "autopep8", "gofmt", "rustfmt"
+    ],
+    "analyzers": [
+      "sonarcloud", "codeclimate", "deepsource", "scrutinizer"
+    ],
+    "security": [
+      "snyk", "whitesource", "veracode", "checkmarx", "fortify"
+    ]
+  },
+  "activation": {
+    "keywords": [
+      "analyze code", "code quality", "code review", "security scan",
+      "performance analysis", "technical debt", "refactoring",
+      "vulnerability assessment", "static analysis"
+    ],
+    "file_patterns": [
+      "**/*.js", "**/*.ts", "**/*.py", "**/*.java", "**/*.cs",
+      "**/*.go", "**/*.rs", "**/*.php", "**/*.rb", "**/*.cpp"
+    ],
+    "context_patterns": [
+      "code review", "quality assessment", "security audit",
+      "performance optimization", "refactoring", "modernization"
+    ]
+  },
+  "configuration": {
+    "quality_threshold": 8.0,
+    "security_severity": "medium",
+    "performance_threshold": "p95 < 500ms",
+    "coverage_target": 90,
+    "complexity_limit": 10,
+    "enable_auto_fix": false,
+    "include_suggestions": true,
+    "generate_reports": true
+  },
+  "dependencies": {
+    "required_tools": ["node", "python", "git"],
+    "optional_tools": ["docker", "sonarqube", "snyk"],
+    "minimum_versions": {
+      "node": "18.0.0",
+      "python": "3.8.0",
+      "git": "2.30.0"
+    }
+  },
+  "outputs": {
+    "formats": ["json", "markdown", "html", "csv", "junit"],
+    "reports": [
+      "quality-summary",
+      "security-audit",
+      "performance-analysis",
+      "technical-debt-report",
+      "refactoring-suggestions"
+    ],
+    "metrics": [
+      "cyclomatic_complexity",
+      "maintainability_index",
+      "test_coverage",
+      "security_score",
+      "performance_rating"
+    ]
+  },
+  "integration": {
+    "ci_cd": ["github-actions", "gitlab-ci", "jenkins", "azure-devops"],
+    "ide": ["vscode", "intellij", "eclipse", "sublime"],
+    "platforms": ["sonarcloud", "codeclimate", "snyk", "github"],
+    "webhooks": ["slack", "teams", "discord", "email"]
+  },
+  "performance": {
+    "execution_time": "< 5 minutes for typical projects",
+    "memory_usage": "< 500MB",
+    "supported_project_size": "up to 1M LOC",
+    "concurrent_analysis": true
+  }
+}

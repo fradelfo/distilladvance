@@ -117,7 +117,7 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Production deployment config (Vercel + Railway)
 - [x] GitHub Actions CI/CD pipeline
 - [x] MCP integrations (GitHub + PostgreSQL)
-- [ ] Prompt editor with rich formatting
+- [x] Prompt editor with rich formatting (`/prompts/[id]/edit`)
 - [ ] Coach feature (prompt improvement suggestions)
 - [ ] Chrome Web Store deployment
 
@@ -239,7 +239,7 @@ chore: description
 - [ ] Coach suggestions: LLM-based or heuristic?
 - [x] Variable extraction algorithm (implemented: `{{variable}}` syntax)
 
-### Available Routes (12)
+### Available Routes (13)
 
 | Route | Purpose |
 |-------|---------|
@@ -247,6 +247,7 @@ chore: description
 | `/login`, `/signup` | Authentication |
 | `/dashboard` | User home |
 | `/prompts`, `/prompts/[id]` | Prompt library & detail |
+| `/prompts/[id]/edit` | Prompt editor |
 | `/collections`, `/collections/[id]` | Collections & detail |
 | `/workspaces`, `/workspaces/[slug]` | Team workspaces |
 | `/onboarding` | Welcome wizard |

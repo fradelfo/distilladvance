@@ -76,7 +76,7 @@ Knowledge workers and teams don't have a simple, trusted way to:
 ## Current implementation status
 
 > **Current Sprint:** 4 - Advanced Features
-> **See:** `Projects/DistillAdv/Development Log.md` for detailed progress
+> **See:** `cursormvp/docs/logs/development-log.md` for detailed progress
 
 ### Sprint 1: Foundation ✅ COMPLETE
 - [x] Monorepo structure with Bun workspaces
@@ -253,26 +253,37 @@ chore: description
 
 ---
 
-## Documentation (Obsidian)
+## Documentation (Local)
 
-**Vault path:** `Projects/DistillAdv/`
+**Path:** `cursormvp/docs/logs/`
 
 | Document | Path |
 |----------|------|
-| Project README | `Projects/DistillAdv/README.md` |
-| Development Log | `Projects/DistillAdv/Development Log.md` |
-| Session Resume | `Projects/DistillAdv/Session Start.md` |
-| Roadmap | `Projects/DistillAdv/Roadmap.md` |
-| Sprint Goals | `Projects/DistillAdv/Sprint 1/Goals.md` |
-| Architecture | `Projects/DistillAdv/Architecture/System Overview.md` |
+| Development Log | `cursormvp/docs/logs/development-log.md` |
+| Session Resume | `cursormvp/docs/logs/session-start.md` |
+| Roadmap | `cursormvp/docs/logs/roadmap.md` |
+| Sprint Details | `cursormvp/docs/logs/sprints/sprint-[N].md` |
+
+### Slash Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/resume` | Load context from local docs |
+| `/log` | Append progress to development-log.md |
+| `/sync-to-obsidian` | Bulk sync to Obsidian vault |
+
+### Obsidian Sync (Optional)
+Obsidian MCP remains available for manual use via `/sync-to-obsidian`.
+Vault path: `Projects/DistillAdv/`
 
 ---
 
 ## Session start checklist
 
 When starting a new session:
-1. Check current branch: `git branch --show-current`
-2. Check status: `git status`
-3. Review open phase: `docs/phases/`
-4. Check PROJECT_CONTEXT.md in cursormvp/ for latest state
-5. Check Obsidian `Projects/DistillAdv/Development Log.md` for blockers
+1. Run `/resume` for automatic context loading
+2. Or manually check:
+   - `git branch --show-current` + `git status`
+   - `cursormvp/docs/logs/development-log.md` for last session
+   - `cursormvp/docs/logs/sprints/` for current sprint status
+   - `docs/phases/` for active phases

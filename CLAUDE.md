@@ -111,15 +111,15 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Privacy mode API (PrivacyMode enum: PROMPT_ONLY, FULL)
 - [x] Conversation router with privacy-aware data handling
 
-### Sprint 4: Advanced Features 🟡 IN PROGRESS
+### Sprint 4: Advanced Features ✅ COMPLETE
 - [x] Vector embedding pipeline (OpenAI text-embedding-3-small)
 - [x] Semantic search functionality (cosine similarity in PostgreSQL)
 - [x] Production deployment config (Vercel + Railway)
 - [x] GitHub Actions CI/CD pipeline
 - [x] MCP integrations (GitHub + PostgreSQL)
 - [x] Prompt editor with rich formatting (`/prompts/[id]/edit`)
-- [ ] Coach feature (prompt improvement suggestions)
-- [ ] Chrome Web Store deployment
+- [x] Coach feature (prompt improvement suggestions)
+- [x] Chrome Web Store preparation (packaging, store listing, privacy policy)
 
 ## Code conventions
 
@@ -236,10 +236,10 @@ chore: description
 
 ### Open questions
 - [ ] Exact distillation prompt engineering
-- [ ] Coach suggestions: LLM-based or heuristic?
+- [x] Coach suggestions: LLM-based or heuristic? (implemented: LLM-based with Anthropic Claude)
 - [x] Variable extraction algorithm (implemented: `{{variable}}` syntax)
 
-### Available Routes (13)
+### Available Routes (14)
 
 | Route | Purpose |
 |-------|---------|
@@ -251,6 +251,7 @@ chore: description
 | `/collections`, `/collections/[id]` | Collections & detail |
 | `/workspaces`, `/workspaces/[slug]` | Team workspaces |
 | `/onboarding` | Welcome wizard |
+| `/privacy` | Privacy policy |
 
 ---
 

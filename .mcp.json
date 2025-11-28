@@ -8,7 +8,7 @@
       }
     },
     "filesystem": {
-      "command": "npx", 
+      "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
     },
     "obsidian": {
@@ -16,6 +16,20 @@
       "args": ["-y", "obsidian-mcp"],
       "env": {
         "OBSIDIAN_VAULT_PATH": "/Users/delfo/Documents/delf0"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
       }
     }
   }

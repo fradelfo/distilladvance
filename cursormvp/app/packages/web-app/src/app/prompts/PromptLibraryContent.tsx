@@ -14,10 +14,14 @@ import { PromptSearch } from '@/components/PromptSearch';
 import { TagFilter } from '@/components/TagFilter';
 import { SortSelect, type SortOption } from '@/components/SortSelect';
 import { EmptyState } from '@/components/EmptyState';
+import { SemanticSearch } from '@/components/prompts';
 import { trpc } from '@/lib/trpc';
 
 // View mode for the grid
 type ViewMode = 'grid' | 'list';
+
+// Search mode: browse (keyword) or semantic (meaning)
+type SearchMode = 'browse' | 'semantic';
 
 // Type for a prompt from the API (dates come as strings from tRPC)
 interface PromptListItem {
@@ -38,6 +42,9 @@ interface ListPromptsPage {
 }
 
 export function PromptLibraryContent() {
+  // Search mode state
+  const [searchMode, setSearchMode] = useState<SearchMode>('browse');
+
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -217,169 +224,244 @@ export function PromptLibraryContent() {
         </Link>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mb-6 space-y-4">
-        {/* Search Bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <PromptSearch
-            onSearch={handleSearch}
-            initialValue={searchQuery}
-            className="flex-1"
-          />
-          <div className="flex items-center gap-4">
-            <SortSelect value={sortBy} onChange={setSortBy} />
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-md border border-neutral-300 bg-white">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 ${
-                  viewMode === 'grid'
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-700'
-                }`}
-                aria-label="Grid view"
-                title="Grid view"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 ${
-                  viewMode === 'list'
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-700'
-                }`}
-                aria-label="List view"
-                title="List view"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tag Filters */}
-        {allTags.length > 0 && (
-          <TagFilter
-            tags={allTags}
-            selectedTags={selectedTags}
-            onTagsChange={setSelectedTags}
-          />
-        )}
-      </div>
-
-      {/* Error State */}
-      {isError && (
-        <div className="card p-6 text-center">
-          <p className="text-sm text-error-600">
-            Failed to load prompts: {error?.message || 'Unknown error'}
-          </p>
+      {/* Search Mode Toggle */}
+      <div className="mb-6">
+        <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit">
           <button
-            onClick={() => window.location.reload()}
-            className="mt-4 btn-outline px-4 py-2"
+            type="button"
+            onClick={() => setSearchMode('browse')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              searchMode === 'browse'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+            aria-pressed={searchMode === 'browse'}
           >
-            Retry
+            <span className="flex items-center gap-2">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                />
+              </svg>
+              Browse
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchMode('semantic')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              searchMode === 'semantic'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+            aria-pressed={searchMode === 'semantic'}
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+              Semantic Search
+            </span>
           </button>
         </div>
+      </div>
+
+      {/* Semantic Search Mode */}
+      {searchMode === 'semantic' && (
+        <SemanticSearch includePublic={true} />
       )}
 
-      {/* Loading State */}
-      {isLoading && (
-        <div
-          className={
-            viewMode === 'grid'
-              ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-              : 'space-y-4'
-          }
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <PromptCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
-
-      {/* No Search Results */}
-      {noSearchResults && (
-        <EmptyState
-          icon="🔍"
-          title="No prompts found"
-          description={`No prompts match your ${
-            searchQuery ? `search "${searchQuery}"` : ''
-          }${searchQuery && selectedTags.length > 0 ? ' and ' : ''}${
-            selectedTags.length > 0 ? 'selected tags' : ''
-          }.`}
-          secondaryAction={{
-            label: 'Clear filters',
-            onClick: () => {
-              setSearchQuery('');
-              setSelectedTags([]);
-            },
-          }}
-        />
-      )}
-
-      {/* Prompts Grid/List */}
-      {!isLoading && !noSearchResults && sortedPrompts.length > 0 && (
+      {/* Browse Mode - Search and Filters */}
+      {searchMode === 'browse' && (
         <>
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                : 'space-y-4'
-            }
-          >
-            {sortedPrompts.map((prompt) => (
-              <PromptCard
-                key={prompt.id}
-                id={prompt.id}
-                title={prompt.title}
-                tags={prompt.tags}
-                usageCount={prompt.usageCount}
-                isPublic={prompt.isPublic}
-                createdAt={new Date(prompt.createdAt)}
-                updatedAt={new Date(prompt.updatedAt)}
-                onCopy={handleCopy}
-                onRun={handleRun}
-                onEdit={handleEdit}
+          <div className="mb-6 space-y-4">
+            {/* Search Bar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <PromptSearch
+                onSearch={handleSearch}
+                initialValue={searchQuery}
+                className="flex-1"
               />
-            ))}
+              <div className="flex items-center gap-4">
+                <SortSelect value={sortBy} onChange={setSortBy} />
+                {/* View Mode Toggle */}
+                <div className="flex items-center rounded-md border border-neutral-300 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 ${
+                      viewMode === 'grid'
+                        ? 'bg-neutral-100 text-neutral-900'
+                        : 'text-neutral-500 hover:text-neutral-700'
+                    }`}
+                    aria-label="Grid view"
+                    title="Grid view"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 ${
+                      viewMode === 'list'
+                        ? 'bg-neutral-100 text-neutral-900'
+                        : 'text-neutral-500 hover:text-neutral-700'
+                    }`}
+                    aria-label="List view"
+                    title="List view"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Tag Filters */}
+            {allTags.length > 0 && (
+              <TagFilter
+                tags={allTags}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+              />
+            )}
           </div>
 
-          {/* Load More Button */}
-          {hasNextPage && (
-            <div className="mt-8 text-center">
+          {/* Error State */}
+          {isError && (
+            <div className="card p-6 text-center">
+              <p className="text-sm text-error-600">
+                Failed to load prompts: {error?.message || 'Unknown error'}
+              </p>
               <button
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="btn-outline px-6 py-2"
+                onClick={() => window.location.reload()}
+                className="mt-4 btn-outline px-4 py-2"
               >
-                {isFetchingNextPage ? 'Loading...' : 'Load More'}
+                Retry
               </button>
             </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div
+              className={
+                viewMode === 'grid'
+                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'space-y-4'
+              }
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <PromptCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
+
+          {/* No Search Results */}
+          {noSearchResults && (
+            <EmptyState
+              icon="🔍"
+              title="No prompts found"
+              description={`No prompts match your ${
+                searchQuery ? `search "${searchQuery}"` : ''
+              }${searchQuery && selectedTags.length > 0 ? ' and ' : ''}${
+                selectedTags.length > 0 ? 'selected tags' : ''
+              }.`}
+              secondaryAction={{
+                label: 'Clear filters',
+                onClick: () => {
+                  setSearchQuery('');
+                  setSelectedTags([]);
+                },
+              }}
+            />
+          )}
+
+          {/* Prompts Grid/List */}
+          {!isLoading && !noSearchResults && sortedPrompts.length > 0 && (
+            <>
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+                    : 'space-y-4'
+                }
+              >
+                {sortedPrompts.map((prompt) => (
+                  <PromptCard
+                    key={prompt.id}
+                    id={prompt.id}
+                    title={prompt.title}
+                    tags={prompt.tags}
+                    usageCount={prompt.usageCount}
+                    isPublic={prompt.isPublic}
+                    createdAt={new Date(prompt.createdAt)}
+                    updatedAt={new Date(prompt.updatedAt)}
+                    onCopy={handleCopy}
+                    onRun={handleRun}
+                    onEdit={handleEdit}
+                  />
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {hasNextPage && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="btn-outline px-6 py-2"
+                  >
+                    {isFetchingNextPage ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

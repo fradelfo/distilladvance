@@ -48,6 +48,35 @@ const generateEmbeddingInputSchema = z.object({
   dimensions: z.number().positive().optional(),
 });
 
+const semanticSearchInputSchema = z.object({
+  query: z.string().min(1, "Query is required").max(1000, "Query too long"),
+  limit: z.number().min(1).max(50).default(10),
+  threshold: z.number().min(0).max(1).default(0.7),
+  workspaceId: z.string().optional(),
+  includePublic: z.boolean().default(true),
+});
+
+// ============================================================================
+// Vector Math Helpers
+// ============================================================================
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) return 0;
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+  return magnitude === 0 ? 0 : dotProduct / magnitude;
+}
+
 // ============================================================================
 // Router Definition
 // ============================================================================
@@ -508,4 +537,231 @@ export const embeddingRouter = router({
       },
     };
   }),
+
+  /**
+   * Semantic search for similar prompts.
+   *
+   * Takes a natural language query, generates an embedding,
+   * and finds the most similar prompts using cosine similarity.
+   */
+  search: authedProcedure
+    .input(semanticSearchInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = (ctx as { userId?: string }).userId;
+      const startTime = Date.now();
+
+      // Generate embedding for the search query
+      const queryResult = await generateEmbedding(input.query);
+
+      if (!queryResult.success || !queryResult.embedding) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: queryResult.error || "Failed to generate query embedding",
+        });
+      }
+
+      const queryVector = queryResult.embedding;
+
+      // Build where clause for accessible prompts
+      const accessConditions: Array<{ userId?: string; isPublic?: boolean; workspaceId?: string }> = [];
+
+      if (userId) {
+        accessConditions.push({ userId });
+      }
+
+      if (input.includePublic) {
+        accessConditions.push({ isPublic: true });
+      }
+
+      if (input.workspaceId) {
+        accessConditions.push({ workspaceId: input.workspaceId });
+      }
+
+      // Fetch all embeddings for accessible prompts
+      const embeddings = await ctx.prisma.promptEmbedding.findMany({
+        where: {
+          prompt: {
+            OR: accessConditions.length > 0 ? accessConditions : [{ isPublic: true }],
+          },
+        },
+        include: {
+          prompt: {
+            select: {
+              id: true,
+              title: true,
+              content: true,
+              tags: true,
+              isPublic: true,
+              userId: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Calculate similarity scores
+      const scoredResults = embeddings
+        .map((emb) => ({
+          prompt: emb.prompt,
+          similarity: cosineSimilarity(queryVector, emb.vector),
+          embeddingId: emb.id,
+          model: emb.model,
+        }))
+        .filter((r) => r.similarity >= input.threshold)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, input.limit);
+
+      const durationMs = Date.now() - startTime;
+
+      // Log search usage
+      if (userId) {
+        try {
+          await ctx.prisma.aiUsageLog.create({
+            data: {
+              userId,
+              model: queryResult.usage.model,
+              provider: "openai",
+              promptTokens: queryResult.usage.promptTokens,
+              completionTokens: 0,
+              totalTokens: queryResult.usage.totalTokens,
+              cost: 0,
+              operation: "semantic_search",
+              metadata: {
+                query: input.query.slice(0, 100),
+                resultsCount: scoredResults.length,
+                threshold: input.threshold,
+                durationMs,
+              },
+            },
+          });
+        } catch (logError) {
+          console.error("[Semantic Search] Failed to log usage:", logError);
+        }
+      }
+
+      return {
+        success: true,
+        results: scoredResults.map((r) => ({
+          prompt: {
+            id: r.prompt.id,
+            title: r.prompt.title,
+            content: r.prompt.content.slice(0, 200) + (r.prompt.content.length > 200 ? "..." : ""),
+            tags: r.prompt.tags,
+            isPublic: r.prompt.isPublic,
+            createdAt: r.prompt.createdAt,
+            author: r.prompt.user?.name ?? "Unknown",
+            isOwner: r.prompt.userId === userId,
+          },
+          similarity: Math.round(r.similarity * 1000) / 1000,
+        })),
+        meta: {
+          query: input.query,
+          totalCandidates: embeddings.length,
+          resultsReturned: scoredResults.length,
+          threshold: input.threshold,
+          durationMs,
+        },
+      };
+    }),
+
+  /**
+   * Find prompts similar to a given prompt.
+   *
+   * Uses the prompt's existing embedding to find similar prompts.
+   */
+  findSimilar: authedProcedure
+    .input(
+      z.object({
+        promptId: z.string().min(1, "Prompt ID is required"),
+        limit: z.number().min(1).max(20).default(5),
+        threshold: z.number().min(0).max(1).default(0.75),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = (ctx as { userId?: string }).userId;
+
+      // Get the source prompt's embedding
+      const sourceEmbedding = await ctx.prisma.promptEmbedding.findFirst({
+        where: { promptId: input.promptId },
+        include: {
+          prompt: {
+            select: { userId: true, isPublic: true },
+          },
+        },
+      });
+
+      if (!sourceEmbedding) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Prompt embedding not found. Generate an embedding first.",
+        });
+      }
+
+      // Check access
+      if (sourceEmbedding.prompt.userId !== userId && !sourceEmbedding.prompt.isPublic) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this prompt",
+        });
+      }
+
+      const sourceVector = sourceEmbedding.vector;
+
+      // Fetch embeddings for comparison (exclude the source prompt)
+      const embeddings = await ctx.prisma.promptEmbedding.findMany({
+        where: {
+          promptId: { not: input.promptId },
+          prompt: {
+            OR: [
+              { userId: userId ?? undefined },
+              { isPublic: true },
+            ],
+          },
+        },
+        include: {
+          prompt: {
+            select: {
+              id: true,
+              title: true,
+              content: true,
+              tags: true,
+              isPublic: true,
+              userId: true,
+            },
+          },
+        },
+      });
+
+      // Calculate and sort by similarity
+      const similar = embeddings
+        .map((emb) => ({
+          prompt: emb.prompt,
+          similarity: cosineSimilarity(sourceVector, emb.vector),
+        }))
+        .filter((r) => r.similarity >= input.threshold)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, input.limit);
+
+      return {
+        success: true,
+        sourcePromptId: input.promptId,
+        similar: similar.map((r) => ({
+          prompt: {
+            id: r.prompt.id,
+            title: r.prompt.title,
+            content: r.prompt.content.slice(0, 150) + (r.prompt.content.length > 150 ? "..." : ""),
+            tags: r.prompt.tags,
+            isPublic: r.prompt.isPublic,
+            isOwner: r.prompt.userId === userId,
+          },
+          similarity: Math.round(r.similarity * 1000) / 1000,
+        })),
+      };
+    }),
 });

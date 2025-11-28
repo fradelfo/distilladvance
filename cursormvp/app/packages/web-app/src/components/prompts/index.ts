@@ -5,3 +5,4 @@
  */
 
 export { RunPromptModal } from './RunPromptModal';
+export { SemanticSearch, SemanticSearchSkeleton } from './SemanticSearch';

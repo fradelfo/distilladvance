@@ -1,7 +1,7 @@
 # Distill - Project Context
 
 > This file maintains current project state, decisions, and context for Claude Code sessions.
-> Updated: 2025-11-27
+> Updated: 2025-11-28
 
 ## Project Summary
 
@@ -42,11 +42,14 @@
 - [x] Privacy mode API integration
 - [x] Conversation router with privacy modes
 
-### Not Started (Sprint 4+) ⏳
+### Sprint 4: Advanced Features 🟡 IN PROGRESS
+- [x] Vector embedding pipeline (OpenAI text-embedding-3-small)
+- [x] Semantic search functionality (cosine similarity)
+- [x] Production deployment configuration (Vercel + Railway)
+- [x] GitHub Actions CI/CD pipeline
+- [x] MCP integrations (GitHub + PostgreSQL)
 - [ ] Prompt editor with rich formatting
 - [ ] Coach feature (prompt improvement suggestions)
-- [ ] Vector embedding pipeline
-- [ ] Semantic search functionality
 - [ ] Chrome Web Store deployment
 
 ## Architecture Decisions
@@ -153,7 +156,7 @@ User
  └── AiUsageLogs (cost tracking)
 ```
 
-## Ports & Services
+## Ports & Services (Local Development)
 
 | Service | Port | Purpose |
 |---------|------|---------|
@@ -162,6 +165,27 @@ User
 | PostgreSQL | 5432 | Main database |
 | Redis | 6379 | Cache & queues |
 | ChromaDB | 8000 | Vector storage |
+
+## Production Deployment
+
+| Component | Platform | Config File |
+|-----------|----------|-------------|
+| Web App | Vercel | `app/packages/web-app/vercel.json` |
+| API Server | Railway | `app/packages/api/railway.json` |
+| Database | Railway PostgreSQL | (managed) |
+| CI/CD | GitHub Actions | `.github/workflows/deploy-production.yml` |
+
+### Deployment Flow
+```
+Push to main → CI (lint/test/build) → Deploy API (Railway) → Deploy Web (Vercel) → Verify
+```
+
+### Required GitHub Secrets
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- `RAILWAY_TOKEN`
+- `DATABASE_URL`, `NEXTAUTH_SECRET`, `API_SECRET`
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
 ## Notes & Reminders
 

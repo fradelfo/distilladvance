@@ -111,11 +111,14 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Privacy mode API (PrivacyMode enum: PROMPT_ONLY, FULL)
 - [x] Conversation router with privacy-aware data handling
 
-### Sprint 4: Advanced Features 🟡 NOT STARTED
+### Sprint 4: Advanced Features 🟡 IN PROGRESS
+- [x] Vector embedding pipeline (OpenAI text-embedding-3-small)
+- [x] Semantic search functionality (cosine similarity in PostgreSQL)
+- [x] Production deployment config (Vercel + Railway)
+- [x] GitHub Actions CI/CD pipeline
+- [x] MCP integrations (GitHub + PostgreSQL)
 - [ ] Prompt editor with rich formatting
 - [ ] Coach feature (prompt improvement suggestions)
-- [ ] Vector embedding pipeline (ChromaDB)
-- [ ] Semantic search functionality
 - [ ] Chrome Web Store deployment
 
 ## Code conventions

@@ -1,5 +1,6 @@
 import { router } from "./index.js";
 import { authRouter } from "./routers/auth.js";
+import { coachRouter } from "./routers/coach.js";
 import { collectionRouter } from "./routers/collection.js";
 import { conversationRouter } from "./routers/conversation.js";
 import { distillRouter } from "./routers/distill.js";
@@ -13,6 +14,7 @@ import { workspaceRouter } from "./routers/workspace.js";
  */
 export const appRouter = router({
   auth: authRouter,
+  coach: coachRouter,
   collection: collectionRouter,
   conversation: conversationRouter,
   distill: distillRouter,

@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
 import { TagChip } from '@/components/TagFilter';
+import { CoachPanel } from '@/components/prompts/CoachPanel';
 
 interface PromptDetailContentProps {
   promptId: string;
@@ -460,6 +461,11 @@ export function PromptDetailContent({
         <pre className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap text-sm font-mono text-neutral-800">
           {isRunMode ? filledTemplate : prompt.content}
         </pre>
+      </div>
+
+      {/* Coach Panel */}
+      <div className="mt-6">
+        <CoachPanel promptId={promptId} />
       </div>
 
       {/* Delete Confirmation Modal */}

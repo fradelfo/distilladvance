@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
+import { CoachPanel } from '@/components/prompts/CoachPanel';
 
 interface PromptEditContentProps {
   promptId: string;
@@ -653,6 +654,26 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
             />
           </button>
         </div>
+      </div>
+
+      {/* Prompt Coach */}
+      <div className="mb-4">
+        <CoachPanel
+          promptId={promptId}
+          onApplySuggestion={(suggestion) => {
+            // Apply the suggested text if there's a current/suggested pair
+            if (suggestion.current && suggestion.suggested) {
+              const newContent = content.replace(
+                suggestion.current,
+                suggestion.suggested
+              );
+              if (newContent !== content) {
+                setContent(newContent);
+                setHasChanges(true);
+              }
+            }
+          }}
+        />
       </div>
 
       {/* Save Bar (sticky on mobile) */}

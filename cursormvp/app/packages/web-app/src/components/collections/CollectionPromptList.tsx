@@ -32,6 +32,8 @@ interface CollectionPromptListProps {
   onRemovePrompt?: (promptId: string) => void;
   /** Called when prompts are reordered */
   onReorder?: (promptIds: string[]) => void;
+  /** Called when user wants to browse library to add prompts */
+  onBrowseLibrary?: () => void;
 }
 
 export function CollectionPromptList({
@@ -39,6 +41,7 @@ export function CollectionPromptList({
   canEdit = false,
   isLoading = false,
   onRemovePrompt,
+  onBrowseLibrary,
 }: CollectionPromptListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -93,9 +96,9 @@ export function CollectionPromptList({
             ? 'Add prompts from your library to organize them here.'
             : 'This collection is empty.'}
         </p>
-        {canEdit && (
-          <Link
-            href="/prompts"
+        {canEdit && onBrowseLibrary && (
+          <button
+            onClick={onBrowseLibrary}
             className="inline-flex items-center gap-2 mt-4 btn-primary px-4 py-2"
           >
             <svg
@@ -113,7 +116,7 @@ export function CollectionPromptList({
               />
             </svg>
             Browse Library
-          </Link>
+          </button>
         )}
       </div>
     );

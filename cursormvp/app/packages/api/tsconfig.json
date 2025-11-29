@@ -22,7 +22,8 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@distill/shared-types": ["../shared-types/src/index.ts"]
     },
     "types": ["node"]
   },

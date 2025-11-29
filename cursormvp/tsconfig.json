@@ -21,6 +21,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
+      "@distill/shared-types": ["app/packages/shared-types/src/index.ts"],
       "@distill/shared/*": ["app/packages/shared-types/src/*"],
       "@distill/extension/*": ["app/packages/browser-extension/src/*"],
       "@distill/web/*": ["app/packages/web-app/src/*"],

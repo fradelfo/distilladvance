@@ -40,7 +40,11 @@
       "mcp__filesystem__read_multiple_files",
       "Bash(bun run web:build:*)",
       "Bash(git push:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(bun --cwd app/packages/web-app run build)",
+      "Bash(npx next build)",
+      "Bash(bun run:*)",
+      "Bash(unzip:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -5,20 +5,34 @@
 
 import type { ExtensionMessage } from '@distill/shared-types';
 import { MessageTypes } from '../shared/messages';
+import {
+  initExtensionAnalytics,
+  trackExtensionInstalled,
+  trackExtensionUpdated,
+  trackKeyboardShortcutUsed,
+  trackContextMenuUsed,
+  trackChatCaptured,
+} from '../shared/analytics';
 
 // Initialize extension
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(async (details) => {
+  // Initialize analytics first
+  await initExtensionAnalytics();
+
   if (details.reason === 'install') {
     console.log('[Distill] Extension installed');
     initializeDefaults();
+    trackExtensionInstalled();
   } else if (details.reason === 'update') {
     console.log('[Distill] Extension updated');
+    trackExtensionUpdated(details.previousVersion || 'unknown');
   }
 });
 
 // Handle keyboard shortcut command
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'capture-conversation') {
+    trackKeyboardShortcutUsed();
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.id) {
       // Send message to content script to open capture modal
@@ -69,8 +83,10 @@ chrome.runtime.onInstalled.addListener(() => {
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'distill-selection' && info.selectionText) {
+    trackContextMenuUsed('distill-selection');
     handleDistillSelection(info.selectionText, tab);
   } else if (info.menuItemId === 'distill-page') {
+    trackContextMenuUsed('distill-page');
     handleDistillPage(tab);
   }
 });
@@ -141,8 +157,14 @@ async function handleConversationCaptured(payload: unknown) {
   const conversations = await chrome.storage.local.get('conversations');
   const existing = conversations.conversations || [];
 
+  const capturedData = payload as {
+    source?: string;
+    privacyMode?: string;
+    messages?: Array<unknown>;
+  };
+
   existing.unshift({
-    ...(payload as object),
+    ...capturedData,
     capturedAt: new Date().toISOString(),
   });
 
@@ -157,6 +179,16 @@ async function handleConversationCaptured(payload: unknown) {
     promptsSaved: (stats.promptsSaved || 0) + 1,
     lastCapture: new Date().toISOString(),
   });
+
+  // Track analytics event
+  const messageCount = capturedData.messages?.length || 0;
+  const tokenCount = messageCount * 100; // Rough estimate
+  trackChatCaptured(
+    (capturedData.source || 'other') as any,
+    capturedData.privacyMode === 'full' ? 'full_chat' : 'prompt_only',
+    tokenCount,
+    messageCount
+  );
 
   return { success: true, message: 'Conversation captured' };
 }

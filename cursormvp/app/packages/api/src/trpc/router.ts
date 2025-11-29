@@ -1,4 +1,5 @@
 import { router } from "./index.js";
+import { analyticsRouter } from "./routers/analytics.js";
 import { authRouter } from "./routers/auth.js";
 import { coachRouter } from "./routers/coach.js";
 import { collectionRouter } from "./routers/collection.js";
@@ -13,6 +14,7 @@ import { workspaceRouter } from "./routers/workspace.js";
  * Root tRPC router combining all sub-routers.
  */
 export const appRouter = router({
+  analytics: analyticsRouter,
   auth: authRouter,
   coach: coachRouter,
   collection: collectionRouter,

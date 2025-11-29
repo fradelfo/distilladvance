@@ -239,3 +239,197 @@ export type WithTimestamps<T> = T & {
 };
 
 export type WithId<T> = T & { id: string };
+
+// ============================================================================
+// Analytics Types (PRD Section 7.1)
+// ============================================================================
+
+/**
+ * All trackable event types in Distill.
+ * Based on PRD Section 7.1 - MVP tracking events.
+ */
+export type AnalyticsEventType =
+  | 'user_signed_up'
+  | 'workspace_created'
+  | 'extension_installed'
+  | 'chat_captured'
+  | 'prompt_created'
+  | 'prompt_run'
+  | 'prompt_edited'
+  | 'coach_used'
+  | 'member_invited'
+  | 'search_performed'
+  | 'page_viewed'
+  | 'feature_used';
+
+/**
+ * Base properties included with every event.
+ */
+export interface AnalyticsBaseProperties {
+  timestamp: string;
+  sessionId?: string;
+  userId?: string;
+  workspaceId?: string;
+}
+
+/**
+ * Event-specific property types.
+ */
+export interface UserSignedUpProperties extends AnalyticsBaseProperties {
+  source: 'organic' | 'referral' | 'invite' | 'marketing';
+  referrer?: string;
+  method: 'email' | 'google' | 'github';
+}
+
+export interface WorkspaceCreatedProperties extends AnalyticsBaseProperties {
+  privacyDefault: 'prompt_only' | 'full_chat';
+  workspaceName?: string;
+}
+
+export interface ExtensionInstalledProperties extends AnalyticsBaseProperties {
+  browser: 'chrome' | 'firefox' | 'edge' | 'safari';
+  version: string;
+  extensionVersion: string;
+}
+
+export interface ChatCapturedProperties extends AnalyticsBaseProperties {
+  platform: ConversationSource;
+  privacyMode: 'prompt_only' | 'full_chat';
+  tokenCount: number;
+  messageCount: number;
+}
+
+export interface PromptCreatedProperties extends AnalyticsBaseProperties {
+  source: 'capture' | 'manual' | 'import';
+  hasVariables: boolean;
+  variableCount: number;
+  tagCount: number;
+}
+
+export interface PromptRunProperties extends AnalyticsBaseProperties {
+  platform: ConversationSource | 'clipboard';
+  variableCount: number;
+  promptId: string;
+  isShared: boolean;
+}
+
+export interface PromptEditedProperties extends AnalyticsBaseProperties {
+  editType: 'title' | 'content' | 'variables' | 'tags' | 'multiple';
+  timeSinceCreationMs: number;
+  promptId: string;
+}
+
+export interface CoachUsedProperties extends AnalyticsBaseProperties {
+  suggestionsShown: number;
+  suggestionsApplied: number;
+  focusArea?: string;
+  qualityScore?: number;
+  promptId: string;
+}
+
+export interface MemberInvitedProperties extends AnalyticsBaseProperties {
+  count: number;
+  method: 'email' | 'link';
+}
+
+export interface SearchPerformedProperties extends AnalyticsBaseProperties {
+  queryLength: number;
+  resultsCount: number;
+  searchType: 'text' | 'semantic';
+  hasFilters: boolean;
+}
+
+export interface PageViewedProperties extends AnalyticsBaseProperties {
+  path: string;
+  referrer?: string;
+  duration?: number;
+}
+
+export interface FeatureUsedProperties extends AnalyticsBaseProperties {
+  feature: string;
+  action: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Union type for all event properties.
+ */
+export type AnalyticsEventProperties =
+  | { event: 'user_signed_up'; properties: UserSignedUpProperties }
+  | { event: 'workspace_created'; properties: WorkspaceCreatedProperties }
+  | { event: 'extension_installed'; properties: ExtensionInstalledProperties }
+  | { event: 'chat_captured'; properties: ChatCapturedProperties }
+  | { event: 'prompt_created'; properties: PromptCreatedProperties }
+  | { event: 'prompt_run'; properties: PromptRunProperties }
+  | { event: 'prompt_edited'; properties: PromptEditedProperties }
+  | { event: 'coach_used'; properties: CoachUsedProperties }
+  | { event: 'member_invited'; properties: MemberInvitedProperties }
+  | { event: 'search_performed'; properties: SearchPerformedProperties }
+  | { event: 'page_viewed'; properties: PageViewedProperties }
+  | { event: 'feature_used'; properties: FeatureUsedProperties };
+
+/**
+ * Analytics configuration.
+ */
+export interface AnalyticsConfig {
+  enabled: boolean;
+  provider: 'posthog' | 'custom';
+  apiKey?: string;
+  host?: string;
+  debug?: boolean;
+}
+
+/**
+ * Dashboard metrics types.
+ */
+export interface ActivationFunnelMetrics {
+  signups: number;
+  workspacesCreated: number;
+  extensionsInstalled: number;
+  firstCapture: number;
+  thirdCapture: number;
+  conversionRates: {
+    signupToWorkspace: number;
+    workspaceToExtension: number;
+    extensionToFirstCapture: number;
+    firstToThirdCapture: number;
+    overall: number;
+  };
+}
+
+export interface EngagementMetrics {
+  dailyActiveUsers: number;
+  weeklyActiveUsers: number;
+  monthlyActiveUsers: number;
+  promptsPerUser: number;
+  runsPerPrompt: number;
+  averageSessionDuration: number;
+}
+
+export interface TeamHealthMetrics {
+  activeWorkspaces: number;
+  seatsPerWorkspace: number;
+  sharedPromptsUsage: number;
+  collaborationRate: number;
+}
+
+export interface FeatureAdoptionMetrics {
+  coachUsageRate: number;
+  semanticSearchUsageRate: number;
+  privacyModeDistribution: {
+    promptOnly: number;
+    fullChat: number;
+  };
+  platformDistribution: Record<ConversationSource, number>;
+}
+
+export interface DashboardMetrics {
+  activation: ActivationFunnelMetrics;
+  engagement: EngagementMetrics;
+  teamHealth: TeamHealthMetrics;
+  featureAdoption: FeatureAdoptionMetrics;
+  period: {
+    start: string;
+    end: string;
+  };
+}

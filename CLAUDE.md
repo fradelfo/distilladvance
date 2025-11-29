@@ -4,7 +4,7 @@
 
 **Project:** Distill
 **Description:** Browser extension + web app (SaaS) that captures AI chat conversations and distills them into reusable, coached prompt templates with team sharing and privacy controls
-**Stage:** Development - Sprint 4 (Advanced Features)
+**Stage:** Development - Sprint 5 Complete (Analytics & Instrumentation)
 **Repository:** /Users/delf0/Desktop/distill2/cursormvp/
 
 ### Tech stack
@@ -120,6 +120,13 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Prompt editor with rich formatting (`/prompts/[id]/edit`)
 - [x] Coach feature (prompt improvement suggestions)
 - [x] Chrome Web Store preparation (packaging, store listing, privacy policy)
+
+### Sprint 5: Analytics & Instrumentation ✅ COMPLETE
+- [x] PostHog self-hosted analytics setup
+- [x] Server-side event tracking service
+- [x] Client-side analytics (web app + extension)
+- [x] Analytics dashboard UI (`/analytics`)
+- [x] All PRD tracking events implemented (10/10)
 
 ## Code conventions
 
@@ -239,7 +246,7 @@ chore: description
 - [x] Coach suggestions: LLM-based or heuristic? (implemented: LLM-based with Anthropic Claude)
 - [x] Variable extraction algorithm (implemented: `{{variable}}` syntax)
 
-### Available Routes (14)
+### Available Routes (15)
 
 | Route | Purpose |
 |-------|---------|
@@ -252,6 +259,7 @@ chore: description
 | `/workspaces`, `/workspaces/[slug]` | Team workspaces |
 | `/onboarding` | Welcome wizard |
 | `/privacy` | Privacy policy |
+| `/analytics` | Analytics dashboard |
 
 ---
 

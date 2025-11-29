@@ -51,6 +51,14 @@ const envSchema = z.object({
   // Rate Limiting
   RATE_LIMIT_DISTILL_PER_MINUTE: z.coerce.number().default(10),
   RATE_LIMIT_DISTILL_PER_DAY: z.coerce.number().default(100),
+
+  // Analytics (PostHog)
+  POSTHOG_API_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().url().default("http://localhost:8080"),
+  ANALYTICS_ENABLED: z
+    .string()
+    .transform((val) => val === "true")
+    .default("true"),
 });
 
 /**

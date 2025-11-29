@@ -44,6 +44,25 @@ services:
     environment:
       ANONYMIZED_TELEMETRY: "false"
 
+  # PostHog Analytics (self-hosted)
+  posthog:
+    image: posthog/posthog:latest
+    container_name: distill-posthog
+    ports:
+      - "8080:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/posthog
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: posthog-secret-key-change-in-production
+      SITE_URL: http://localhost:8080
+      DISABLE_SECURE_SSL_REDIRECT: "true"
+      IS_BEHIND_PROXY: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   # API Server (development)
   api:
     build:

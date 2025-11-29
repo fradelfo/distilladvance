@@ -65,15 +65,22 @@ export function HomeContent({ userName }: HomeContentProps) {
 
   // Fetch conversation stats
   const {
-    data: statsData,
-    isLoading: statsLoading
+    data: conversationStatsData,
+    isLoading: conversationStatsLoading
   } = trpc.conversation.stats.useQuery();
+
+  // Fetch prompt stats
+  const {
+    data: promptStatsData,
+    isLoading: promptStatsLoading
+  } = trpc.distill.stats.useQuery();
 
   // Extract data
   const recentPrompts = promptsData?.pages?.[0]?.prompts ?? [];
   const recentConversations = conversationsData?.pages?.[0]?.conversations ?? [];
-  const stats = statsData?.stats;
-  const totalConversations = stats?.total ?? 0;
+  const conversationStats = conversationStatsData?.stats;
+  const totalConversations = conversationStats?.total ?? 0;
+  const totalPrompts = promptStatsData?.stats?.total ?? 0;
 
   // Combine recent items for activity feed
   const activityItems = [
@@ -92,7 +99,7 @@ export function HomeContent({ userName }: HomeContentProps) {
     })),
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
-  const isLoading = promptsLoading || conversationsLoading || statsLoading;
+  const isLoading = promptsLoading || conversationsLoading || conversationStatsLoading || promptStatsLoading;
 
   return (
     <div className="space-y-8">
@@ -104,7 +111,7 @@ export function HomeContent({ userName }: HomeContentProps) {
             <div className="mt-1 h-8 w-16 animate-pulse rounded bg-neutral-200" />
           ) : (
             <p className="mt-1 text-2xl font-semibold text-neutral-900">
-              {recentPrompts.length}
+              {totalPrompts}
             </p>
           )}
         </div>
@@ -124,7 +131,7 @@ export function HomeContent({ userName }: HomeContentProps) {
             <div className="mt-1 h-8 w-24 animate-pulse rounded bg-neutral-200" />
           ) : (
             <div className="mt-1 flex gap-2">
-              {stats?.bySource && stats.bySource.map(({ source, count }) => (
+              {conversationStats?.bySource && conversationStats.bySource.map(({ source, count }) => (
                 <span
                   key={source}
                   className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs"
@@ -133,7 +140,7 @@ export function HomeContent({ userName }: HomeContentProps) {
                   {getSourceIcon(source)} {count}
                 </span>
               ))}
-              {!stats?.bySource && <span className="text-neutral-400">-</span>}
+              {!conversationStats?.bySource && <span className="text-neutral-400">-</span>}
             </div>
           )}
         </div>

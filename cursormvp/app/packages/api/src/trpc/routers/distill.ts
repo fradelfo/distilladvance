@@ -381,6 +381,40 @@ export const distillRouter = router({
     }),
 
   /**
+   * Get prompt statistics for the current user.
+   */
+  stats: authedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.userId;
+
+    if (!userId) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to view stats",
+      });
+    }
+
+    const [total, byPublic] = await Promise.all([
+      ctx.prisma.prompt.count({
+        where: { userId },
+      }),
+      ctx.prisma.prompt.groupBy({
+        by: ["isPublic"],
+        where: { userId },
+        _count: { isPublic: true },
+      }),
+    ]);
+
+    return {
+      success: true,
+      stats: {
+        total,
+        publicCount: byPublic.find((p) => p.isPublic)?._count.isPublic ?? 0,
+        privateCount: byPublic.find((p) => !p.isPublic)?._count.isPublic ?? 0,
+      },
+    };
+  }),
+
+  /**
    * Delete a prompt.
    */
   deletePrompt: authedProcedure

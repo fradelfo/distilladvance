@@ -5,10 +5,19 @@ import { ProcessingState } from './ProcessingState';
 import { SuccessState } from './SuccessState';
 import { ErrorState } from './ErrorState';
 import { sendMessage, MessageTypes, type MessageResponse } from '../../shared/messages';
+import { urls } from '../../shared/config';
 import type { CapturedConversation, DistillResult } from '@distill/shared-types';
 
-type ModalState = 'preview' | 'processing' | 'success' | 'error';
+type ModalState = 'preview' | 'processing' | 'saving' | 'success' | 'error';
 type PrivacyMode = 'prompt-only' | 'full';
+type ActionType = 'distill' | 'save';
+
+interface SavedConversationResult {
+  conversationId: string;
+  title: string;
+  source: string;
+  privacyMode: string;
+}
 
 interface CaptureModalProps {
   isOpen: boolean;
@@ -28,6 +37,8 @@ export function CaptureModal({
   const [progress, setProgress] = useState(0);
   const [progressStep, setProgressStep] = useState('');
   const [result, setResult] = useState<DistillResult | null>(null);
+  const [savedResult, setSavedResult] = useState<SavedConversationResult | null>(null);
+  const [actionType, setActionType] = useState<ActionType>('distill');
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -58,6 +69,7 @@ export function CaptureModal({
   const handleDistill = useCallback(async () => {
     if (!conversation) return;
 
+    setActionType('distill');
     setModalState('processing');
     setProgress(0);
     setProgressStep('Sending conversation...');
@@ -86,30 +98,88 @@ export function CaptureModal({
         },
       });
 
-      if (response?.success) {
+      if (response?.success && response.data) {
         setProgress(100);
         setProgressStep('Complete!');
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // Mock result for now
+        // Use actual result from API
+        const data = response.data as {
+          promptId: string;
+          title: string;
+          content: string;
+          tags: string[];
+          metadata: Record<string, unknown>;
+        };
+
         setResult({
-          promptId: 'prompt-' + Date.now(),
-          content: 'Generated prompt template...',
-          title: conversation.title || 'Untitled Prompt',
-          tags: ['generated'],
+          promptId: data.promptId,
+          content: data.content,
+          title: data.title || conversation.title || 'Untitled Prompt',
+          tags: data.tags || ['generated'],
           metadata: {
+            ...data.metadata,
             originalLength: conversation.messages.length,
-            distilledLength: 1,
           },
         });
         setModalState('success');
       } else {
-        throw new Error(response?.error?.message || 'Distillation failed');
+        throw new Error(response?.error?.message || (response as { error?: string })?.error || 'Distillation failed');
       }
     } catch (err) {
       console.error('[Distill] Error during distillation:', err);
       setError({
         code: 'DISTILL_FAILED',
+        message: err instanceof Error ? err.message : 'An unexpected error occurred',
+      });
+      setModalState('error');
+    }
+  }, [conversation, privacyMode]);
+
+  const handleSave = useCallback(async () => {
+    if (!conversation) return;
+
+    setActionType('save');
+    setModalState('saving');
+    setProgress(0);
+    setProgressStep('Saving conversation...');
+
+    try {
+      // Get the current tab URL for sourceUrl
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const sourceUrl = tab?.url;
+
+      // Generate title from first user message
+      const firstUserMessage = conversation.messages.find((m) => m.role === 'user');
+      const title = firstUserMessage?.content?.slice(0, 100) || conversation.title || 'Untitled Conversation';
+
+      setProgress(50);
+      setProgressStep('Uploading to server...');
+
+      // Send save request
+      const response = await sendMessage<object, MessageResponse>(MessageTypes.SAVE_CONVERSATION, {
+        messages: conversation.messages,
+        title,
+        source: conversation.source || 'unknown',
+        sourceUrl,
+        privacyMode,
+      });
+
+      if (response?.success && response.data) {
+        setProgress(100);
+        setProgressStep('Saved!');
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        const data = response.data as SavedConversationResult;
+        setSavedResult(data);
+        setModalState('success');
+      } else {
+        throw new Error(response?.error?.message || (response as { error?: string })?.error || 'Failed to save conversation');
+      }
+    } catch (err) {
+      console.error('[Distill] Error saving conversation:', err);
+      setError({
+        code: 'SAVE_FAILED',
         message: err instanceof Error ? err.message : 'An unexpected error occurred',
       });
       setModalState('error');
@@ -124,13 +194,26 @@ export function CaptureModal({
   const handleViewEdit = () => {
     if (result?.promptId) {
       chrome.tabs.create({
-        url: `https://app.distill.ai/prompts/${result.promptId}`,
+        url: urls.prompts(result.promptId),
       });
     }
     onDistillComplete();
   };
 
   const handleCaptureAnother = () => {
+    onDistillComplete();
+  };
+
+  const handleViewConversations = () => {
+    if (savedResult?.conversationId) {
+      chrome.tabs.create({
+        url: `${urls.dashboard.replace('/dashboard', '')}/conversations/${savedResult.conversationId}`,
+      });
+    } else {
+      chrome.tabs.create({
+        url: `${urls.dashboard.replace('/dashboard', '')}/conversations`,
+      });
+    }
     onDistillComplete();
   };
 
@@ -155,13 +238,15 @@ export function CaptureModal({
             <div className="modal-icon">D</div>
             <h2 id="modal-title" className="modal-title">
               {modalState === 'success'
-                ? 'Prompt Created!'
+                ? actionType === 'save'
+                  ? 'Conversation Saved!'
+                  : 'Prompt Created!'
                 : modalState === 'error'
                   ? 'Something went wrong'
-                  : 'Distill this conversation'}
+                  : 'Capture this conversation'}
             </h2>
           </div>
-          {modalState !== 'processing' && (
+          {modalState !== 'processing' && modalState !== 'saving' && (
             <button
               type="button"
               className="modal-close"
@@ -195,16 +280,42 @@ export function CaptureModal({
             </>
           )}
 
-          {modalState === 'processing' && (
+          {(modalState === 'processing' || modalState === 'saving') && (
             <ProcessingState progress={progress} step={progressStep} />
           )}
 
-          {modalState === 'success' && result && (
+          {modalState === 'success' && actionType === 'distill' && result && (
             <SuccessState
               result={result}
               onViewEdit={handleViewEdit}
               onCaptureAnother={handleCaptureAnother}
             />
+          )}
+
+          {modalState === 'success' && actionType === 'save' && savedResult && (
+            <div className="save-success">
+              <div className="success-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <p className="success-message">
+                Your conversation has been saved and can be viewed or distilled later.
+              </p>
+              <div className="save-details">
+                <span className="save-title">"{savedResult.title?.slice(0, 50)}..."</span>
+                <span className="save-source">{savedResult.source}</span>
+              </div>
+              <div className="success-actions">
+                <button type="button" className="btn-secondary" onClick={handleCaptureAnother}>
+                  Capture Another
+                </button>
+                <button type="button" className="btn-primary" onClick={handleViewConversations}>
+                  View Conversations
+                </button>
+              </div>
+            </div>
           )}
 
           {modalState === 'error' && error && (
@@ -217,6 +328,26 @@ export function CaptureModal({
           <footer className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={handleSave}
+              disabled={!conversation}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+              Save
             </button>
             <button
               type="button"
@@ -373,6 +504,31 @@ export function CaptureModal({
           border-color: var(--color-gray-400);
         }
 
+        .btn-outline {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 18px;
+          background: white;
+          border: 1px solid var(--color-primary-500);
+          border-radius: 8px;
+          color: var(--color-primary-600);
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+          background: var(--color-primary-50);
+        }
+
+        .btn-outline:disabled {
+          border-color: var(--color-gray-300);
+          color: var(--color-gray-400);
+          cursor: not-allowed;
+        }
+
         .btn-primary {
           display: flex;
           align-items: center;
@@ -408,6 +564,51 @@ export function CaptureModal({
           .modal-container {
             animation: none;
           }
+        }
+
+        /* Save Success Styles */
+        .save-success {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 20px 0;
+        }
+
+        .success-icon {
+          color: var(--color-primary-500);
+          margin-bottom: 16px;
+        }
+
+        .success-message {
+          color: var(--color-gray-600);
+          font-size: 14px;
+          margin-bottom: 16px;
+          max-width: 280px;
+        }
+
+        .save-details {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          margin-bottom: 20px;
+        }
+
+        .save-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--color-gray-900);
+        }
+
+        .save-source {
+          font-size: 12px;
+          color: var(--color-gray-500);
+          text-transform: capitalize;
+        }
+
+        .success-actions {
+          display: flex;
+          gap: 10px;
         }
       `}</style>
     </div>

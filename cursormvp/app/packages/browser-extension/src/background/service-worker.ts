@@ -5,6 +5,7 @@
 
 import type { ExtensionMessage } from '@distill/shared-types';
 import { MessageTypes } from '../shared/messages';
+import { config } from '../shared/config';
 import {
   initExtensionAnalytics,
   trackExtensionInstalled,
@@ -114,6 +115,10 @@ async function handleMessage(
     case 'DISTILL_REQUEST':
       return handleDistillRequest(payload);
 
+    case MessageTypes.SAVE_CONVERSATION:
+    case 'SAVE_CONVERSATION':
+      return handleSaveConversation(payload);
+
     case MessageTypes.GET_SETTINGS:
     case 'GET_SETTINGS':
       return getSettings();
@@ -194,25 +199,183 @@ async function handleConversationCaptured(payload: unknown) {
 }
 
 async function handleDistillRequest(payload: unknown) {
-  // TODO: Implement actual API call to distillation service
-  // For now, simulate a successful distillation
   console.log('[Distill] Processing distill request:', payload);
 
-  // In production, this would:
-  // 1. Get auth token from storage
-  // 2. Call the API server with the conversation
-  // 3. Return the distilled prompt result
+  try {
+    // Get cookies for auth
+    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
-  return {
-    success: true,
-    data: {
-      promptId: 'prompt-' + Date.now(),
-      title: 'Distilled Prompt',
-      content: 'Generated prompt template...',
-      tags: ['generated'],
-      metadata: {},
-    },
-  };
+    const distillPayload = payload as {
+      messages: Array<{ role: string; content: string }>;
+      privacyMode: string;
+      options?: { preserveContext?: boolean };
+    };
+
+    // Step 1: Call the distill API
+    console.log('[Distill] Calling distill API...');
+    const distillResponse = await fetch(`${config.apiUrl}/trpc/distill.distill`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        messages: distillPayload.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      }),
+    });
+
+    if (!distillResponse.ok) {
+      const errorText = await distillResponse.text();
+      console.error('[Distill] Distill API error:', errorText);
+      throw new Error(`Distill API error: ${distillResponse.status}`);
+    }
+
+    const distillResult = await distillResponse.json();
+    console.log('[Distill] Distill result:', distillResult);
+
+    if (!distillResult.result?.data?.success) {
+      throw new Error(distillResult.result?.data?.error || 'Distillation failed');
+    }
+
+    const { prompt: distilledPrompt } = distillResult.result.data;
+
+    // Step 2: Save the prompt to the database
+    console.log('[Distill] Saving prompt...');
+    const saveResponse = await fetch(`${config.apiUrl}/trpc/distill.savePrompt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        title: distilledPrompt.title,
+        description: distilledPrompt.description,
+        template: distilledPrompt.template,
+        variables: distilledPrompt.variables || [],
+        tags: distilledPrompt.tags || [],
+        isPublic: false,
+      }),
+    });
+
+    if (!saveResponse.ok) {
+      const errorText = await saveResponse.text();
+      console.error('[Distill] Save prompt error:', errorText);
+      throw new Error(`Save prompt error: ${saveResponse.status}`);
+    }
+
+    const saveResult = await saveResponse.json();
+    console.log('[Distill] Save result:', saveResult);
+
+    if (!saveResult.result?.data?.success) {
+      throw new Error(saveResult.result?.data?.error || 'Failed to save prompt');
+    }
+
+    const savedPrompt = saveResult.result.data.prompt;
+
+    return {
+      success: true,
+      data: {
+        promptId: savedPrompt.id,
+        title: savedPrompt.title,
+        content: savedPrompt.content,
+        tags: savedPrompt.tags || [],
+        metadata: savedPrompt.metadata || {},
+      },
+    };
+  } catch (error) {
+    console.error('[Distill] Error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+async function handleSaveConversation(payload: unknown) {
+  console.log('[Distill] Processing save conversation request:', payload);
+
+  try {
+    // Get cookies for auth
+    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+
+    const savePayload = payload as {
+      messages: Array<{ role: string; content: string }>;
+      title: string;
+      source: string;
+      sourceUrl?: string;
+      privacyMode: 'prompt-only' | 'full';
+    };
+
+    // Map privacy mode to API format
+    const apiPrivacyMode = savePayload.privacyMode === 'full' ? 'FULL' : 'PROMPT_ONLY';
+
+    // Prepare raw content for storage (only if FULL mode)
+    const rawContent = apiPrivacyMode === 'FULL' ? savePayload.messages : null;
+
+    // Call the conversation.create API
+    console.log('[Distill] Calling conversation.create API...');
+    const response = await fetch(`${config.apiUrl}/trpc/conversation.create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        title: savePayload.title || 'Untitled Conversation',
+        source: savePayload.source || 'unknown',
+        sourceUrl: savePayload.sourceUrl,
+        privacyMode: apiPrivacyMode,
+        rawContent,
+        metadata: {
+          messageCount: savePayload.messages.length,
+          capturedAt: new Date().toISOString(),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Distill] Save conversation error:', errorText);
+      throw new Error(`Save conversation error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('[Distill] Save result:', result);
+
+    if (!result.result?.data?.success) {
+      throw new Error(result.result?.data?.error || 'Failed to save conversation');
+    }
+
+    const savedConversation = result.result.data.conversation;
+
+    // Update local stats
+    const stats = await chrome.storage.local.get(['conversationsSaved', 'lastSave']);
+    await chrome.storage.local.set({
+      conversationsSaved: (stats.conversationsSaved || 0) + 1,
+      lastSave: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      data: {
+        conversationId: savedConversation.id,
+        title: savedConversation.title,
+        source: savedConversation.source,
+        privacyMode: savedConversation.privacyMode,
+      },
+    };
+  } catch (error) {
+    console.error('[Distill] Error saving conversation:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }
 
 async function getSettings() {
@@ -226,8 +389,51 @@ async function updateSettings(settings: unknown) {
 }
 
 async function getAuthStatus() {
-  const result = await chrome.storage.local.get('authToken');
-  return { authenticated: !!result.authToken };
+  try {
+    // Check auth by calling the web app's session endpoint
+    // We need to get cookies for the web app domain
+    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+
+    console.log('[Distill] Checking auth with cookies from:', config.webUrl);
+    console.log('[Distill] Found cookies:', cookies.length);
+
+    const response = await fetch(`${config.webUrl}/api/auth/session`, {
+      credentials: 'include',
+      headers: {
+        Cookie: cookieHeader,
+      },
+    });
+
+    if (!response.ok) {
+      console.log('[Distill] Session check failed:', response.status);
+      // In development mode, allow bypass for testing
+      if (config.webUrl.includes('localhost')) {
+        console.log('[Distill] Dev mode - allowing auth bypass for testing');
+        return { authenticated: true, userId: 'dev-user' };
+      }
+      return { authenticated: false };
+    }
+
+    const session = await response.json();
+    console.log('[Distill] Session response:', session);
+    const authenticated = !!session?.user?.id;
+
+    // Cache the user ID for API calls
+    if (authenticated && session.user.id) {
+      await chrome.storage.local.set({ userId: session.user.id });
+    }
+
+    return { authenticated, userId: session?.user?.id };
+  } catch (error) {
+    console.error('[Distill] Auth check failed:', error);
+    // In development mode, allow bypass for testing
+    if (config.webUrl.includes('localhost')) {
+      console.log('[Distill] Dev mode - allowing auth bypass for testing');
+      return { authenticated: true, userId: 'dev-user' };
+    }
+    return { authenticated: false };
+  }
 }
 
 // ============================================================================

@@ -484,4 +484,172 @@ export const distillRouter = router({
 
       return updatedPrompt;
     }),
+
+  /**
+   * Distill a saved conversation into a prompt.
+   *
+   * This fetches a conversation from the database, extracts its messages,
+   * distills them into a prompt, and saves the prompt linked to the conversation.
+   */
+  distillFromConversation: authedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.userId;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to distill conversations",
+        });
+      }
+
+      // Fetch the conversation
+      const conversation = await ctx.prisma.conversation.findUnique({
+        where: { id: input.conversationId },
+        select: {
+          id: true,
+          userId: true,
+          title: true,
+          source: true,
+          sourceUrl: true,
+          privacyMode: true,
+          rawContent: true,
+        },
+      });
+
+      if (!conversation) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conversation not found",
+        });
+      }
+
+      // Verify ownership
+      if (conversation.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this conversation",
+        });
+      }
+
+      // Check privacy mode
+      if (conversation.privacyMode !== "FULL") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Cannot distill this conversation. Only conversations saved in 'Full' privacy mode can be distilled.",
+        });
+      }
+
+      // Check for raw content
+      if (!conversation.rawContent) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Conversation has no content to distill",
+        });
+      }
+
+      // Extract messages from rawContent
+      const rawMessages = conversation.rawContent as Array<{
+        role: string;
+        content: string;
+      }>;
+
+      if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Conversation has no valid messages to distill",
+        });
+      }
+
+      // Convert to ConversationMessage format
+      const messages: ConversationMessage[] = rawMessages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+      // Perform distillation
+      const result = await distillConversation(messages);
+
+      // Log usage
+      try {
+        const usageEntry = createUsageLogEntry(result, userId);
+        await ctx.prisma.aiUsageLog.create({
+          data: {
+            userId: usageEntry.userId,
+            model: usageEntry.model,
+            provider: usageEntry.provider,
+            promptTokens: usageEntry.promptTokens,
+            completionTokens: usageEntry.completionTokens,
+            totalTokens: usageEntry.totalTokens,
+            cost: usageEntry.cost,
+            operation: usageEntry.operation,
+            metadata: usageEntry.metadata as object,
+          },
+        });
+      } catch (logError) {
+        console.error("[Distill] Failed to log usage:", logError);
+      }
+
+      if (!result.success || !result.prompt) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: result.error || "Failed to distill conversation",
+        });
+      }
+
+      // Save the prompt with conversationId link
+      // Convert variables to plain JSON to satisfy Prisma's type requirements
+      const variablesJson = (result.prompt.variables || []).map((v) => ({
+        name: v.name,
+        description: v.description,
+        example: v.example,
+        required: v.required,
+      }));
+
+      const savedPrompt = await ctx.prisma.prompt.create({
+        data: {
+          userId,
+          conversationId: conversation.id,
+          title: result.prompt.title,
+          content: result.prompt.template,
+          distilledFrom: null,
+          model: "claude-distilled",
+          tags: result.prompt.tags || [],
+          isPublic: false,
+          metadata: {
+            variables: variablesJson,
+            version: 1,
+            distilledFrom: {
+              conversationId: conversation.id,
+              source: conversation.source,
+            },
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          tags: true,
+          createdAt: true,
+        },
+      });
+
+      return {
+        success: true,
+        promptId: savedPrompt.id,
+        prompt: {
+          ...savedPrompt,
+          description: result.prompt.description,
+          variables: result.prompt.variables,
+        },
+        usage: {
+          inputTokens: result.usage.inputTokens,
+          outputTokens: result.usage.outputTokens,
+          totalTokens: result.usage.totalTokens,
+          estimatedCost: result.usage.estimatedCost,
+          durationMs: result.durationMs,
+        },
+      };
+    }),
 });

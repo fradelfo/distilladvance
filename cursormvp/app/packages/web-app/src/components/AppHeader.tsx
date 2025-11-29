@@ -17,7 +17,6 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
     { href: '/prompts', label: 'Library', key: 'prompts' },
     { href: '/collections', label: 'Collections', key: 'collections' },
     { href: '/workspaces', label: 'Workspaces', key: 'workspaces' },
-    { href: '/dashboard/settings', label: 'Settings', key: 'settings' },
   ];
 
   return (

@@ -28,16 +28,16 @@ export default async function DashboardPage() {
                 Library
               </Link>
               <Link
-                href="/dashboard/collections"
+                href="/collections"
                 className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
               >
                 Collections
               </Link>
               <Link
-                href="/dashboard/settings"
+                href="/workspaces"
                 className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
               >
-                Settings
+                Workspaces
               </Link>
             </nav>
           </div>
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
               Your captured and distilled prompts
             </p>
           </div>
-          <button className="btn-primary px-4 py-2">
+          <Link href="/prompts/new" className="btn-primary px-4 py-2">
             <span className="flex items-center gap-2">
               <svg
                 className="h-4 w-4"
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
               </svg>
               New Prompt
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Empty State */}
@@ -131,9 +131,9 @@ export default async function DashboardPage() {
             >
               Install Extension
             </a>
-            <button className="btn-outline px-6 py-2">
+            <Link href="/prompts/new" className="btn-outline px-6 py-2">
               Create Manually
-            </button>
+            </Link>
           </div>
         </div>
 

@@ -1,14 +1,14 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { PromptLibraryContent } from './PromptLibraryContent';
+import { ConversationsContent } from './ConversationsContent';
 import { AppLayout } from '@/components/AppLayout';
 
 export const metadata = {
-  title: 'Prompt Library',
-  description: 'Browse and manage your prompt templates',
+  title: 'Conversations',
+  description: 'Browse and manage your captured AI conversations',
 };
 
-export default async function PromptsPage() {
+export default async function ConversationsPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -16,9 +16,9 @@ export default async function PromptsPage() {
   }
 
   return (
-    <AppLayout user={session.user} currentPage="prompts">
+    <AppLayout user={session.user} currentPage="conversations">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <PromptLibraryContent />
+        <ConversationsContent />
       </div>
     </AppLayout>
   );

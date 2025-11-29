@@ -1,5 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { prisma } from "../lib/prisma.js";
+import { env } from "../lib/env.js";
 
 /**
  * Context available to all tRPC procedures.
@@ -19,21 +20,67 @@ export interface AuthedContext extends Context {
 }
 
 /**
+ * Validate session by calling the web app's session endpoint.
+ * This is the most reliable approach as it uses NextAuth's own validation.
+ */
+async function validateSession(
+  cookieHeader: string
+): Promise<{ id?: string; email?: string } | null> {
+  try {
+    const response = await fetch(`${env.WEB_URL}/api/auth/session`, {
+      headers: {
+        Cookie: cookieHeader,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const session = await response.json();
+
+    // NextAuth returns { user: { id, email, ... } } or {} if not authenticated
+    if (session?.user?.id) {
+      return {
+        id: session.user.id,
+        email: session.user.email,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("[Context] Failed to validate session:", error);
+    return null;
+  }
+}
+
+/**
  * Creates context for each tRPC request.
- * This is where you'd add authentication, session data, etc.
  */
 export async function createContext({
   req,
   res,
 }: CreateExpressContextOptions): Promise<Context> {
-  // TODO: Extract userId from session/JWT when auth is fully implemented
-  // For now, check for a simple auth header or cookie
-  const authHeader = req.headers.authorization;
   let userId: string | undefined;
 
-  if (authHeader?.startsWith("Bearer ")) {
-    // TODO: Validate JWT and extract userId
-    // For now, this is a placeholder
+  // Try to validate session via web app
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const session = await validateSession(cookieHeader);
+    if (session?.id) {
+      userId = session.id;
+    }
+  }
+
+  // Fallback: check Authorization header
+  if (!userId) {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      // Simple user ID from header (for extension/API clients)
+      const token = authHeader.slice(7);
+      // In production, validate this token properly
+      userId = token;
+    }
   }
 
   return {

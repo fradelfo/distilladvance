@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { urls } from '../../shared/config';
 
 interface ErrorStateProps {
   error: {
@@ -149,7 +150,7 @@ export function ErrorState({
             type="button"
             className="btn-primary"
             onClick={() => {
-              chrome.tabs.create({ url: 'https://app.distill.ai/login' });
+              chrome.tabs.create({ url: urls.login });
             }}
           >
             Log In

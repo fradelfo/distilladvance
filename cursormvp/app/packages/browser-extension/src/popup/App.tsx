@@ -4,6 +4,7 @@ import { CaptureModal } from './components/CaptureModal';
 import { StatusBadge } from './components/StatusBadge';
 import { StatsPanel } from './components/StatsPanel';
 import { sendMessage, MessageTypes, type AuthStatusPayload } from '../shared/messages';
+import { urls, config } from '../shared/config';
 import type { CapturedConversation, ConversationSource } from '@distill/shared-types';
 
 type PageStatus = 'unsupported' | 'supported' | 'loading' | 'error';
@@ -99,14 +100,23 @@ export function App(): React.ReactElement {
   }, [checkCurrentPage, checkAuthStatus, loadStats]);
 
   const handleCaptureClick = async () => {
-    if (state.pageStatus !== 'supported') return;
+    console.log('[Distill] Capture clicked, pageStatus:', state.pageStatus);
+    if (state.pageStatus !== 'supported') {
+      console.log('[Distill] Page not supported, aborting');
+      return;
+    }
 
     setState((prev) => ({ ...prev, captureModalOpen: true }));
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) return;
+      console.log('[Distill] Active tab:', tab?.id, tab?.url);
+      if (!tab?.id) {
+        console.log('[Distill] No tab ID found');
+        return;
+      }
 
+      console.log('[Distill] Sending CAPTURE_CONVERSATION message to tab', tab.id);
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: MessageTypes.CAPTURE_CONVERSATION,
         payload: {},
@@ -114,14 +124,21 @@ export function App(): React.ReactElement {
         timestamp: Date.now(),
       });
 
+      console.log('[Distill] Response from content script:', response);
+
       if (response?.success && response.data) {
+        console.log('[Distill] Got conversation data:', response.data.messages?.length, 'messages');
         setState((prev) => ({
           ...prev,
           conversation: response.data,
         }));
+      } else {
+        console.log('[Distill] No data in response');
       }
     } catch (error) {
       console.error('[Distill] Error capturing:', error);
+      // This usually means content script isn't loaded
+      alert('Content script not loaded. Please refresh the AI chat page and try again.');
       setState((prev) => ({
         ...prev,
         captureModalOpen: false,
@@ -157,11 +174,11 @@ export function App(): React.ReactElement {
   };
 
   const openDashboard = () => {
-    chrome.tabs.create({ url: 'https://app.distill.ai/dashboard' });
+    chrome.tabs.create({ url: urls.dashboard });
   };
 
   const openLogin = () => {
-    chrome.tabs.create({ url: 'https://app.distill.ai/login' });
+    chrome.tabs.create({ url: urls.login });
   };
 
   return (
@@ -249,7 +266,7 @@ export function App(): React.ReactElement {
       {/* Footer */}
       <footer className="popup-footer">
         <span>v0.1.0</span>
-        <a href="https://distill.ai/help" target="_blank" rel="noopener noreferrer">
+        <a href={config.helpUrl} target="_blank" rel="noopener noreferrer">
           Help
         </a>
       </footer>

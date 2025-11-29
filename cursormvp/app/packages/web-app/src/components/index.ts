@@ -5,6 +5,8 @@
  */
 
 export { AppHeader } from './AppHeader';
+export { AppLayout } from './AppLayout';
+export { AppSidebar } from './AppSidebar';
 export { EmptyState } from './EmptyState';
 export { PromptCard, PromptCardSkeleton } from './PromptCard';
 export { PromptSearch } from './PromptSearch';

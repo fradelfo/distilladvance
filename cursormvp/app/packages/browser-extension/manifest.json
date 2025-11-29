@@ -48,7 +48,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "contextMenus"
+    "contextMenus",
+    "cookies"
   ],
   "optional_permissions": [
     "clipboardWrite"
@@ -58,7 +59,11 @@
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://gemini.google.com/*",
-    "https://copilot.microsoft.com/*"
+    "https://copilot.microsoft.com/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*",
+    "https://app.distill.ai/*",
+    "https://api.distill.ai/*"
   ],
   "web_accessible_resources": [
     {

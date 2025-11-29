@@ -15,6 +15,9 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().default(3001),
   API_SECRET: z.string().optional(),
 
+  // Auth (shared with web app)
+  AUTH_SECRET: z.string().optional(),
+
   // Database
   DATABASE_URL: z.string().url(),
   DATABASE_SSL: z

@@ -1,22 +1,15 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppLayout';
-import { PromptEditContent } from './PromptEditContent';
-
-interface PromptEditPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
+import { NewPromptContent } from './NewPromptContent';
 
 export const metadata = {
-  title: 'Edit Prompt',
-  description: 'Edit your prompt template',
+  title: 'Create New Prompt',
+  description: 'Create a new prompt template',
 };
 
-export default async function PromptEditPage({ params }: PromptEditPageProps) {
+export default async function NewPromptPage() {
   const session = await auth();
-  const { id } = await params;
 
   if (!session?.user) {
     redirect('/login');
@@ -25,7 +18,7 @@ export default async function PromptEditPage({ params }: PromptEditPageProps) {
   return (
     <AppLayout user={session.user} currentPage="prompts">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <PromptEditContent promptId={id} />
+        <NewPromptContent />
       </div>
     </AppLayout>
   );

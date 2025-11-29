@@ -6,12 +6,13 @@
  */
 
 import type { ConversationSource } from '@distill/shared-types';
+import { config } from './config';
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const API_URL = 'http://localhost:3001';
+const API_URL = config.apiUrl;
 let userId: string | null = null;
 let sessionId: string | null = null;
 let analyticsEnabled = true;

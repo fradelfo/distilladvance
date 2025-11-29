@@ -7,13 +7,14 @@
  * with edit and delete capabilities.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CollectionForm,
   CollectionPromptList,
   CollectionPromptListSkeleton,
+  PromptPickerModal,
 } from '@/components/collections';
 import { trpc } from '@/lib/trpc';
 
@@ -29,6 +30,7 @@ export function CollectionDetailContent({
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPromptPickerOpen, setIsPromptPickerOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch collection details
@@ -73,6 +75,12 @@ export function CollectionDetailContent({
 
   const collection = data?.collection;
 
+  // Get existing prompt IDs for the picker modal
+  const existingPromptIds = useMemo(
+    () => collection?.prompts.map((p) => p.id) ?? [],
+    [collection?.prompts]
+  );
+
   // Handlers
   const handleUpdate = useCallback(
     (formData: { name: string; description: string; isPublic: boolean }) => {
@@ -99,6 +107,14 @@ export function CollectionDetailContent({
     },
     [removePromptMutation, collectionId]
   );
+
+  const handleBrowseLibrary = useCallback(() => {
+    setIsPromptPickerOpen(true);
+  }, []);
+
+  const handlePromptsAdded = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Loading state
   if (isLoading) {
@@ -331,12 +347,12 @@ export function CollectionDetailContent({
           Prompts in this collection
         </h2>
         {collection.isOwner && (
-          <Link
-            href="/prompts"
+          <button
+            onClick={handleBrowseLibrary}
             className="text-sm text-primary-600 hover:text-primary-700"
           >
-            Add from library
-          </Link>
+            + Add from library
+          </button>
         )}
       </div>
 
@@ -344,6 +360,7 @@ export function CollectionDetailContent({
         prompts={collection.prompts}
         canEdit={collection.isOwner}
         onRemovePrompt={handleRemovePrompt}
+        onBrowseLibrary={handleBrowseLibrary}
         isLoading={removePromptMutation.isPending}
       />
 
@@ -406,6 +423,15 @@ export function CollectionDetailContent({
           </div>
         </Modal>
       )}
+
+      {/* Prompt Picker Modal */}
+      <PromptPickerModal
+        collectionId={collectionId}
+        existingPromptIds={existingPromptIds}
+        isOpen={isPromptPickerOpen}
+        onClose={() => setIsPromptPickerOpen(false)}
+        onAdded={handlePromptsAdded}
+      />
     </div>
   );
 }

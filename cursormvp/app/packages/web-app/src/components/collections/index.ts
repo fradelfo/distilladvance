@@ -10,3 +10,4 @@ export {
   CollectionPromptList,
   CollectionPromptListSkeleton,
 } from './CollectionPromptList';
+export { PromptPickerModal } from './PromptPickerModal';

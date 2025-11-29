@@ -8,16 +8,16 @@ interface AppHeaderProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'dashboard' | 'prompts' | 'collections' | 'workspaces' | 'settings';
+  currentPage?: 'dashboard' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'settings';
 }
 
 export function AppHeader({ user, currentPage }: AppHeaderProps) {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', key: 'dashboard' },
     { href: '/prompts', label: 'Library', key: 'prompts' },
+    { href: '/conversations', label: 'Conversations', key: 'conversations' },
     { href: '/collections', label: 'Collections', key: 'collections' },
     { href: '/workspaces', label: 'Workspaces', key: 'workspaces' },
-    { href: '/dashboard/settings', label: 'Settings', key: 'settings' },
   ];
 
   return (

@@ -4,7 +4,7 @@
 
 **Project:** Distill
 **Description:** Browser extension + web app (SaaS) that captures AI chat conversations and distills them into reusable, coached prompt templates with team sharing and privacy controls
-**Stage:** Development - Sprint 5 Complete (Analytics & Instrumentation)
+**Stage:** Development - Sprint 6 Active (UI/UX Improvements)
 **Repository:** /Users/delf0/Desktop/distill2/cursormvp/
 
 ### Tech stack
@@ -75,7 +75,7 @@ Knowledge workers and teams don't have a simple, trusted way to:
 
 ## Current implementation status
 
-> **Current Sprint:** 4 - Advanced Features
+> **Current Sprint:** 6 - UI/UX Improvements
 > **See:** `cursormvp/docs/logs/development-log.md` for detailed progress
 
 ### Sprint 1: Foundation ✅ COMPLETE
@@ -127,6 +127,14 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Client-side analytics (web app + extension)
 - [x] Analytics dashboard UI (`/analytics`)
 - [x] All PRD tracking events implemented (10/10)
+
+### Sprint 6: UI/UX Improvements 🔄 IN PROGRESS
+- [x] Left sidebar navigation (collapsible, mobile responsive)
+- [x] Home page redesign (stats, activity feed, quick actions)
+- [x] Stats API endpoint (`distill.stats`) with unit tests
+- [ ] Firefox extension support
+- [ ] Billing & payments (Stripe)
+- [ ] Performance optimization
 
 ## Code conventions
 

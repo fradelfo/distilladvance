@@ -1,13 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig, build } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, existsSync, readdirSync, renameSync, rmSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, readdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
 
-// Plugin to copy static files and fix output paths
+// Plugin to copy static files, fix output paths, and build content script as IIFE
 function copyStaticFiles() {
   return {
     name: 'copy-static-files',
-    writeBundle() {
+    async writeBundle() {
       const distDir = resolve(__dirname, 'dist');
 
       // Copy manifest.json
@@ -58,6 +58,35 @@ function copyStaticFiles() {
         // Clean up src directory
         rmSync(srcDir, { recursive: true, force: true });
       }
+
+      // Build content script separately as IIFE (no ES module imports)
+      console.log('Building content script as IIFE...');
+      await build({
+        configFile: false,
+        build: {
+          outDir: resolve(__dirname, 'dist/content'),
+          emptyDirOnBuildStart: false,
+          lib: {
+            entry: resolve(__dirname, 'src/content/main.ts'),
+            name: 'DistillContent',
+            formats: ['iife'],
+            fileName: () => 'main.js',
+          },
+          rollupOptions: {
+            output: {
+              inlineDynamicImports: true,
+            },
+          },
+          minify: false,
+          sourcemap: true,
+        },
+        resolve: {
+          alias: {
+            '@distill/shared-types': resolve(__dirname, '../shared-types/src/index.ts'),
+          },
+        },
+      });
+      console.log('Content script built as IIFE');
     },
   };
 }
@@ -76,8 +105,7 @@ export default defineConfig({
         options: resolve(__dirname, 'src/options/index.html'),
         // Background service worker
         'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
-        // Content script
-        'content/main': resolve(__dirname, 'src/content/main.ts'),
+        // Content script is built separately as IIFE (see copyStaticFiles plugin)
       },
       output: {
         entryFileNames: '[name].js',
@@ -92,9 +120,15 @@ export default defineConfig({
           }
           return '[name][extname]';
         },
+        // Vendor chunk for popup/background
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
       },
     },
-    // Service worker needs to be iife format
+    // Enable IIFE format for content scripts (no module imports)
     target: 'esnext',
     minify: false, // Easier debugging during development
     sourcemap: true,

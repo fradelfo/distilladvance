@@ -12,7 +12,28 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: [env.WEB_URL, "http://localhost:3000"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or extensions)
+      if (!origin) return callback(null, true);
+
+      // Allow web app origins (including fallback dev ports)
+      const allowedOrigins = [
+        env.WEB_URL,
+        "http://localhost:3000",
+        "http://localhost:3002",
+        "http://localhost:3003",
+      ];
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow Chrome extension origins
+      if (origin.startsWith("chrome-extension://")) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );

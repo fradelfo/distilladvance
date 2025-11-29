@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { AppHeader } from '@/components/AppHeader';
+import { AppLayout } from '@/components/AppLayout';
 import { CollectionDetailContent } from './CollectionDetailContent';
 
 interface CollectionDetailPageProps {
@@ -26,12 +26,10 @@ export default async function CollectionDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <AppHeader user={session.user} currentPage="collections" />
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppLayout user={session.user} currentPage="collections">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <CollectionDetailContent collectionId={id} />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

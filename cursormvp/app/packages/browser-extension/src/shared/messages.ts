@@ -25,6 +25,10 @@ export const MessageTypes = {
   DISTILL_REQUEST: 'DISTILL_REQUEST',
   DISTILL_COMPLETE: 'DISTILL_COMPLETE',
 
+  // Save conversation (without distilling)
+  SAVE_CONVERSATION: 'SAVE_CONVERSATION',
+  SAVE_CONVERSATION_COMPLETE: 'SAVE_CONVERSATION_COMPLETE',
+
   // Settings
   GET_SETTINGS: 'GET_SETTINGS',
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
@@ -69,6 +73,19 @@ export interface DistillRequestPayload {
 
 export interface DistillCompletePayload {
   result: DistillResult;
+}
+
+export interface SaveConversationPayload {
+  messages: ConversationMessage[];
+  title: string;
+  source: string;
+  sourceUrl?: string;
+  privacyMode: 'prompt-only' | 'full';
+}
+
+export interface SaveConversationCompletePayload {
+  conversationId: string;
+  title: string;
 }
 
 export interface SettingsPayload {

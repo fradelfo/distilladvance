@@ -46,6 +46,14 @@ Research --> PRD --> Design --> Development --> Alpha --> Beta --> Launch
 - [x] Extension tracking
 - [x] Activation funnel visualization
 
+### Sprint 6: UI/UX Improvements - IN PROGRESS
+- [x] Left sidebar navigation (collapsible, mobile responsive)
+- [x] Home page redesign (stats, activity feed, quick actions)
+- [x] Stats API endpoint with tests
+- [ ] Firefox extension support
+- [ ] Billing & payments (Stripe)
+- [ ] Performance optimization
+
 ---
 
 ## Success Metrics

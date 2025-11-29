@@ -44,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className={`${inter.className} min-h-screen bg-neutral-50`}>
+      <body className={`${inter.className} h-full`}>
         <Providers>{children}</Providers>
       </body>
     </html>

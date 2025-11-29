@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { CollectionsContent } from './CollectionsContent';
-import { AppHeader } from '@/components/AppHeader';
+import { AppLayout } from '@/components/AppLayout';
 
 export const metadata = {
   title: 'Collections',
@@ -16,12 +16,10 @@ export default async function CollectionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <AppHeader user={session.user} currentPage="collections" />
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppLayout user={session.user} currentPage="collections">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <CollectionsContent />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

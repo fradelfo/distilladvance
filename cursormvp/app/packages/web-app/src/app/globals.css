@@ -32,6 +32,11 @@
     border-color: theme('colors.neutral.200');
   }
 
+  html,
+  body {
+    @apply h-full;
+  }
+
   body {
     @apply bg-white text-neutral-900 antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;

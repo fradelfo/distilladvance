@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { AppHeader } from '@/components/AppHeader';
+import { AppLayout } from '@/components/AppLayout';
 import { ConversationDetailContent } from './ConversationDetailContent';
 
 interface ConversationDetailPageProps {
@@ -24,12 +24,10 @@ export default async function ConversationDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <AppHeader user={session.user} currentPage="conversations" />
-
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppLayout user={session.user} currentPage="conversations">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <ConversationDetailContent conversationId={params.id} />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

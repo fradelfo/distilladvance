@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { AppHeader } from '@/components/AppHeader';
+import { AppLayout } from '@/components/AppLayout';
 import { PromptEditContent } from './PromptEditContent';
 
 interface PromptEditPageProps {
@@ -23,12 +23,10 @@ export default async function PromptEditPage({ params }: PromptEditPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <AppHeader user={session.user} currentPage="prompts" />
-
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppLayout user={session.user} currentPage="prompts">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <PromptEditContent promptId={id} />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

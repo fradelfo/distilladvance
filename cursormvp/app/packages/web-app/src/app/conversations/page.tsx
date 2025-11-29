@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { ConversationsContent } from './ConversationsContent';
-import { AppHeader } from '@/components/AppHeader';
+import { AppLayout } from '@/components/AppLayout';
 
 export const metadata = {
   title: 'Conversations',
@@ -16,12 +16,10 @@ export default async function ConversationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <AppHeader user={session.user} currentPage="conversations" />
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AppLayout user={session.user} currentPage="conversations">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <ConversationsContent />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

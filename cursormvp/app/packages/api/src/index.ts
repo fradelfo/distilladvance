@@ -16,8 +16,13 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, or extensions)
       if (!origin) return callback(null, true);
 
-      // Allow web app origins
-      const allowedOrigins = [env.WEB_URL, "http://localhost:3000"];
+      // Allow web app origins (including fallback dev ports)
+      const allowedOrigins = [
+        env.WEB_URL,
+        "http://localhost:3000",
+        "http://localhost:3002",
+        "http://localhost:3003",
+      ];
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }

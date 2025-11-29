@@ -3,7 +3,7 @@ import { CaptureButton } from './components/CaptureButton';
 import { CaptureModal } from './components/CaptureModal';
 import { StatusBadge } from './components/StatusBadge';
 import { StatsPanel } from './components/StatsPanel';
-import { sendMessage, MessageTypes } from '../shared/messages';
+import { sendMessage, MessageTypes, type AuthStatusPayload } from '../shared/messages';
 import type { CapturedConversation, ConversationSource } from '@distill/shared-types';
 
 type PageStatus = 'unsupported' | 'supported' | 'loading' | 'error';
@@ -67,7 +67,7 @@ export function App(): React.ReactElement {
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      const response = await sendMessage(MessageTypes.AUTH_STATUS, {});
+      const response = await sendMessage<object, AuthStatusPayload>(MessageTypes.AUTH_STATUS, {});
       setState((prev) => ({
         ...prev,
         isAuthenticated: response?.authenticated ?? false,

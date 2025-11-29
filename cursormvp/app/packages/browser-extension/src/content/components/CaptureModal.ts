@@ -327,7 +327,7 @@ export class CaptureModal {
 
     firstFocusable?.focus();
 
-    this.shadow.addEventListener('keydown', (e: KeyboardEvent) => {
+    (this.shadow as unknown as HTMLElement).addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
         if (e.shiftKey) {
           if (document.activeElement === firstFocusable) {

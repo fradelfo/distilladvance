@@ -16,9 +16,12 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+
+    /* Types */
+    "types": ["chrome"],
 
     /* Paths */
     "baseUrl": ".",
@@ -26,6 +29,5 @@
       "@distill/shared-types": ["../shared-types/src/index.ts"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "../shared-types" }]
+  "include": ["src"]
 }

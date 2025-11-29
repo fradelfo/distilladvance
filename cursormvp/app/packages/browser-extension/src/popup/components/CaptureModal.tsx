@@ -4,7 +4,7 @@ import { PrivacyModeSelector } from './PrivacyModeSelector';
 import { ProcessingState } from './ProcessingState';
 import { SuccessState } from './SuccessState';
 import { ErrorState } from './ErrorState';
-import { sendMessage, MessageTypes } from '../../shared/messages';
+import { sendMessage, MessageTypes, type MessageResponse } from '../../shared/messages';
 import type { CapturedConversation, DistillResult } from '@distill/shared-types';
 
 type ModalState = 'preview' | 'processing' | 'success' | 'error';
@@ -78,7 +78,7 @@ export function CaptureModal({
       }
 
       // Send distill request
-      const response = await sendMessage(MessageTypes.DISTILL_REQUEST, {
+      const response = await sendMessage<object, MessageResponse>(MessageTypes.DISTILL_REQUEST, {
         messages: conversation.messages,
         privacyMode,
         options: {

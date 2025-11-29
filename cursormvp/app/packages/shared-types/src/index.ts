@@ -177,7 +177,11 @@ export type ExtensionMessageType =
   | 'GET_SETTINGS'
   | 'UPDATE_SETTINGS'
   | 'AUTH_STATUS'
-  | 'ERROR';
+  | 'ERROR'
+  | 'GET_PAGE_STATUS'
+  | 'PAGE_STATUS'
+  | 'OPEN_CAPTURE_MODAL'
+  | 'CLOSE_CAPTURE_MODAL';
 
 export interface ExtensionSettings {
   autoCapture: boolean;

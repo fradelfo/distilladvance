@@ -38,7 +38,6 @@ jobs:
 
       - name: Type check
         run: bun run type-check
-        continue-on-error: true  # TODO: Fix root tsconfig for monorepo
 
   # ============================================================================
   # Unit Tests

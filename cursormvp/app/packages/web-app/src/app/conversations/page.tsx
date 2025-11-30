@@ -17,7 +17,7 @@ export default async function ConversationsPage() {
 
   return (
     <AppLayout user={session.user} currentPage="conversations">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="px-4 py-8 sm:px-6 lg:px-8">
         <ConversationsContent />
       </div>
     </AppLayout>

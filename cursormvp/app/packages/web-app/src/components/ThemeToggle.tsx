@@ -20,11 +20,13 @@ import {
 interface ThemeToggleProps {
   /** Show text label next to icon */
   showLabel?: boolean;
+  /** Hide label (for collapsible sidebars) */
+  hideLabel?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
 
-export function ThemeToggle({ showLabel = false, className = '' }: ThemeToggleProps) {
+export function ThemeToggle({ showLabel = false, hideLabel = false, className = '' }: ThemeToggleProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -54,14 +56,16 @@ export function ThemeToggle({ showLabel = false, className = '' }: ThemeTogglePr
       <Button
         variant="ghost"
         onClick={toggleTheme}
-        className={`w-full justify-start ${className}`}
+        className={`w-full justify-start overflow-hidden ${className} ${hideLabel ? 'justify-center px-2' : ''}`}
       >
         {isDark ? (
-          <Sun className="h-5 w-5" />
+          <Sun className="h-5 w-5 flex-shrink-0" />
         ) : (
-          <Moon className="h-5 w-5" />
+          <Moon className="h-5 w-5 flex-shrink-0" />
         )}
-        <span className="ml-2">{isDark ? 'Light mode' : 'Dark mode'}</span>
+        <span className={`ml-2 truncate transition-all duration-200 ${hideLabel ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100'}`}>
+          {isDark ? 'Light mode' : 'Dark mode'}
+        </span>
       </Button>
     );
   }

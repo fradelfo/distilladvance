@@ -8,7 +8,7 @@
  * Uses shadcn/ui Avatar, Tooltip, and Lucide icons.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import {
@@ -83,24 +83,117 @@ const navItems = [
   },
 ];
 
+// Resize constraints
+const MIN_WIDTH = 64;           // Icon-only mode (matches w-16)
+const MAX_WIDTH = 320;          // Maximum expanded width
+const DEFAULT_WIDTH = 240;      // Default expanded width
+const AUTO_CLOSE_THRESHOLD = 50; // Below this width during drag, auto-snap to closed
+
+// Helper to get initial width from localStorage (runs on client only)
+function getInitialWidth(): number {
+  if (typeof window === 'undefined') return DEFAULT_WIDTH;
+
+  const storedWidth = localStorage.getItem('sidebar-width');
+  if (storedWidth) {
+    const parsed = Number(storedWidth);
+    if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
+      return parsed;
+    }
+  }
+  // Legacy fallback for existing users
+  const legacyCollapsed = localStorage.getItem('sidebar-collapsed');
+  if (legacyCollapsed === 'true') {
+    return MIN_WIDTH;
+  }
+  return DEFAULT_WIDTH;
+}
+
 export function AppSidebar({ user, currentPage }: AppSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [width, setWidth] = useState(getInitialWidth);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('sidebar-collapsed');
-    if (stored !== null) {
-      setIsCollapsed(stored === 'true');
+  // Refs for resize operation
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Derived state - icon-only mode at minimum width
+  const isCollapsed = width <= MIN_WIDTH;
+
+  // Toggle between collapsed (MIN_WIDTH) and expanded (DEFAULT_WIDTH)
+  const toggleSidebar = useCallback(() => {
+    const newWidth = isCollapsed ? DEFAULT_WIDTH : MIN_WIDTH;
+    setWidth(newWidth);
+    localStorage.setItem('sidebar-width', String(newWidth));
+  }, [isCollapsed]);
+
+  // Resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    startX.current = e.clientX;
+    startWidth.current = width;
+
+    // Disable transitions during resize for smooth performance
+    if (sidebarRef.current) {
+      sidebarRef.current.style.transition = 'none';
+    }
+
+    // Set cursor globally and prevent text selection
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [width]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing.current || !sidebarRef.current) return;
+
+    const delta = e.clientX - startX.current;
+    // Allow dragging below MIN_WIDTH to detect auto-close intent
+    const newWidth = Math.min(MAX_WIDTH, Math.max(0, startWidth.current + delta));
+
+    // Direct DOM manipulation for 60fps performance
+    sidebarRef.current.style.width = `${Math.max(MIN_WIDTH, newWidth)}px`;
+
+    // Store the raw width for auto-close detection
+    sidebarRef.current.dataset.rawWidth = String(newWidth);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (!isResizing.current) return;
+
+    isResizing.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+
+    if (sidebarRef.current) {
+      // Re-enable transitions
+      sidebarRef.current.style.transition = '';
+
+      // Check if user dragged below auto-close threshold
+      const rawWidth = Number(sidebarRef.current.dataset.rawWidth) || sidebarRef.current.offsetWidth;
+      const finalWidth = rawWidth < AUTO_CLOSE_THRESHOLD ? MIN_WIDTH : Math.max(MIN_WIDTH, rawWidth);
+
+      // Clean up data attribute
+      delete sidebarRef.current.dataset.rawWidth;
+
+      // Apply final width with transition
+      sidebarRef.current.style.width = `${finalWidth}px`;
+      setWidth(finalWidth);
+      localStorage.setItem('sidebar-width', String(finalWidth));
     }
   }, []);
 
-  // Save collapsed state to localStorage
-  const toggleCollapsed = () => {
-    const newValue = !isCollapsed;
-    setIsCollapsed(newValue);
-    localStorage.setItem('sidebar-collapsed', String(newValue));
-  };
+  // Attach document-level listeners for drag outside sidebar
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
 
   const getUserInitials = () => {
     if (user.name) {
@@ -136,35 +229,35 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
         className={cn(
           'fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-border bg-background transition-all duration-300',
           'md:relative md:z-auto',
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          isCollapsed ? 'w-16' : 'w-[280px]'
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
+        style={{ width: `${width}px` }}
       >
         {/* Header */}
         <div className={cn(
-          'flex h-16 items-center border-b border-border px-4',
+          'flex h-16 items-center border-b border-border px-4 overflow-hidden',
           isCollapsed ? 'justify-center' : 'justify-between'
         )}>
-          {!isCollapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <span className="text-2xl">💧</span>
-              <span className="text-xl font-semibold text-foreground">Distill</span>
-            </Link>
-          )}
-          {isCollapsed && (
-            <Link href="/dashboard" className="flex items-center justify-center">
-              <span className="text-2xl">💧</span>
-            </Link>
-          )}
+          <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden min-w-0">
+            <span className="text-2xl flex-shrink-0">💧</span>
+            <span className={cn(
+              'text-xl font-semibold text-foreground truncate transition-all duration-200',
+              isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+            )}>
+              Distill
+            </span>
+          </Link>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={toggleCollapsed}
+                onClick={toggleSidebar}
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 className={cn(
                   'hidden md:flex',
                   isCollapsed && 'absolute right-2'
@@ -209,18 +302,23 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                   onClick={() => setIsMobileOpen(false)}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors overflow-hidden',
                     isActive
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                    isCollapsed && 'justify-center px-2'
+                    isCollapsed && 'justify-center px-2 gap-0'
                   )}
                 >
                   <Icon className={cn(
-                    'h-5 w-5',
+                    'h-5 w-5 flex-shrink-0',
                     isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                   )} />
-                  {!isCollapsed && <span>{item.label}</span>}
+                  <span className={cn(
+                    'truncate transition-all duration-200',
+                    isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                  )}>
+                    {item.label}
+                  </span>
                 </Link>
               );
 
@@ -247,61 +345,91 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
         {/* User section */}
         <div className="border-t border-border p-3">
           {/* Theme toggle */}
-          {isCollapsed ? (
-            <div className="mb-2 flex justify-center">
-              <ThemeToggle />
-            </div>
-          ) : (
-            <ThemeToggle showLabel className="mb-2 w-full justify-start text-muted-foreground hover:text-foreground" />
-          )}
+          <ThemeToggle
+            showLabel
+            hideLabel={isCollapsed}
+            className="mb-2 w-full text-muted-foreground hover:text-foreground"
+          />
 
           {/* User info */}
           <div className={cn(
-            'flex items-center gap-3 rounded-lg p-2',
-            isCollapsed && 'justify-center'
+            'flex items-center gap-3 rounded-lg p-2 overflow-hidden',
+            isCollapsed && 'justify-center gap-0'
           )}>
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-9 w-9 flex-shrink-0">
               <AvatarImage src={user.image || undefined} alt={user.name || 'User'} />
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
-            {!isCollapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {user.name || 'User'}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-              </div>
-            )}
+            <div className={cn(
+              'min-w-0 flex-1 transition-all duration-200',
+              isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+            )}>
+              <p className="truncate text-sm font-medium text-foreground">
+                {user.name || 'User'}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
           </div>
 
           {/* Sign out */}
-          {isCollapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
-                  variant="ghost"
-                  size="icon"
-                  className="mt-2 w-full"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="sr-only">Sign out</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Sign out</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              variant="ghost"
-              className="mt-2 w-full justify-start text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="ml-2">Sign out</span>
-            </Button>
+          <Button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            variant="ghost"
+            className={cn(
+              'mt-2 w-full justify-start text-muted-foreground hover:text-foreground overflow-hidden',
+              isCollapsed && 'justify-center px-2'
+            )}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <span className={cn(
+              'ml-2 truncate transition-all duration-200',
+              isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100'
+            )}>
+              Sign out
+            </span>
+          </Button>
+        </div>
+
+        {/* Resize handle - desktop only */}
+        <div
+          className={cn(
+            'absolute right-0 top-0 h-full w-3 -mr-1.5 cursor-col-resize',
+            'hidden md:flex items-center justify-center',
+            'group transition-colors'
           )}
+          onMouseDown={handleResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          aria-valuenow={width}
+          aria-valuemin={MIN_WIDTH}
+          aria-valuemax={MAX_WIDTH}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 50 : 10;
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              const newWidth = Math.max(MIN_WIDTH, width - step);
+              setWidth(newWidth);
+              localStorage.setItem('sidebar-width', String(newWidth));
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              const newWidth = Math.min(MAX_WIDTH, width + step);
+              setWidth(newWidth);
+              localStorage.setItem('sidebar-width', String(newWidth));
+            }
+          }}
+        >
+          {/* Full-height border line indicator */}
+          <div
+            className={cn(
+              'h-full w-px bg-border',
+              'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+              'group-hover:bg-primary/40 group-active:bg-primary/60 group-active:opacity-100'
+            )}
+          />
         </div>
       </aside>
     </>

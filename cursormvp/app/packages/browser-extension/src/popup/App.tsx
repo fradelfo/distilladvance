@@ -106,25 +106,38 @@ export function App(): React.ReactElement {
       return;
     }
 
-    setState((prev) => ({ ...prev, captureModalOpen: true }));
+    setState((prev) => ({ ...prev, captureModalOpen: true, conversation: null }));
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       console.log('[Distill] Active tab:', tab?.id, tab?.url);
       if (!tab?.id) {
         console.log('[Distill] No tab ID found');
+        alert('Could not find active tab. Please try again.');
+        setState((prev) => ({ ...prev, captureModalOpen: false }));
         return;
       }
 
       console.log('[Distill] Sending CAPTURE_CONVERSATION message to tab', tab.id);
-      const response = await chrome.tabs.sendMessage(tab.id, {
+
+      // Add timeout to the message
+      const messagePromise = chrome.tabs.sendMessage(tab.id, {
         type: MessageTypes.CAPTURE_CONVERSATION,
         payload: {},
         source: 'popup',
         timestamp: Date.now(),
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout waiting for conversation data')), 15000)
+      );
+
+      const response = await Promise.race([messagePromise, timeoutPromise]);
+
       console.log('[Distill] Response from content script:', response);
+      console.log('[Distill] Response type:', typeof response);
+      console.log('[Distill] Response success:', response?.success);
+      console.log('[Distill] Response data:', response?.data);
 
       if (response?.success && response.data) {
         console.log('[Distill] Got conversation data:', response.data.messages?.length, 'messages');
@@ -133,15 +146,26 @@ export function App(): React.ReactElement {
           conversation: response.data,
         }));
       } else {
-        console.log('[Distill] No data in response');
+        console.warn('[Distill] Invalid response format:', response);
+        alert('Failed to capture conversation. The conversation data was empty or invalid. Please try again.');
+        setState((prev) => ({ ...prev, captureModalOpen: false, conversation: null }));
       }
     } catch (error) {
       console.error('[Distill] Error capturing:', error);
-      // This usually means content script isn't loaded
-      alert('Content script not loaded. Please refresh the AI chat page and try again.');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes('Timeout')) {
+        alert('Timeout while capturing conversation. This page may have a very long conversation. Please try again or refresh the page.');
+      } else if (errorMessage.includes('Could not establish connection')) {
+        alert('Content script not loaded. Please refresh the AI chat page and try again.');
+      } else {
+        alert(`Error capturing conversation: ${errorMessage}`);
+      }
+
       setState((prev) => ({
         ...prev,
         captureModalOpen: false,
+        conversation: null,
       }));
     }
   };

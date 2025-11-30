@@ -361,61 +361,76 @@ async function openCaptureModal(): Promise<void> {
 
 // Listen for messages from background script and popup
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
+  console.log('[Distill] Content script received message:', message.type);
+
   // Handle async operations properly
   (async () => {
-    switch (message.type) {
-      case MessageTypes.CAPTURE_CONVERSATION: {
-        const capturedData = await buildCapturedConversation();
+    try {
+      switch (message.type) {
+        case MessageTypes.CAPTURE_CONVERSATION: {
+          console.log('[Distill] Starting conversation capture...');
+          const capturedData = await buildCapturedConversation();
+          console.log('[Distill] Conversation captured:', capturedData.messages.length, 'messages');
 
-        // Send back to background script
-        chrome.runtime.sendMessage({
-          type: MessageTypes.CONVERSATION_CAPTURED,
-          payload: capturedData,
-          source: 'content',
-          timestamp: Date.now(),
-        });
+          // Send back to background script
+          chrome.runtime.sendMessage({
+            type: MessageTypes.CONVERSATION_CAPTURED,
+            payload: capturedData,
+            source: 'content',
+            timestamp: Date.now(),
+          }).catch((err) => {
+            console.warn('[Distill] Failed to send to background:', err);
+          });
 
-        sendResponse({ success: true, data: capturedData });
-        break;
-      }
-
-      case MessageTypes.OPEN_CAPTURE_MODAL: {
-        await openCaptureModal();
-        sendResponse({ success: true });
-        break;
-      }
-
-      case MessageTypes.CLOSE_CAPTURE_MODAL: {
-        if (currentModal) {
-          currentModal.remove();
-          currentModal = null;
+          sendResponse({ success: true, data: capturedData });
+          break;
         }
-        sendResponse({ success: true });
-        break;
+
+        case MessageTypes.OPEN_CAPTURE_MODAL: {
+          await openCaptureModal();
+          sendResponse({ success: true });
+          break;
+        }
+
+        case MessageTypes.CLOSE_CAPTURE_MODAL: {
+          if (currentModal) {
+            currentModal.remove();
+            currentModal = null;
+          }
+          sendResponse({ success: true });
+          break;
+        }
+
+        case MessageTypes.GET_PAGE_STATUS: {
+          const platform = detectPlatform();
+          const messages = await extractConversation();
+
+          sendResponse({
+            success: true,
+            data: {
+              supported: platform !== 'other',
+              platform,
+              hasConversation: messages.length > 0,
+              messageCount: messages.length,
+            },
+          });
+          break;
+        }
+
+        default:
+          console.warn('[Distill] Unknown message type:', message.type);
+          sendResponse({ success: false, error: 'Unknown message type' });
       }
-
-      case MessageTypes.GET_PAGE_STATUS: {
-        const platform = detectPlatform();
-        const messages = await extractConversation();
-
-        sendResponse({
-          success: true,
-          data: {
-            supported: platform !== 'other',
-            platform,
-            hasConversation: messages.length > 0,
-            messageCount: messages.length,
-          },
-        });
-        break;
-      }
-
-      default:
-        sendResponse({ success: false, error: 'Unknown message type' });
+    } catch (error) {
+      console.error('[Distill] Error handling message:', error);
+      sendResponse({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   })();
 
-  return true;
+  return true; // Keep message channel open for async response
 });
 
 // Initialize content script

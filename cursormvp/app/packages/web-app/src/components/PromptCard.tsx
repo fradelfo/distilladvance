@@ -4,10 +4,17 @@
  * PromptCard Component
  *
  * Displays a prompt summary in a card format with quick actions.
+ * Uses shadcn/ui Card component and Lucide icons.
  */
 
 import Link from 'next/link';
+import { PlayCircle, Copy, Pencil } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TagChip } from './TagFilter';
+import { formatRelativeDate } from '@/lib/date';
 
 interface PromptCardProps {
   /** Prompt ID */
@@ -41,32 +48,11 @@ export function PromptCard({
   tags,
   usageCount,
   isPublic,
-  createdAt,
   updatedAt,
   onCopy,
   onRun,
   onEdit,
 }: PromptCardProps) {
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return 'Today';
-    } else if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
-    } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-      });
-    }
-  };
-
   const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -86,146 +72,91 @@ export function PromptCard({
   };
 
   return (
-    <Link href={`/prompts/${id}`} className="block">
-      <article className="card p-4 hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-base font-semibold text-neutral-900 line-clamp-1">
-            {title}
-          </h3>
-          {isPublic && (
-            <span className="flex-shrink-0 inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-600">
-              Public
-            </span>
-          )}
-        </div>
-
-        {/* Description */}
-        {description && (
-          <p className="text-sm text-neutral-600 line-clamp-2 mb-3">
-            {description}
-          </p>
-        )}
-
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {tags.slice(0, 3).map((tag) => (
-              <TagChip key={tag} tag={tag} size="sm" />
-            ))}
-            {tags.length > 3 && (
-              <span className="inline-flex items-center px-2 py-0.5 text-xs text-neutral-400">
-                +{tags.length - 3} more
-              </span>
+    <Link href={`/prompts/${id}`} className="block h-full">
+      <Card className="h-full flex flex-col hover:shadow-md transition-shadow duration-200">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-base font-semibold text-foreground line-clamp-1">
+              {title}
+            </h3>
+            {isPublic && (
+              <Badge variant="success" className="flex-shrink-0">
+                Public
+              </Badge>
             )}
           </div>
-        )}
+        </CardHeader>
 
-        {/* Spacer to push footer to bottom */}
-        <div className="flex-grow" />
+        <CardContent className="flex-grow pb-3">
+          {/* Description */}
+          {description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+              {description}
+            </p>
+          )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tags.slice(0, 3).map((tag) => (
+                <TagChip key={tag} tag={tag} size="sm" />
+              ))}
+              {tags.length > 3 && (
+                <span className="inline-flex items-center px-2 py-0.5 text-xs text-muted-foreground">
+                  +{tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="pt-3 border-t flex items-center justify-between">
           {/* Stats */}
-          <div className="flex items-center gap-3 text-xs text-neutral-500">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1" title="Usage count">
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <PlayCircle className="h-3.5 w-3.5" />
               {usageCount}
             </span>
             <span title={`Updated ${updatedAt.toLocaleDateString()}`}>
-              {formatDate(updatedAt)}
+              {formatRelativeDate(updatedAt)}
             </span>
           </div>
 
           {/* Quick Actions */}
           <div className="flex items-center gap-1">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
               onClick={handleCopy}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
               title="Copy prompt"
               aria-label="Copy prompt"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            </button>
-            <button
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 hover:text-primary hover:bg-primary/10"
               onClick={handleRun}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-primary-600 hover:bg-primary-50"
               title="Run prompt"
               aria-label="Run prompt"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-            <button
+              <PlayCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
               onClick={handleEdit}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
               title="Edit prompt"
               aria-label="Edit prompt"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </button>
+              <Pencil className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-      </article>
+        </CardFooter>
+      </Card>
     </Link>
   );
 }
@@ -237,36 +168,33 @@ export function PromptCard({
  */
 export function PromptCardSkeleton() {
   return (
-    <div className="card p-4 animate-pulse">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="h-5 bg-neutral-200 rounded w-3/4" />
-      </div>
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <Skeleton className="h-5 w-3/4" />
+      </CardHeader>
 
-      {/* Description */}
-      <div className="space-y-2 mb-3">
-        <div className="h-4 bg-neutral-100 rounded w-full" />
-        <div className="h-4 bg-neutral-100 rounded w-5/6" />
-      </div>
+      <CardContent className="pb-3">
+        <div className="space-y-2 mb-3">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="flex gap-1.5">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+      </CardContent>
 
-      {/* Tags */}
-      <div className="flex gap-1.5 mb-3">
-        <div className="h-5 bg-neutral-100 rounded-full w-16" />
-        <div className="h-5 bg-neutral-100 rounded-full w-20" />
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
+      <CardFooter className="pt-3 border-t flex items-center justify-between">
         <div className="flex gap-3">
-          <div className="h-4 bg-neutral-100 rounded w-8" />
-          <div className="h-4 bg-neutral-100 rounded w-16" />
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-4 w-16" />
         </div>
         <div className="flex gap-1">
-          <div className="h-7 w-7 bg-neutral-100 rounded" />
-          <div className="h-7 w-7 bg-neutral-100 rounded" />
-          <div className="h-7 w-7 bg-neutral-100 rounded" />
+          <Skeleton className="h-7 w-7 rounded" />
+          <Skeleton className="h-7 w-7 rounded" />
+          <Skeleton className="h-7 w-7 rounded" />
         </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

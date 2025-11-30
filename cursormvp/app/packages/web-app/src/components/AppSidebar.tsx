@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import {
   Home,
   BookOpen,
@@ -279,31 +280,27 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
           {isCollapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <form action="/api/auth/signout" method="POST">
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-2 w-full"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span className="sr-only">Sign out</span>
-                  </Button>
-                </form>
+                <Button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  variant="ghost"
+                  size="icon"
+                  className="mt-2 w-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="sr-only">Sign out</span>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Sign out</TooltipContent>
             </Tooltip>
           ) : (
-            <form action="/api/auth/signout" method="POST">
-              <Button
-                type="submit"
-                variant="ghost"
-                className="mt-2 w-full justify-start text-muted-foreground hover:text-foreground"
-              >
-                <LogOut className="h-5 w-5" />
-                <span className="ml-2">Sign out</span>
-              </Button>
-            </form>
+            <Button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              variant="ghost"
+              className="mt-2 w-full justify-start text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="ml-2">Sign out</span>
+            </Button>
           )}
         </div>
       </aside>

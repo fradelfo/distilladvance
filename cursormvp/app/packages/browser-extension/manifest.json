@@ -60,7 +60,7 @@
     "https://claude.ai/*",
     "https://gemini.google.com/*",
     "https://copilot.microsoft.com/*",
-    "http://localhost:3000/*",
+    "http://localhost:3002/*",
     "http://localhost:3001/*",
     "https://app.distill.ai/*",
     "https://api.distill.ai/*"

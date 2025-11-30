@@ -65,6 +65,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
   } = trpc.distill.getPrompt.useQuery({ id: promptId });
 
   // Update mutation - use simpler pattern to avoid TypeScript depth issues
+  const utils = trpc.useUtils();
   const updateMutation = trpc.distill.updatePrompt.useMutation();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,6 +214,11 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
         tags,
         isPublic,
       });
+
+      // Invalidate cache to ensure fresh data
+      await utils.distill.getPrompt.invalidate({ id: promptId });
+      await utils.distill.listPrompts.invalidate();
+
       setHasChanges(false);
       setShowSavedIndicator(true);
       toast.success('Prompt saved successfully');

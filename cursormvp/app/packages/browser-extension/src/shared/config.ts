@@ -11,7 +11,7 @@ const isDev = import.meta.env.MODE === 'development';
 
 export const config = {
   // Web app URL (for login, dashboard, etc.)
-  webUrl: isDev ? 'http://localhost:3000' : 'https://app.distill.ai',
+  webUrl: isDev ? 'http://localhost:3002' : 'https://app.distill.ai',
 
   // API server URL
   apiUrl: isDev ? 'http://localhost:3001' : 'https://api.distill.ai',

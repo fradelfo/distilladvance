@@ -132,7 +132,7 @@ export function CollectionForm({
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-neutral-700"
+          className="block text-sm font-medium text-foreground"
         >
           Name <span className="text-error-500">*</span>
         </label>
@@ -143,10 +143,10 @@ export function CollectionForm({
           value={formData.name}
           onChange={handleChange}
           disabled={isLoading}
-          className={`mt-1 block w-full rounded-md border px-3 py-2 text-neutral-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:text-sm ${
+          className={`mt-1 block w-full rounded-md border px-3 py-2 text-foreground bg-background shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:text-sm ${
             validationErrors.name
               ? 'border-error-300 focus:border-error-500 focus:ring-error-500'
-              : 'border-neutral-300 focus:border-primary-500'
+              : 'border-input focus:border-primary-500'
           }`}
           placeholder="My Collection"
           aria-invalid={!!validationErrors.name}
@@ -158,7 +158,7 @@ export function CollectionForm({
             {validationErrors.name}
           </p>
         )}
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           {formData.name.length}/100 characters
         </p>
       </div>
@@ -167,7 +167,7 @@ export function CollectionForm({
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-neutral-700"
+          className="block text-sm font-medium text-foreground"
         >
           Description
         </label>
@@ -178,10 +178,10 @@ export function CollectionForm({
           onChange={handleChange}
           disabled={isLoading}
           rows={3}
-          className={`mt-1 block w-full rounded-md border px-3 py-2 text-neutral-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:text-sm ${
+          className={`mt-1 block w-full rounded-md border px-3 py-2 text-foreground bg-background shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:text-sm ${
             validationErrors.description
               ? 'border-error-300 focus:border-error-500 focus:ring-error-500'
-              : 'border-neutral-300 focus:border-primary-500'
+              : 'border-input focus:border-primary-500'
           }`}
           placeholder="A brief description of this collection..."
           aria-invalid={!!validationErrors.description}
@@ -195,7 +195,7 @@ export function CollectionForm({
             {validationErrors.description}
           </p>
         )}
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           {formData.description.length}/500 characters
         </p>
       </div>
@@ -210,24 +210,24 @@ export function CollectionForm({
             checked={formData.isPublic}
             onChange={handleChange}
             disabled={isLoading}
-            className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            className="h-4 w-4 rounded border-input text-primary-600 focus:ring-primary-500"
           />
         </div>
         <div className="ml-3">
           <label
             htmlFor="isPublic"
-            className="text-sm font-medium text-neutral-700"
+            className="text-sm font-medium text-foreground"
           >
             Make this collection public
           </label>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             Public collections can be viewed by anyone with the link
           </p>
         </div>
       </div>
 
       {/* Form Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
+      <div className="flex justify-end gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={onCancel}

@@ -57,18 +57,18 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-3xl">💧</span>
-            <span className="text-2xl font-semibold text-neutral-900">Distill</span>
+            <span className="text-2xl font-semibold text-foreground">Distill</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-neutral-900">
+          <h1 className="mt-6 text-2xl font-bold text-foreground">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Sign in to your account to continue
           </p>
         </div>
@@ -126,9 +126,9 @@ function LoginForm() {
 
           {/* Divider */}
           <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-neutral-200" />
-            <span className="px-4 text-sm text-neutral-500">or</span>
-            <div className="flex-1 border-t border-neutral-200" />
+            <div className="flex-1 border-t border-border" />
+            <span className="px-4 text-sm text-muted-foreground">or</span>
+            <div className="flex-1 border-t border-border" />
           </div>
 
           {/* Email/Password Form */}
@@ -191,11 +191,11 @@ function LoginForm() {
         </div>
 
         {/* Sign Up Link */}
-        <p className="mt-6 text-center text-sm text-neutral-600">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link
             href="/signup"
-            className="font-medium text-primary-600 hover:text-primary-700"
+            className="font-medium text-primary hover:text-primary/80"
           >
             Sign up for free
           </Link>
@@ -203,7 +203,7 @@ function LoginForm() {
 
         {/* Dev Notice */}
         {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 rounded-md bg-neutral-100 p-3 text-center text-xs text-neutral-600">
+          <div className="mt-4 rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
             <p className="font-medium">Development Mode</p>
             <p>Create an account via the sign up page</p>
           </div>
@@ -215,8 +215,8 @@ function LoginForm() {
 
 function LoginFormFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
 }

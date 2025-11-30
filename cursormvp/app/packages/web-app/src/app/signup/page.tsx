@@ -68,18 +68,18 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-3xl">💧</span>
-            <span className="text-2xl font-semibold text-neutral-900">Distill</span>
+            <span className="text-2xl font-semibold text-foreground">Distill</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-neutral-900">
+          <h1 className="mt-6 text-2xl font-bold text-foreground">
             Create your account
           </h1>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Start capturing and sharing your best AI prompts
           </p>
         </div>
@@ -124,9 +124,9 @@ export default function SignupPage() {
 
           {/* Divider */}
           <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-neutral-200" />
-            <span className="px-4 text-sm text-neutral-500">or</span>
-            <div className="flex-1 border-t border-neutral-200" />
+            <div className="flex-1 border-t border-border" />
+            <span className="px-4 text-sm text-muted-foreground">or</span>
+            <div className="flex-1 border-t border-border" />
           </div>
 
           {/* Email/Password Form */}
@@ -214,24 +214,24 @@ export default function SignupPage() {
           </form>
 
           {/* Terms */}
-          <p className="mt-4 text-center text-xs text-neutral-500">
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             By signing up, you agree to our{' '}
-            <Link href="/terms" className="text-primary-600 hover:text-primary-700">
+            <Link href="/terms" className="text-primary hover:text-primary/80">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-primary-600 hover:text-primary-700">
+            <Link href="/privacy" className="text-primary hover:text-primary/80">
               Privacy Policy
             </Link>
           </p>
         </div>
 
         {/* Sign In Link */}
-        <p className="mt-6 text-center text-sm text-neutral-600">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-primary-600 hover:text-primary-700"
+            className="font-medium text-primary hover:text-primary/80"
           >
             Sign in
           </Link>

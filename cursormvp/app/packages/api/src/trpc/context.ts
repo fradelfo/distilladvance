@@ -37,7 +37,9 @@ async function validateSession(
       return null;
     }
 
-    const session = await response.json();
+    const session = (await response.json()) as {
+      user?: { id?: string; email?: string };
+    };
 
     // NextAuth returns { user: { id, email, ... } } or {} if not authenticated
     if (session?.user?.id) {

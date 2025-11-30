@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   CollectionCard,
   CollectionCardSkeleton,
@@ -62,10 +63,12 @@ export function CollectionsContent() {
     onSuccess: () => {
       setIsCreateModalOpen(false);
       setFormError(null);
+      toast.success('Collection created successfully');
       refetch();
     },
     onError: (err) => {
       setFormError(err.message);
+      toast.error('Failed to create collection');
     },
   });
 
@@ -73,21 +76,24 @@ export function CollectionsContent() {
     onSuccess: () => {
       setEditingCollection(null);
       setFormError(null);
+      toast.success('Collection updated successfully');
       refetch();
     },
     onError: (err) => {
       setFormError(err.message);
+      toast.error('Failed to update collection');
     },
   });
 
   const deleteMutation = trpc.collection.delete.useMutation({
     onSuccess: () => {
       setDeletingCollectionId(null);
+      toast.success('Collection deleted successfully');
       refetch();
     },
     onError: (err) => {
-      // Handle error (could show a toast)
       console.error('Failed to delete collection:', err.message);
+      toast.error('Failed to delete collection');
       setDeletingCollectionId(null);
     },
   });

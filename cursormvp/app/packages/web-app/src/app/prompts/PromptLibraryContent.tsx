@@ -15,6 +15,7 @@ import { TagFilter } from '@/components/TagFilter';
 import { SortSelect, type SortOption } from '@/components/SortSelect';
 import { EmptyState } from '@/components/EmptyState';
 import { SemanticSearch } from '@/components/prompts';
+import { ErrorWithRetry } from '@/components/ui/error-with-retry';
 import { trpc } from '@/lib/trpc';
 
 // View mode for the grid
@@ -57,6 +58,8 @@ export function PromptLibraryContent() {
     isLoading,
     isError,
     error,
+    refetch,
+    isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -374,16 +377,12 @@ export function PromptLibraryContent() {
 
           {/* Error State */}
           {isError && (
-            <div className="card p-6 text-center">
-              <p className="text-sm text-error-600">
-                Failed to load prompts: {error?.message || 'Unknown error'}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-4 btn-outline px-4 py-2"
-              >
-                Retry
-              </button>
+            <div className="card">
+              <ErrorWithRetry
+                message={error?.message || 'Unable to load your prompts. Please try again.'}
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
             </div>
           )}
 

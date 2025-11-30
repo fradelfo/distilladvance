@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Copy, Check, X, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, fillVariables } from '@/lib/variables';
 import {
@@ -113,6 +114,12 @@ export function RunPromptModal({
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success('Prompt copied to clipboard', {
+        action: {
+          label: 'Open ChatGPT',
+          onClick: () => window.open(AI_PLATFORM_URLS.chatgpt, '_blank', 'noopener,noreferrer'),
+        },
+      });
     });
   }, [
     filledPrompt,

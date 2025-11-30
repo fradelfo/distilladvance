@@ -16,6 +16,8 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Check, Loader2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
 import { CoachPanel } from '@/components/prompts/CoachPanel';
@@ -52,6 +54,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showVariablePanel, setShowVariablePanel] = useState(true);
+  const [showSavedIndicator, setShowSavedIndicator] = useState(false);
 
   // Fetch prompt data
   const {
@@ -211,9 +214,15 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
         isPublic,
       });
       setHasChanges(false);
-      router.push(`/prompts/${promptId}`);
+      setShowSavedIndicator(true);
+      toast.success('Prompt saved successfully');
+      // Auto-hide saved indicator after 2 seconds
+      setTimeout(() => setShowSavedIndicator(false), 2000);
+      // Navigate after brief delay to show saved indicator
+      setTimeout(() => router.push(`/prompts/${promptId}`), 500);
     } catch (err) {
       console.error('[PromptEditContent] Update failed:', err);
+      toast.error('Failed to save prompt');
     } finally {
       setIsSaving(false);
     }
@@ -288,7 +297,22 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
 
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900">Edit Prompt</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-neutral-900">Edit Prompt</h1>
+          {/* Saving/Saved Indicator */}
+          {isSaving && (
+            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground animate-pulse">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          )}
+          {showSavedIndicator && !isSaving && (
+            <span className="inline-flex items-center gap-1.5 text-sm text-green-600 transition-opacity">
+              <Check className="h-4 w-4" />
+              Saved
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Link
             href={`/prompts/${promptId}`}

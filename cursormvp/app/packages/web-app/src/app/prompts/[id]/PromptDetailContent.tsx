@@ -10,6 +10,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { TagChip } from '@/components/TagFilter';
 import { CoachPanel } from '@/components/prompts/CoachPanel';
@@ -47,7 +48,12 @@ export function PromptDetailContent({
   // Delete mutation
   const deleteMutation = trpc.distill.deletePrompt.useMutation({
     onSuccess: () => {
+      toast.success('Prompt deleted successfully');
       router.push('/prompts');
+    },
+    onError: (err) => {
+      toast.error('Failed to delete prompt');
+      console.error('Delete prompt error:', err);
     },
   });
 

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   FolderClosed,
   Users,
+  CreditCard,
   LogOut,
   Menu,
   X,
@@ -39,7 +40,7 @@ interface AppSidebarProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'settings';
+  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'billing' | 'settings';
 }
 
 const navItems = [
@@ -72,6 +73,12 @@ const navItems = [
     label: 'Workspaces',
     key: 'workspaces',
     icon: Users,
+  },
+  {
+    href: '/billing',
+    label: 'Billing',
+    key: 'billing',
+    icon: CreditCard,
   },
 ];
 
@@ -199,6 +206,7 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                 <Link
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive

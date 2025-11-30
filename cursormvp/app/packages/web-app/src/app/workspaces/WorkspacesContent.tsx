@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   WorkspaceCard,
   WorkspaceCardSkeleton,
@@ -54,10 +55,12 @@ export function WorkspacesContent() {
     onSuccess: () => {
       setIsCreateModalOpen(false);
       setFormError(null);
+      toast.success('Workspace created successfully');
       refetch();
     },
     onError: (err) => {
       setFormError(err.message);
+      toast.error('Failed to create workspace');
     },
   });
 

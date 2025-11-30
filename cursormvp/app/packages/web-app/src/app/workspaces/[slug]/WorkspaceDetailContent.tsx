@@ -11,6 +11,7 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 import { WorkspaceForm, MemberList, InviteForm } from '@/components/workspaces';
 import { trpc } from '@/lib/trpc';
 
@@ -79,19 +80,23 @@ export function WorkspaceDetailContent({
     onSuccess: () => {
       setIsEditModalOpen(false);
       setFormError(null);
+      toast.success('Workspace updated successfully');
       refetch();
     },
     onError: (err) => {
       setFormError(err.message);
+      toast.error('Failed to update workspace');
     },
   });
 
   const deleteMutation = trpc.workspace.delete.useMutation({
     onSuccess: () => {
+      toast.success('Workspace deleted successfully');
       router.push('/workspaces');
     },
     onError: (err) => {
       console.error('Failed to delete workspace:', err.message);
+      toast.error('Failed to delete workspace');
       setIsDeleteModalOpen(false);
     },
   });
@@ -100,19 +105,23 @@ export function WorkspaceDetailContent({
     onSuccess: () => {
       setIsInviteModalOpen(false);
       setInviteError(null);
+      toast.success('Invite sent successfully');
       refetchInvites();
     },
     onError: (err) => {
       setInviteError(err.message);
+      toast.error('Failed to send invite');
     },
   });
 
   const revokeInviteMutation = trpc.workspace.revokeInvite.useMutation({
     onSuccess: () => {
+      toast.success('Invite revoked');
       refetchInvites();
     },
     onError: (err) => {
       console.error('Failed to revoke invite:', err.message);
+      toast.error('Failed to revoke invite');
     },
   });
 
@@ -122,23 +131,28 @@ export function WorkspaceDetailContent({
       setMemberToRemove(null);
       // If user removed themselves, redirect to workspaces list
       if (memberToRemove?.isSelf) {
+        toast.success('You have left the workspace');
         router.push('/workspaces');
       } else {
+        toast.success('Member removed successfully');
         refetch();
       }
     },
     onError: (err) => {
       console.error('Failed to remove member:', err.message);
+      toast.error('Failed to remove member');
       setIsRemoveMemberModalOpen(false);
     },
   });
 
   const updateMemberRoleMutation = trpc.workspace.updateMemberRole.useMutation({
     onSuccess: () => {
+      toast.success('Member role updated');
       refetch();
     },
     onError: (err) => {
       console.error('Failed to update member role:', err.message);
+      toast.error('Failed to update member role');
     },
   });
 

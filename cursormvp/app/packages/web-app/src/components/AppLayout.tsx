@@ -7,7 +7,7 @@ interface AppLayoutProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'settings';
+  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'billing' | 'settings';
   children: React.ReactNode;
 }
 
@@ -15,7 +15,7 @@ export function AppLayout({ user, currentPage, children }: AppLayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden">
       <AppSidebar user={user} currentPage={currentPage} />
-      <main className="flex-1 overflow-auto bg-muted/50">
+      <main id="main-content" className="flex-1 overflow-auto bg-muted/50" tabIndex={-1}>
         {children}
       </main>
     </div>

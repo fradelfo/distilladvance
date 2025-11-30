@@ -56,7 +56,8 @@ export default function SignupPage() {
         return;
       }
 
-      router.push('/login?registered=true');
+      // Redirect to verify-email page to show check your email message
+      router.push('/verify-email');
     } catch {
       setError('root', { message: 'Something went wrong. Please try again.' });
     }

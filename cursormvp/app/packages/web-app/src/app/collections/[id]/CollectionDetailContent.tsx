@@ -10,6 +10,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   CollectionForm,
   CollectionPromptList,
@@ -47,29 +48,35 @@ export function CollectionDetailContent({
     onSuccess: () => {
       setIsEditModalOpen(false);
       setFormError(null);
+      toast.success('Collection updated successfully');
       refetch();
     },
     onError: (err) => {
       setFormError(err.message);
+      toast.error('Failed to update collection');
     },
   });
 
   const deleteMutation = trpc.collection.delete.useMutation({
     onSuccess: () => {
+      toast.success('Collection deleted successfully');
       router.push('/collections');
     },
     onError: (err) => {
       console.error('Failed to delete collection:', err.message);
+      toast.error('Failed to delete collection');
       setIsDeleteModalOpen(false);
     },
   });
 
   const removePromptMutation = trpc.collection.removePrompt.useMutation({
     onSuccess: () => {
+      toast.success('Prompt removed from collection');
       refetch();
     },
     onError: (err) => {
       console.error('Failed to remove prompt:', err.message);
+      toast.error('Failed to remove prompt');
     },
   });
 

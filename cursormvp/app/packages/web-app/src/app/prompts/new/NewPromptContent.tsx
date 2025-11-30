@@ -9,6 +9,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
 
@@ -158,10 +159,12 @@ export function NewPromptContent() {
       });
 
       if (result.success && result.prompt) {
+        toast.success('Prompt created successfully');
         router.push(`/prompts/${result.prompt.id}`);
       }
     } catch (err) {
       console.error('[NewPromptContent] Save failed:', err);
+      toast.error('Failed to create prompt');
     } finally {
       setIsSaving(false);
     }

@@ -785,11 +785,11 @@ Phase 4 (Can ship without):
 
 | # | Question | Options | Owner | Decision Due | Status |
 |---|----------|---------|-------|--------------|--------|
-| Q1 | Coach implementation depth | A) Heuristics only, B) LLM-based, C) Hybrid | Product | Before beta | Open |
+| Q1 | Coach implementation depth | A) Heuristics only, B) LLM-based, C) Hybrid | Product | Before beta | **RESOLVED: B) LLM-based** (Anthropic Claude) |
 | Q2 | Solo user pricing | A) Teams only, B) Free solo tier, C) Paid solo | Product | Before beta | Open |
-| Q3 | Google OAuth for MVP | A) Email only, B) Add Google OAuth | Dev | Before alpha | Leaning B |
-| Q4 | Variable extraction algorithm | A) LLM-based, B) Pattern matching, C) Hybrid | Dev | Sprint 2 | Open |
-| Q5 | Prompt versioning depth | A) Last-edit only, B) Full history | Product | Before beta | Decided: A for MVP |
+| Q3 | Google OAuth for MVP | A) Email only, B) Add Google OAuth | Dev | Before alpha | **RESOLVED: B) Google OAuth** (primary auth) |
+| Q4 | Variable extraction algorithm | A) LLM-based, B) Pattern matching, C) Hybrid | Dev | Sprint 2 | **RESOLVED: B) Pattern matching** (`{{variable}}` syntax) |
+| Q5 | Prompt versioning depth | A) Last-edit only, B) Full history | Product | Before beta | **RESOLVED: A) Last-edit only** |
 
 ---
 
@@ -818,9 +818,75 @@ Phase 4 (Can ship without):
 
 ---
 
+## 13. Implementation Status
+
+> **Last Updated:** 2025-11-30
+> **Current Sprint:** 6 - UI/UX Improvements
+
+### Sprint Progress
+
+| Sprint | Focus | Status | Completion |
+|--------|-------|--------|------------|
+| Sprint 1 | Foundation | COMPLETE | 2025-11-27 |
+| Sprint 2 | Core Loop | COMPLETE | 2025-11-28 |
+| Sprint 3 | Team Features | COMPLETE | 2025-11-28 |
+| Sprint 4 | Advanced Features | COMPLETE | 2025-11-29 |
+| Sprint 5 | Analytics | COMPLETE | 2025-11-29 |
+| Sprint 6 | UI/UX | IN PROGRESS | - |
+
+### Feature Implementation
+
+| # | Feature | PRD Priority | Status | Sprint |
+|---|---------|--------------|--------|--------|
+| 1 | Browser extension (Chrome) | MUST | COMPLETE | 1-2 |
+| 2 | Web app for library | MUST | COMPLETE | 1-2 |
+| 3 | Authentication | MUST | COMPLETE | 1 |
+| 4 | Workspaces with invites | MUST | COMPLETE | 3 |
+| 5 | Prompt capture & distillation | MUST | COMPLETE | 2 |
+| 6 | Prompt library (search, tags, folders) | MUST | COMPLETE | 2-3 |
+| 7 | Privacy modes | MUST | COMPLETE | 2 |
+| 8 | Basic coach suggestions | SHOULD | COMPLETE | 4 |
+| 9 | Analytics & instrumentation | - | COMPLETE | 5 |
+| 10 | UI/UX improvements | - | IN PROGRESS | 6 |
+
+### Tracking Events Implementation
+
+All 10 MVP tracking events from Section 7.1 are implemented:
+
+| Event | Status | Sprint |
+|-------|--------|--------|
+| `user_signed_up` | COMPLETE | 5 |
+| `workspace_created` | COMPLETE | 5 |
+| `extension_installed` | COMPLETE | 5 |
+| `chat_captured` | COMPLETE | 5 |
+| `prompt_created` | COMPLETE | 5 |
+| `prompt_run` | COMPLETE | 5 |
+| `prompt_edited` | COMPLETE | 5 |
+| `coach_used` | COMPLETE | 5 |
+| `member_invited` | COMPLETE | 5 |
+| `search_performed` | COMPLETE | 5 |
+
+### Routes Implemented (17)
+
+| Route | Purpose | Status |
+|-------|---------|--------|
+| `/` | Landing page | COMPLETE |
+| `/login`, `/signup` | Authentication | COMPLETE |
+| `/dashboard` | User home | COMPLETE (redesigned Sprint 6) |
+| `/prompts`, `/prompts/[id]` | Prompt library | COMPLETE |
+| `/prompts/[id]/edit` | Prompt editor | COMPLETE |
+| `/collections`, `/collections/[id]` | Collections | COMPLETE |
+| `/workspaces`, `/workspaces/[slug]` | Workspaces | COMPLETE |
+| `/onboarding` | Welcome wizard | COMPLETE |
+| `/analytics` | Analytics dashboard | COMPLETE |
+| `/privacy` | Privacy policy | COMPLETE |
+
+---
+
 ## Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 0.1 | 2025-11-01 | Initial draft |
 | 0.2 | 2025-11-26 | Added: evidence/research, dependencies, risks, NFRs, user stories, competitive analysis, success metric targets, rollout plan |
+| 0.3 | 2025-11-30 | Added: Implementation status section, resolved open questions |

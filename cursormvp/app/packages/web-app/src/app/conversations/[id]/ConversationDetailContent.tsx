@@ -172,8 +172,8 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       </Link>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between overflow-hidden">
+        <div className="flex items-start gap-4 min-w-0 flex-1">
           {/* Source Icon */}
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-100">
             {sourceIcons[conversation.source] ? (
@@ -186,9 +186,9 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
               <span className="text-2xl">💬</span>
             )}
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h1
-              className="text-2xl font-bold text-neutral-900 line-clamp-2"
+              className="text-2xl font-bold text-neutral-900 truncate"
               title={conversation.title}
             >
               {conversation.title}

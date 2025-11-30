@@ -3,8 +3,17 @@
 /**
  * SortSelect Component
  *
- * Dropdown select for sorting options.
+ * Dropdown select for sorting options using shadcn/ui Select.
  */
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export type SortOption = 'recent' | 'oldest' | 'most_used' | 'alphabetical';
 
@@ -27,22 +36,21 @@ const sortOptions: { value: SortOption; label: string }[] = [
 export function SortSelect({ value, onChange, className = '' }: SortSelectProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <label htmlFor="sort-select" className="text-sm text-neutral-600 whitespace-nowrap">
+      <Label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">
         Sort by:
-      </label>
-      <select
-        id="sort-select"
-        value={value}
-        onChange={(e) => onChange(e.target.value as SortOption)}
-        className="input py-1.5 text-sm pr-8 bg-white"
-        aria-label="Sort prompts by"
-      >
-        {sortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      </Label>
+      <Select value={value} onValueChange={(v) => onChange(v as SortOption)}>
+        <SelectTrigger id="sort-select" className="w-[160px] h-9">
+          <SelectValue placeholder="Select sort" />
+        </SelectTrigger>
+        <SelectContent>
+          {sortOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

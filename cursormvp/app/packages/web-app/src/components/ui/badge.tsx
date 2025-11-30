@@ -18,7 +18,7 @@ const badgeVariants = cva(
         // Role variants for workspaces
         owner: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100",
         admin: "border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
-        member: "border-transparent bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100",
+        member: "border-transparent bg-secondary text-foreground dark:bg-neutral-800 dark:text-neutral-100",
         // Status variants
         success: "border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
         warning: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100",

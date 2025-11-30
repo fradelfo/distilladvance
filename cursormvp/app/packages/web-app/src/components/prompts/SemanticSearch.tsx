@@ -89,7 +89,7 @@ export function SemanticSearch({
     if (score >= 0.9) return 'bg-success-100 text-success-700';
     if (score >= 0.8) return 'bg-primary-100 text-primary-700';
     if (score >= 0.7) return 'bg-warning-100 text-warning-700';
-    return 'bg-neutral-100 text-neutral-600';
+    return 'bg-secondary text-muted-foreground';
   };
 
   return (
@@ -101,7 +101,7 @@ export function SemanticSearch({
             {/* Search Icon */}
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
-                className="h-5 w-5 text-neutral-400"
+                className="h-5 w-5 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -133,7 +133,7 @@ export function SemanticSearch({
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-600"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-muted-foreground"
                 aria-label="Clear search"
               >
                 <svg
@@ -193,7 +193,7 @@ export function SemanticSearch({
 
         {/* Search Info */}
         {meta && (
-          <p className="mt-2 text-xs text-neutral-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Found {meta.resultsReturned} result{meta.resultsReturned !== 1 ? 's' : ''} from{' '}
             {meta.totalCandidates} prompt{meta.totalCandidates !== 1 ? 's' : ''} in {meta.durationMs}ms
           </p>
@@ -278,7 +278,7 @@ function SemanticSearchResultCard({
       <article className="card p-4 hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
         {/* Header with Similarity Badge */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-base font-semibold text-neutral-900 line-clamp-1 flex-1">
+          <h3 className="text-base font-semibold text-foreground line-clamp-1 flex-1">
             {prompt.title}
           </h3>
           <span
@@ -290,7 +290,7 @@ function SemanticSearchResultCard({
         </div>
 
         {/* Content Preview */}
-        <p className="text-sm text-neutral-600 line-clamp-2 mb-3">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
           {prompt.content}
         </p>
 
@@ -301,7 +301,7 @@ function SemanticSearchResultCard({
               <TagChip key={tag} tag={tag} size="sm" />
             ))}
             {prompt.tags.length > 3 && (
-              <span className="inline-flex items-center px-2 py-0.5 text-xs text-neutral-400">
+              <span className="inline-flex items-center px-2 py-0.5 text-xs text-muted-foreground">
                 +{prompt.tags.length - 3} more
               </span>
             )}
@@ -313,7 +313,7 @@ function SemanticSearchResultCard({
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
-          <div className="flex items-center gap-2 text-xs text-neutral-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{prompt.author}</span>
             {prompt.isPublic && (
               <span className="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-600">
@@ -350,19 +350,19 @@ export function SemanticSearchSkeleton() {
 
           {/* Description */}
           <div className="space-y-2 mb-3">
-            <div className="h-4 bg-neutral-100 rounded w-full" />
-            <div className="h-4 bg-neutral-100 rounded w-5/6" />
+            <div className="h-4 bg-secondary rounded w-full" />
+            <div className="h-4 bg-secondary rounded w-5/6" />
           </div>
 
           {/* Tags */}
           <div className="flex gap-1.5 mb-3">
-            <div className="h-5 bg-neutral-100 rounded-full w-16" />
-            <div className="h-5 bg-neutral-100 rounded-full w-20" />
+            <div className="h-5 bg-secondary rounded-full w-16" />
+            <div className="h-5 bg-secondary rounded-full w-20" />
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
-            <div className="h-4 bg-neutral-100 rounded w-24" />
+            <div className="h-4 bg-secondary rounded w-24" />
           </div>
         </div>
       ))}

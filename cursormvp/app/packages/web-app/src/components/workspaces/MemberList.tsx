@@ -43,7 +43,7 @@ export function MemberList({
   const roleColors = {
     OWNER: 'bg-amber-50 text-amber-700 border-amber-200',
     ADMIN: 'bg-purple-50 text-purple-700 border-purple-200',
-    MEMBER: 'bg-neutral-50 text-neutral-600 border-neutral-200',
+    MEMBER: 'bg-secondary text-muted-foreground border-border',
   };
 
   const canManageRole = (targetRole: 'OWNER' | 'ADMIN' | 'MEMBER') => {
@@ -71,7 +71,7 @@ export function MemberList({
       {members.map((member) => (
         <div
           key={member.id}
-          className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 bg-white"
+          className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
         >
           <div className="flex items-center gap-3">
             {/* Avatar */}
@@ -90,20 +90,20 @@ export function MemberList({
             {/* Info */}
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-neutral-900">
+                <span className="font-medium text-foreground">
                   {member.user.name || 'Unnamed'}
                 </span>
                 {member.userId === currentUserId && (
-                  <span className="text-xs text-neutral-500">(you)</span>
+                  <span className="text-xs text-muted-foreground">(you)</span>
                 )}
               </div>
-              <p className="text-sm text-neutral-500">{member.user.email}</p>
+              <p className="text-sm text-muted-foreground">{member.user.email}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Joined date */}
-            <span className="text-xs text-neutral-400 hidden sm:block">
+            <span className="text-xs text-muted-foreground hidden sm:block">
               Joined {formatDate(member.joinedAt)}
             </span>
 
@@ -118,7 +118,7 @@ export function MemberList({
                 onBlur={() => setEditingUserId(null)}
                 autoFocus
                 disabled={isLoading}
-                className="text-sm rounded-md border border-neutral-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="text-sm rounded-md border border-input px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="OWNER">Owner</option>
                 <option value="ADMIN">Admin</option>
@@ -147,7 +147,7 @@ export function MemberList({
               <button
                 onClick={() => onRemoveMember(member.userId)}
                 disabled={isLoading}
-                className="p-1.5 rounded-md text-neutral-400 hover:text-error-600 hover:bg-error-50"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-error-600 hover:bg-error-50"
                 title={member.userId === currentUserId ? 'Leave workspace' : 'Remove member'}
               >
                 <svg
@@ -181,16 +181,16 @@ export function MemberListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 animate-pulse"
+          className="flex items-center justify-between p-3 rounded-lg border border-border animate-pulse"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-neutral-200" />
             <div>
               <div className="h-4 bg-neutral-200 rounded w-32 mb-1" />
-              <div className="h-3 bg-neutral-100 rounded w-40" />
+              <div className="h-3 bg-secondary rounded w-40" />
             </div>
           </div>
-          <div className="h-6 bg-neutral-100 rounded-full w-16" />
+          <div className="h-6 bg-secondary rounded-full w-16" />
         </div>
       ))}
     </div>

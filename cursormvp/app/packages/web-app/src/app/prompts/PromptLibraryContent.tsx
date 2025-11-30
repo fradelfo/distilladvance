@@ -149,8 +149,8 @@ export function PromptLibraryContent() {
         {/* Page Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Prompt Library</h1>
-            <p className="mt-1 text-sm text-neutral-600">
+            <h1 className="text-2xl font-bold text-foreground">Prompt Library</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Your captured and distilled prompts
             </p>
           </div>
@@ -202,8 +202,8 @@ export function PromptLibraryContent() {
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Prompt Library</h1>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h1 className="text-2xl font-bold text-foreground">Prompt Library</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {prompts.length} prompt{prompts.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -229,14 +229,14 @@ export function PromptLibraryContent() {
 
       {/* Search Mode Toggle */}
       <div className="mb-6">
-        <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit">
+        <div className="flex items-center rounded-lg border border-border bg-secondary p-1 w-fit">
           <button
             type="button"
             onClick={() => setSearchMode('browse')}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               searchMode === 'browse'
-                ? 'bg-white text-neutral-900 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-900'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             aria-pressed={searchMode === 'browse'}
           >
@@ -263,8 +263,8 @@ export function PromptLibraryContent() {
             onClick={() => setSearchMode('semantic')}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               searchMode === 'semantic'
-                ? 'bg-white text-neutral-900 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-900'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             aria-pressed={searchMode === 'semantic'}
           >
@@ -308,14 +308,14 @@ export function PromptLibraryContent() {
               <div className="flex items-center gap-4">
                 <SortSelect value={sortBy} onChange={setSortBy} />
                 {/* View Mode Toggle */}
-                <div className="flex items-center rounded-md border border-neutral-300 bg-white">
+                <div className="flex items-center rounded-md border border-input bg-background">
                   <button
                     type="button"
                     onClick={() => setViewMode('grid')}
                     className={`p-2 ${
                       viewMode === 'grid'
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-500 hover:text-neutral-700'
+                        ? 'bg-secondary text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                     aria-label="Grid view"
                     title="Grid view"
@@ -340,8 +340,8 @@ export function PromptLibraryContent() {
                     onClick={() => setViewMode('list')}
                     className={`p-2 ${
                       viewMode === 'list'
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-500 hover:text-neutral-700'
+                        ? 'bg-secondary text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                     aria-label="List view"
                     title="List view"

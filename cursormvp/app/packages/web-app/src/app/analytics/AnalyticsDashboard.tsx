@@ -59,21 +59,21 @@ export function AnalyticsDashboard() {
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 dateRange === range
                   ? 'bg-primary-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  : 'bg-secondary text-foreground hover:bg-neutral-200'
               }`}
             >
               {range === '7d' ? 'Last 7 days' : range === '30d' ? 'Last 30 days' : 'Last 90 days'}
             </button>
           ))}
         </div>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           {new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}
         </p>
       </div>
 
       {/* Engagement Metrics */}
       <section>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Engagement</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Engagement</h2>
         <div className="grid gap-4 md:grid-cols-4">
           <MetricCard
             title="Daily Active Users"
@@ -100,7 +100,7 @@ export function AnalyticsDashboard() {
 
       {/* Activation Funnel */}
       <section>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Activation Funnel</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Activation Funnel</h2>
         <div className="card p-6">
           <ActivationFunnel
             signups={metrics?.activation.signups || 0}
@@ -115,7 +115,7 @@ export function AnalyticsDashboard() {
 
       {/* Team Health */}
       <section>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Team Health</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Team Health</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
             title="Active Workspaces"
@@ -137,17 +137,17 @@ export function AnalyticsDashboard() {
 
       {/* Feature Adoption */}
       <section>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Feature Adoption</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Feature Adoption</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="card p-6">
-            <h3 className="text-sm font-medium text-neutral-600 mb-4">Privacy Mode Distribution</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">Privacy Mode Distribution</h3>
             <PrivacyModeChart
               promptOnly={metrics?.featureAdoption.privacyModeDistribution.promptOnly || 0}
               fullChat={metrics?.featureAdoption.privacyModeDistribution.fullChat || 0}
             />
           </div>
           <div className="card p-6">
-            <h3 className="text-sm font-medium text-neutral-600 mb-4">Platform Distribution</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">Platform Distribution</h3>
             <PlatformChart distribution={metrics?.featureAdoption.platformDistribution || {}} />
           </div>
         </div>
@@ -175,8 +175,8 @@ function MetricCard({
     <div className="card p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-neutral-500">{title}</p>
-          <p className="mt-1 text-2xl font-semibold text-neutral-900">{value}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
           {trend && (
             <p
               className={`mt-1 text-sm ${
@@ -228,27 +228,27 @@ function ActivationFunnel({
     <div className="space-y-4">
       {steps.map((step, index) => (
         <div key={step.label} className="flex items-center gap-4">
-          <div className="w-32 text-sm text-neutral-600">{step.label}</div>
+          <div className="w-32 text-sm text-muted-foreground">{step.label}</div>
           <div className="flex-1">
-            <div className="h-8 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="h-8 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary-500 rounded-full transition-all duration-500"
                 style={{ width: `${(step.value / maxValue) * 100}%` }}
               />
             </div>
           </div>
-          <div className="w-16 text-right text-sm font-medium text-neutral-900">
+          <div className="w-16 text-right text-sm font-medium text-foreground">
             {step.value}
           </div>
           {step.conversion != null && (
-            <div className="w-16 text-right text-xs text-neutral-500">
+            <div className="w-16 text-right text-xs text-muted-foreground">
               {((step.conversion ?? 0) * 100).toFixed(0)}%
             </div>
           )}
         </div>
       ))}
-      <div className="pt-4 border-t border-neutral-200 flex justify-between">
-        <span className="text-sm text-neutral-600">Overall Conversion</span>
+      <div className="pt-4 border-t border-border flex justify-between">
+        <span className="text-sm text-muted-foreground">Overall Conversion</span>
         <span className="text-sm font-semibold text-primary-600">
           {((conversionRates?.overall || 0) * 100).toFixed(1)}%
         </span>
@@ -276,12 +276,12 @@ function PrivacyModeChart({ promptOnly, fullChat }: { promptOnly: number; fullCh
       <div className="flex justify-between text-sm">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-neutral-600">Prompt Only</span>
+          <span className="text-muted-foreground">Prompt Only</span>
           <span className="font-medium">{promptOnly} ({promptOnlyPercent.toFixed(0)}%)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-purple-500" />
-          <span className="text-neutral-600">Full Chat</span>
+          <span className="text-muted-foreground">Full Chat</span>
           <span className="font-medium">{fullChat} ({(100 - promptOnlyPercent).toFixed(0)}%)</span>
         </div>
       </div>
@@ -309,9 +309,9 @@ function PlatformChart({ distribution }: { distribution: Record<string, number> 
         return (
           <div key={platform.key} className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${platform.color}`} />
-            <div className="w-20 text-sm text-neutral-600">{platform.label}</div>
+            <div className="w-20 text-sm text-muted-foreground">{platform.label}</div>
             <div className="flex-1">
-              <div className="h-4 bg-neutral-100 rounded-full overflow-hidden">
+              <div className="h-4 bg-secondary rounded-full overflow-hidden">
                 <div
                   className={`h-full ${platform.color} rounded-full transition-all duration-500`}
                   style={{ width: `${percent}%` }}

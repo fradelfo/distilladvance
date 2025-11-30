@@ -82,7 +82,7 @@ const FOCUS_AREAS: Array<{
 const IMPACT_COLORS = {
   high: 'bg-error-100 text-error-700 border-error-200',
   medium: 'bg-amber-100 text-amber-700 border-amber-200',
-  low: 'bg-neutral-100 text-neutral-700 border-neutral-200',
+  low: 'bg-secondary text-foreground border-border',
 };
 
 const AREA_ICONS: Record<Exclude<FocusArea, 'comprehensive'>, string> = {
@@ -147,7 +147,7 @@ function ScoreDisplay({ score }: { score: number }) {
       </div>
       <div>
         <p className={`font-semibold ${getScoreColor()}`}>{getScoreLabel()}</p>
-        <p className="text-sm text-neutral-500">Quality Score</p>
+        <p className="text-sm text-muted-foreground">Quality Score</p>
       </div>
     </div>
   );
@@ -167,16 +167,16 @@ function SuggestionCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="border border-neutral-200 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-neutral-50 transition-colors"
+        className="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-secondary transition-colors"
       >
         {/* Area Icon */}
         <div className="flex-shrink-0 mt-0.5">
           <svg
-            className="w-5 h-5 text-neutral-400"
+            className="w-5 h-5 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -193,7 +193,7 @@ function SuggestionCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-neutral-900 truncate">
+            <h4 className="font-medium text-foreground truncate">
               {suggestion.title}
             </h4>
             <span
@@ -202,14 +202,14 @@ function SuggestionCard({
               {suggestion.impact}
             </span>
           </div>
-          <p className="text-sm text-neutral-600 line-clamp-2">
+          <p className="text-sm text-muted-foreground line-clamp-2">
             {suggestion.issue}
           </p>
         </div>
 
         {/* Expand Icon */}
         <svg
-          className={`w-5 h-5 text-neutral-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -225,11 +225,11 @@ function SuggestionCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-neutral-100 bg-neutral-50">
+        <div className="px-4 pb-4 pt-2 border-t border-neutral-100 bg-secondary">
           {/* Current vs Suggested */}
           {suggestion.current && (
             <div className="mb-3">
-              <p className="text-xs font-medium text-neutral-500 mb-1">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
                 Current:
               </p>
               <pre className="text-sm bg-error-50 text-error-800 p-2 rounded border border-error-200 whitespace-pre-wrap font-mono">
@@ -240,7 +240,7 @@ function SuggestionCard({
 
           {suggestion.suggested && (
             <div className="mb-3">
-              <p className="text-xs font-medium text-neutral-500 mb-1">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
                 Suggested:
               </p>
               <pre className="text-sm bg-success-50 text-success-800 p-2 rounded border border-success-200 whitespace-pre-wrap font-mono">
@@ -251,10 +251,10 @@ function SuggestionCard({
 
           {/* Reasoning */}
           <div className="mb-3">
-            <p className="text-xs font-medium text-neutral-500 mb-1">
+            <p className="text-xs font-medium text-muted-foreground mb-1">
               Why this helps:
             </p>
-            <p className="text-sm text-neutral-700">{suggestion.reasoning}</p>
+            <p className="text-sm text-foreground">{suggestion.reasoning}</p>
           </div>
 
           {/* Apply Button */}
@@ -310,13 +310,13 @@ export function CoachPanel({
   // Loading state
   if (coachMutation.isPending) {
     return (
-      <div className="border border-neutral-200 rounded-lg p-6">
+      <div className="border border-border rounded-lg p-6">
         <div className="flex flex-col items-center justify-center py-8">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mb-4" />
-          <p className="text-neutral-600 font-medium">
+          <p className="text-muted-foreground font-medium">
             Analyzing your prompt...
           </p>
-          <p className="text-sm text-neutral-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             This may take a few seconds
           </p>
         </div>
@@ -327,34 +327,34 @@ export function CoachPanel({
   // Results view
   if (showResults && analysis) {
     return (
-      <div className="border border-neutral-200 rounded-lg overflow-hidden">
+      <div className="border border-border rounded-lg overflow-hidden">
         {/* Header with Score */}
-        <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+        <div className="p-4 bg-secondary border-b border-border flex items-center justify-between">
           <ScoreDisplay score={analysis.overallScore} />
           <button
             onClick={handleReset}
-            className="text-sm text-neutral-600 hover:text-neutral-900"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             Analyze Again
           </button>
         </div>
 
         {/* Summary */}
-        <div className="p-4 border-b border-neutral-200">
-          <p className="text-neutral-700">{analysis.summary}</p>
+        <div className="p-4 border-b border-border">
+          <p className="text-foreground">{analysis.summary}</p>
         </div>
 
         {/* Strengths */}
         {analysis.strengths.length > 0 && (
-          <div className="p-4 border-b border-neutral-200">
-            <h3 className="text-sm font-medium text-neutral-900 mb-2">
+          <div className="p-4 border-b border-border">
+            <h3 className="text-sm font-medium text-foreground mb-2">
               Strengths
             </h3>
             <ul className="space-y-1">
               {analysis.strengths.map((strength, index) => (
                 <li
                   key={index}
-                  className="flex items-start gap-2 text-sm text-neutral-600"
+                  className="flex items-start gap-2 text-sm text-muted-foreground"
                 >
                   <svg
                     className="w-4 h-4 text-success-500 flex-shrink-0 mt-0.5"
@@ -376,8 +376,8 @@ export function CoachPanel({
 
         {/* Suggestions */}
         {analysis.suggestions.length > 0 && (
-          <div className="p-4 border-b border-neutral-200">
-            <h3 className="text-sm font-medium text-neutral-900 mb-3">
+          <div className="p-4 border-b border-border">
+            <h3 className="text-sm font-medium text-foreground mb-3">
               Improvement Suggestions ({analysis.suggestions.length})
             </h3>
             <div className="space-y-3">
@@ -395,14 +395,14 @@ export function CoachPanel({
         {/* Quick Wins */}
         {analysis.quickWins.length > 0 && (
           <div className="p-4">
-            <h3 className="text-sm font-medium text-neutral-900 mb-2">
+            <h3 className="text-sm font-medium text-foreground mb-2">
               Quick Wins
             </h3>
             <ul className="space-y-1">
               {analysis.quickWins.map((win, index) => (
                 <li
                   key={index}
-                  className="flex items-start gap-2 text-sm text-neutral-600"
+                  className="flex items-start gap-2 text-sm text-muted-foreground"
                 >
                   <svg
                     className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"
@@ -420,7 +420,7 @@ export function CoachPanel({
 
         {/* Usage Stats */}
         {coachMutation.data && (
-          <div className="px-4 py-2 bg-neutral-50 border-t border-neutral-200 text-xs text-neutral-500">
+          <div className="px-4 py-2 bg-secondary border-t border-border text-xs text-muted-foreground">
             Analysis completed in {coachMutation.data.usage.durationMs}ms |{' '}
             {coachMutation.data.usage.tokens} tokens | $
             {coachMutation.data.usage.cost.toFixed(4)}
@@ -432,7 +432,7 @@ export function CoachPanel({
 
   // Initial state - request analysis
   return (
-    <div className="border border-neutral-200 rounded-lg p-4">
+    <div className="border border-border rounded-lg p-4">
       <div className="flex items-start gap-3 mb-4">
         <div className="p-2 bg-primary-50 rounded-lg">
           <svg
@@ -450,8 +450,8 @@ export function CoachPanel({
           </svg>
         </div>
         <div>
-          <h3 className="font-medium text-neutral-900">Prompt Coach</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="font-medium text-foreground">Prompt Coach</h3>
+          <p className="text-sm text-muted-foreground">
             Get AI-powered suggestions to improve your prompt
           </p>
         </div>
@@ -460,7 +460,7 @@ export function CoachPanel({
       {/* Focus Area Selection */}
       {!compact && (
         <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Focus Area
           </label>
           <div className="flex flex-wrap gap-2">
@@ -471,14 +471,14 @@ export function CoachPanel({
                 className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                   selectedArea === area.id
                     ? 'bg-primary-100 border-primary-300 text-primary-700'
-                    : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
+                    : 'bg-background border-border text-muted-foreground hover:border-input'
                 }`}
               >
                 {area.name}
               </button>
             ))}
           </div>
-          <p className="text-xs text-neutral-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {FOCUS_AREAS.find((a) => a.id === selectedArea)?.description}
           </p>
         </div>

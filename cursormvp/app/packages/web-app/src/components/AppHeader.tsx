@@ -21,12 +21,12 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
   ];
 
   return (
-    <header className="border-b border-neutral-200 bg-white">
+    <header className="border-b border-border bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-2xl">💧</span>
-            <span className="text-xl font-semibold text-neutral-900">Distill</span>
+            <span className="text-xl font-semibold text-foreground">Distill</span>
           </Link>
           <nav className="hidden md:flex md:gap-4">
             {navItems.map((item) => (
@@ -36,7 +36,7 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
                 className={`text-sm font-medium ${
                   currentPage === item.key
                     ? 'text-primary-600'
-                    : 'text-neutral-600 hover:text-neutral-900'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {item.label}
@@ -49,10 +49,10 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
           {/* User Menu */}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-neutral-900">
+              <p className="text-sm font-medium text-foreground">
                 {user.name || 'User'}
               </p>
-              <p className="text-xs text-neutral-500">{user.email}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
             {user.image ? (
               <img
@@ -76,7 +76,7 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
           >
             <button
               type="submit"
-              className="btn-ghost px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900"
+              className="btn-ghost px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
               Sign out
             </button>

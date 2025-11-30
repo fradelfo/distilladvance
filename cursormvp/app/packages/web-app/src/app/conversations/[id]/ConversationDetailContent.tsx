@@ -147,7 +147,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
   if (!conversation) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-sm text-neutral-600">Conversation not found</p>
+        <p className="text-sm text-muted-foreground">Conversation not found</p>
         <Link href="/conversations" className="mt-4 btn-outline px-4 py-2 inline-block">
           Back to Conversations
         </Link>
@@ -163,7 +163,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       {/* Back link */}
       <Link
         href="/conversations"
-        className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -175,7 +175,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between overflow-hidden">
         <div className="flex items-start gap-4 min-w-0 flex-1">
           {/* Source Icon */}
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-100">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-secondary">
             {sourceIcons[conversation.source] ? (
               <img
                 src={sourceIcons[conversation.source]}
@@ -188,12 +188,12 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
           </div>
           <div className="min-w-0 flex-1">
             <h1
-              className="text-2xl font-bold text-neutral-900 truncate"
+              className="text-2xl font-bold text-foreground truncate"
               title={conversation.title}
             >
               {conversation.title}
             </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>{sourceNames[conversation.source] || conversation.source}</span>
               <span>·</span>
               <span>{formatDate(conversation.createdAt)}</span>
@@ -238,13 +238,13 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       <div className="card p-4">
         <div className="flex flex-wrap gap-4">
           <div>
-            <span className="text-xs font-medium uppercase text-neutral-500">Privacy Mode</span>
+            <span className="text-xs font-medium uppercase text-muted-foreground">Privacy Mode</span>
             <p className="mt-1">
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   conversation.privacyMode === 'FULL'
                     ? 'bg-primary-100 text-primary-700'
-                    : 'bg-neutral-100 text-neutral-700'
+                    : 'bg-secondary text-foreground'
                 }`}
               >
                 {conversation.privacyMode === 'FULL' ? 'Full Content' : 'Prompt Only'}
@@ -253,7 +253,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
           </div>
           {conversation.sourceUrl && (
             <div>
-              <span className="text-xs font-medium uppercase text-neutral-500">Source URL</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Source URL</span>
               <p className="mt-1">
                 <a
                   href={conversation.sourceUrl}
@@ -267,7 +267,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
             </div>
           )}
           <div>
-            <span className="text-xs font-medium uppercase text-neutral-500">Linked Prompts</span>
+            <span className="text-xs font-medium uppercase text-muted-foreground">Linked Prompts</span>
             <p className="mt-1 text-sm">{prompts.length}</p>
           </div>
         </div>
@@ -276,16 +276,16 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       {/* Message Thread */}
       {conversation.privacyMode === 'FULL' && rawContent && rawContent.length > 0 ? (
         <div className="card p-0 overflow-hidden">
-          <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-            <h2 className="font-medium text-neutral-900">Conversation Thread</h2>
-            <p className="text-sm text-neutral-500">{rawContent.length} messages</p>
+          <div className="border-b border-border bg-secondary px-4 py-3">
+            <h2 className="font-medium text-foreground">Conversation Thread</h2>
+            <p className="text-sm text-muted-foreground">{rawContent.length} messages</p>
           </div>
           <div className="divide-y divide-neutral-100">
             {rawContent.map((message, index) => (
               <div
                 key={index}
                 className={`p-4 ${
-                  message.role === 'assistant' ? 'bg-neutral-50' : 'bg-white'
+                  message.role === 'assistant' ? 'bg-secondary' : 'bg-background'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -293,16 +293,16 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
                     className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${
                       message.role === 'assistant'
                         ? 'bg-primary-100 text-primary-700'
-                        : 'bg-neutral-200 text-neutral-700'
+                        : 'bg-neutral-200 text-foreground'
                     }`}
                   >
                     {message.role === 'assistant' ? 'AI' : 'You'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase text-neutral-500 mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       {message.role === 'assistant' ? 'Assistant' : 'You'}
                     </p>
-                    <div className="prose prose-sm max-w-none text-neutral-800 whitespace-pre-wrap">
+                    <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
                       {message.content}
                     </div>
                   </div>
@@ -314,12 +314,12 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       ) : (
         <div className="card p-6 text-center">
           <div className="text-4xl mb-3">🔒</div>
-          <h3 className="font-medium text-neutral-900 mb-1">Content Not Stored</h3>
-          <p className="text-sm text-neutral-600">
+          <h3 className="font-medium text-foreground mb-1">Content Not Stored</h3>
+          <p className="text-sm text-muted-foreground">
             This conversation was saved in &quot;Prompt Only&quot; mode. The full message content was not stored for privacy.
           </p>
           {conversation.privacyMode !== 'FULL' && (
-            <p className="text-sm text-neutral-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               To enable distillation, capture new conversations in &quot;Full&quot; privacy mode.
             </p>
           )}
@@ -329,18 +329,18 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       {/* Linked Prompts */}
       {prompts.length > 0 && (
         <div className="card p-0 overflow-hidden">
-          <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-            <h2 className="font-medium text-neutral-900">Linked Prompts</h2>
+          <div className="border-b border-border bg-secondary px-4 py-3">
+            <h2 className="font-medium text-foreground">Linked Prompts</h2>
           </div>
           <div className="divide-y divide-neutral-100">
             {prompts.map((prompt) => (
               <Link
                 key={prompt.id}
                 href={`/prompts/${prompt.id}`}
-                className="block px-4 py-3 hover:bg-neutral-50 transition-colors"
+                className="block px-4 py-3 hover:bg-secondary transition-colors"
               >
-                <p className="font-medium text-neutral-900">{prompt.title}</p>
-                <p className="text-sm text-neutral-500">
+                <p className="font-medium text-foreground">{prompt.title}</p>
+                <p className="text-sm text-muted-foreground">
                   Created {new Date(prompt.createdAt).toLocaleDateString()}
                 </p>
               </Link>
@@ -353,10 +353,10 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="card w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Delete Conversation?
             </h3>
-            <p className="text-sm text-neutral-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               This will permanently delete this conversation. Any linked prompts will remain but will no longer be associated with this conversation.
             </p>
             <div className="flex justify-end gap-2">

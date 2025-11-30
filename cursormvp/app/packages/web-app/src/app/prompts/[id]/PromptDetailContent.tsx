@@ -134,9 +134,9 @@ export function PromptDetailContent({
         <div className="mb-6 h-8 bg-neutral-200 rounded w-1/3" />
         <div className="card p-6 space-y-4">
           <div className="h-6 bg-neutral-200 rounded w-2/3" />
-          <div className="h-4 bg-neutral-100 rounded w-full" />
-          <div className="h-4 bg-neutral-100 rounded w-5/6" />
-          <div className="h-32 bg-neutral-100 rounded" />
+          <div className="h-4 bg-secondary rounded w-full" />
+          <div className="h-4 bg-secondary rounded w-5/6" />
+          <div className="h-32 bg-secondary rounded" />
         </div>
       </div>
     );
@@ -146,12 +146,12 @@ export function PromptDetailContent({
   if (isError || !prompt) {
     return (
       <div className="card p-8 text-center">
-        <p className="text-lg font-medium text-neutral-900 mb-2">
+        <p className="text-lg font-medium text-foreground mb-2">
           {error?.message === 'Prompt not found'
             ? 'Prompt not found'
             : 'Failed to load prompt'}
         </p>
-        <p className="text-sm text-neutral-600 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           {error?.message || 'The prompt you are looking for does not exist or you do not have access to it.'}
         </p>
         <Link href="/prompts" className="btn-primary px-6 py-2">
@@ -166,7 +166,7 @@ export function PromptDetailContent({
       {/* Back Link */}
       <Link
         href="/prompts"
-        className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <svg
           className="h-4 w-4"
@@ -187,9 +187,9 @@ export function PromptDetailContent({
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">{prompt.title}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{prompt.title}</h1>
           {description && (
-            <p className="mt-2 text-neutral-600">{description}</p>
+            <p className="mt-2 text-muted-foreground">{description}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export function PromptDetailContent({
       )}
 
       {/* Stats */}
-      <div className="flex flex-wrap gap-6 mb-6 text-sm text-neutral-500">
+      <div className="flex flex-wrap gap-6 mb-6 text-sm text-muted-foreground">
         <span className="flex items-center gap-1">
           <svg
             className="h-4 w-4"
@@ -302,7 +302,7 @@ export function PromptDetailContent({
           className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
             !isRunMode
               ? 'bg-primary-100 text-primary-700'
-              : 'text-neutral-600 hover:bg-neutral-100'
+              : 'text-muted-foreground hover:bg-secondary'
           }`}
         >
           View Template
@@ -312,7 +312,7 @@ export function PromptDetailContent({
           className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
             isRunMode
               ? 'bg-primary-100 text-primary-700'
-              : 'text-neutral-600 hover:bg-neutral-100'
+              : 'text-muted-foreground hover:bg-secondary'
           }`}
         >
           Run Prompt
@@ -322,7 +322,7 @@ export function PromptDetailContent({
       {/* Variables Form (Run Mode) */}
       {isRunMode && variables.length > 0 && (
         <div className="card p-6 mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Fill Variables
           </h2>
           <div className="space-y-4">
@@ -330,7 +330,7 @@ export function PromptDetailContent({
               <div key={variable.name}>
                 <label
                   htmlFor={`var-${variable.name}`}
-                  className="block text-sm font-medium text-neutral-700 mb-1"
+                  className="block text-sm font-medium text-foreground mb-1"
                 >
                   {variable.name}
                   {variable.required && (
@@ -338,7 +338,7 @@ export function PromptDetailContent({
                   )}
                 </label>
                 {variable.description && (
-                  <p className="text-xs text-neutral-500 mb-1">
+                  <p className="text-xs text-muted-foreground mb-1">
                     {variable.description}
                   </p>
                 )}
@@ -361,23 +361,23 @@ export function PromptDetailContent({
       {/* Variables List (View Mode) */}
       {!isRunMode && variables.length > 0 && (
         <div className="card p-6 mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Variables
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-neutral-200">
-                  <th className="text-left py-2 px-3 font-medium text-neutral-700">
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 font-medium text-foreground">
                     Name
                   </th>
-                  <th className="text-left py-2 px-3 font-medium text-neutral-700">
+                  <th className="text-left py-2 px-3 font-medium text-foreground">
                     Description
                   </th>
-                  <th className="text-left py-2 px-3 font-medium text-neutral-700">
+                  <th className="text-left py-2 px-3 font-medium text-foreground">
                     Example
                   </th>
-                  <th className="text-left py-2 px-3 font-medium text-neutral-700">
+                  <th className="text-left py-2 px-3 font-medium text-foreground">
                     Required
                   </th>
                 </tr>
@@ -391,17 +391,17 @@ export function PromptDetailContent({
                     <td className="py-2 px-3 font-mono text-primary-600">
                       {`{{${variable.name}}}`}
                     </td>
-                    <td className="py-2 px-3 text-neutral-600">
+                    <td className="py-2 px-3 text-muted-foreground">
                       {variable.description || '-'}
                     </td>
-                    <td className="py-2 px-3 text-neutral-600">
+                    <td className="py-2 px-3 text-muted-foreground">
                       {variable.example || '-'}
                     </td>
                     <td className="py-2 px-3">
                       {variable.required ? (
                         <span className="text-success-600">Yes</span>
                       ) : (
-                        <span className="text-neutral-400">No</span>
+                        <span className="text-muted-foreground">No</span>
                       )}
                     </td>
                   </tr>
@@ -415,7 +415,7 @@ export function PromptDetailContent({
       {/* Template Content */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">
+          <h2 className="text-lg font-semibold text-foreground">
             {isRunMode ? 'Generated Prompt' : 'Template'}
           </h2>
           <button
@@ -464,7 +464,7 @@ export function PromptDetailContent({
             </span>
           </button>
         </div>
-        <pre className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap text-sm font-mono text-neutral-800">
+        <pre className="bg-secondary border border-border rounded-lg p-4 overflow-x-auto whitespace-pre-wrap text-sm font-mono text-foreground">
           {isRunMode ? filledTemplate : prompt.content}
         </pre>
       </div>
@@ -478,10 +478,10 @@ export function PromptDetailContent({
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="card p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Delete Prompt?
             </h3>
-            <p className="text-sm text-neutral-600 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Are you sure you want to delete &quot;{prompt.title}&quot;? This
               action cannot be undone.
             </p>

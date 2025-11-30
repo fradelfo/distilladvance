@@ -117,13 +117,13 @@ export function OnboardingContent({ user }: OnboardingContentProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-12">
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-3xl">💧</span>
-            <span className="text-2xl font-semibold text-neutral-900">Distill</span>
+            <span className="text-2xl font-semibold text-foreground">Distill</span>
           </Link>
         </div>
 
@@ -201,10 +201,10 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
   return (
     <div className="text-center">
       <div className="mb-6 text-5xl">👋</div>
-      <h1 className="text-2xl font-bold text-neutral-900">
+      <h1 className="text-2xl font-bold text-foreground">
         Welcome, {userName}!
       </h1>
-      <p className="mt-4 text-neutral-600">
+      <p className="mt-4 text-muted-foreground">
         Distill helps you capture, organize, and share your best AI prompts.
       </p>
 
@@ -213,7 +213,7 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm text-primary-600">
             1
           </div>
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-foreground">
             <span className="font-medium">Capture conversations</span> from ChatGPT, Claude, and other AI tools
           </p>
         </div>
@@ -221,7 +221,7 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm text-primary-600">
             2
           </div>
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-foreground">
             <span className="font-medium">Distill into templates</span> with reusable variables
           </p>
         </div>
@@ -229,7 +229,7 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm text-primary-600">
             3
           </div>
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-foreground">
             <span className="font-medium">Share with your team</span> and build a prompt library
           </p>
         </div>
@@ -273,10 +273,10 @@ function WorkspaceStep({
     <div>
       <div className="mb-6 text-center">
         <div className="mb-4 text-4xl">🏢</div>
-        <h2 className="text-xl font-bold text-neutral-900">
+        <h2 className="text-xl font-bold text-foreground">
           Create a workspace
         </h2>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Workspaces let you organize prompts and collaborate with your team.
           You can skip this and use your personal space instead.
         </p>
@@ -303,7 +303,7 @@ function WorkspaceStep({
             Workspace URL
           </label>
           <div className="flex items-center">
-            <span className="rounded-l-md border border-r-0 border-neutral-300 bg-neutral-100 px-3 py-2 text-sm text-neutral-500">
+            <span className="rounded-l-md border border-r-0 border-input bg-secondary px-3 py-2 text-sm text-muted-foreground">
               distill.app/
             </span>
             <input
@@ -319,7 +319,7 @@ function WorkspaceStep({
           {slugError && (
             <p className="mt-1 text-sm text-error-600">{slugError}</p>
           )}
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Lowercase letters, numbers, and hyphens only
           </p>
         </div>
@@ -362,17 +362,17 @@ function WorkspaceStep({
         <button
           onClick={onSkip}
           disabled={isCreating}
-          className="btn-ghost w-full px-6 py-3 text-neutral-600 hover:text-neutral-900"
+          className="btn-ghost w-full px-6 py-3 text-muted-foreground hover:text-foreground"
         >
           Skip for now
         </button>
       </div>
 
-      <div className="mt-6 border-t border-neutral-200 pt-4">
+      <div className="mt-6 border-t border-border pt-4">
         <button
           onClick={onBack}
           disabled={isCreating}
-          className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <svg
             className="h-4 w-4"
@@ -405,17 +405,17 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
     <div>
       <div className="mb-6 text-center">
         <div className="mb-4 text-4xl">🧩</div>
-        <h2 className="text-xl font-bold text-neutral-900">
+        <h2 className="text-xl font-bold text-foreground">
           Install the browser extension
         </h2>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           The Distill extension lets you capture conversations directly from AI chat interfaces.
         </p>
       </div>
 
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-6">
+      <div className="rounded-lg border border-border bg-secondary p-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-background shadow-sm">
             <svg className="h-8 w-8" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -436,8 +436,8 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
             </svg>
           </div>
           <div className="flex-1">
-            <h3 className="font-medium text-neutral-900">Chrome Extension</h3>
-            <p className="text-sm text-neutral-600">
+            <h3 className="font-medium text-foreground">Chrome Extension</h3>
+            <p className="text-sm text-muted-foreground">
               Works with Chrome, Edge, and Brave
             </p>
           </div>
@@ -485,16 +485,16 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
 
         <button
           onClick={onNext}
-          className="btn-ghost w-full px-6 py-3 text-neutral-600 hover:text-neutral-900"
+          className="btn-ghost w-full px-6 py-3 text-muted-foreground hover:text-foreground"
         >
           Skip for now
         </button>
       </div>
 
-      <div className="mt-6 border-t border-neutral-200 pt-4">
+      <div className="mt-6 border-t border-border pt-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <svg
             className="h-4 w-4"
@@ -526,16 +526,16 @@ function CompleteStep({ userName, onComplete }: CompleteStepProps) {
   return (
     <div className="text-center">
       <div className="mb-6 text-5xl">🎉</div>
-      <h2 className="text-2xl font-bold text-neutral-900">
+      <h2 className="text-2xl font-bold text-foreground">
         You're all set, {userName}!
       </h2>
-      <p className="mt-4 text-neutral-600">
+      <p className="mt-4 text-muted-foreground">
         Your account is ready. Start capturing and distilling your best AI conversations.
       </p>
 
-      <div className="mt-8 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-        <h3 className="font-medium text-neutral-900">Quick start tips</h3>
-        <ul className="mt-3 space-y-2 text-left text-sm text-neutral-600">
+      <div className="mt-8 rounded-lg border border-border bg-secondary p-4">
+        <h3 className="font-medium text-foreground">Quick start tips</h3>
+        <ul className="mt-3 space-y-2 text-left text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <span className="text-primary-600">-</span>
             Visit ChatGPT, Claude, or Gemini and have a conversation

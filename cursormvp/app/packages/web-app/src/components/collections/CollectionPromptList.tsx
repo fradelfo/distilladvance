@@ -74,7 +74,7 @@ export function CollectionPromptList({
       <div className="card p-8 text-center">
         <div className="text-4xl mb-4">
           <svg
-            className="mx-auto h-12 w-12 text-neutral-400"
+            className="mx-auto h-12 w-12 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -88,10 +88,10 @@ export function CollectionPromptList({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">
+        <h3 className="text-lg font-semibold text-foreground">
           No prompts in this collection
         </h3>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           {canEdit
             ? 'Add prompts from your library to organize them here.'
             : 'This collection is empty.'}
@@ -136,13 +136,13 @@ export function CollectionPromptList({
                 href={`/prompts/${prompt.id}`}
                 className="block hover:text-primary-600"
               >
-                <h4 className="text-base font-semibold text-neutral-900 line-clamp-1">
+                <h4 className="text-base font-semibold text-foreground line-clamp-1">
                   {prompt.title}
                 </h4>
               </Link>
 
               {/* Preview of content */}
-              <p className="mt-1 text-sm text-neutral-600 line-clamp-2">
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                 {truncateContent(prompt.content)}
               </p>
 
@@ -153,7 +153,7 @@ export function CollectionPromptList({
                     <TagChip key={tag} tag={tag} size="sm" />
                   ))}
                   {prompt.tags.length > 4 && (
-                    <span className="inline-flex items-center px-2 py-0.5 text-xs text-neutral-400">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs text-muted-foreground">
                       +{prompt.tags.length - 4} more
                     </span>
                   )}
@@ -161,7 +161,7 @@ export function CollectionPromptList({
               )}
 
               {/* Meta info */}
-              <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
+              <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1" title="Usage count">
                   <svg
                     className="h-3.5 w-3.5"
@@ -198,7 +198,7 @@ export function CollectionPromptList({
             <div className="flex items-center gap-2 flex-shrink-0">
               <Link
                 href={`/prompts/${prompt.id}?run=true`}
-                className="p-2 rounded-md text-neutral-400 hover:text-primary-600 hover:bg-primary-50"
+                className="p-2 rounded-md text-muted-foreground hover:text-primary-600 hover:bg-primary-50"
                 title="Run prompt"
                 aria-label="Run prompt"
               >
@@ -226,7 +226,7 @@ export function CollectionPromptList({
               {canEdit && (
                 <button
                   onClick={() => onRemovePrompt?.(prompt.id)}
-                  className="p-2 rounded-md text-neutral-400 hover:text-error-600 hover:bg-error-50"
+                  className="p-2 rounded-md text-muted-foreground hover:text-error-600 hover:bg-error-50"
                   title="Remove from collection"
                   aria-label="Remove prompt from collection"
                   disabled={isLoading}
@@ -269,21 +269,21 @@ export function CollectionPromptListSkeleton() {
             <div className="flex-1">
               <div className="h-5 bg-neutral-200 rounded w-3/4 mb-2" />
               <div className="space-y-2 mb-3">
-                <div className="h-4 bg-neutral-100 rounded w-full" />
-                <div className="h-4 bg-neutral-100 rounded w-5/6" />
+                <div className="h-4 bg-secondary rounded w-full" />
+                <div className="h-4 bg-secondary rounded w-5/6" />
               </div>
               <div className="flex gap-2 mb-3">
-                <div className="h-5 bg-neutral-100 rounded-full w-16" />
-                <div className="h-5 bg-neutral-100 rounded-full w-20" />
+                <div className="h-5 bg-secondary rounded-full w-16" />
+                <div className="h-5 bg-secondary rounded-full w-20" />
               </div>
               <div className="flex gap-4">
-                <div className="h-4 bg-neutral-100 rounded w-16" />
-                <div className="h-4 bg-neutral-100 rounded w-24" />
+                <div className="h-4 bg-secondary rounded w-16" />
+                <div className="h-4 bg-secondary rounded w-24" />
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="h-9 w-9 bg-neutral-100 rounded" />
-              <div className="h-9 w-9 bg-neutral-100 rounded" />
+              <div className="h-9 w-9 bg-secondary rounded" />
+              <div className="h-9 w-9 bg-secondary rounded" />
             </div>
           </div>
         </div>

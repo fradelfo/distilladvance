@@ -106,27 +106,27 @@ export function HomeContent({ userName }: HomeContentProps) {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card p-4">
-          <p className="text-sm text-neutral-500">Total Prompts</p>
+          <p className="text-sm text-muted-foreground">Total Prompts</p>
           {isLoading ? (
             <div className="mt-1 h-8 w-16 animate-pulse rounded bg-neutral-200" />
           ) : (
-            <p className="mt-1 text-2xl font-semibold text-neutral-900">
+            <p className="mt-1 text-2xl font-semibold text-foreground">
               {totalPrompts}
             </p>
           )}
         </div>
         <div className="card p-4">
-          <p className="text-sm text-neutral-500">Conversations</p>
+          <p className="text-sm text-muted-foreground">Conversations</p>
           {isLoading ? (
             <div className="mt-1 h-8 w-16 animate-pulse rounded bg-neutral-200" />
           ) : (
-            <p className="mt-1 text-2xl font-semibold text-neutral-900">
+            <p className="mt-1 text-2xl font-semibold text-foreground">
               {totalConversations}
             </p>
           )}
         </div>
         <div className="card p-4">
-          <p className="text-sm text-neutral-500">Sources</p>
+          <p className="text-sm text-muted-foreground">Sources</p>
           {isLoading ? (
             <div className="mt-1 h-8 w-24 animate-pulse rounded bg-neutral-200" />
           ) : (
@@ -134,13 +134,13 @@ export function HomeContent({ userName }: HomeContentProps) {
               {conversationStats?.bySource && conversationStats.bySource.map(({ source, count }) => (
                 <span
                   key={source}
-                  className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs"
+                  className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
                   title={`${source}: ${count}`}
                 >
                   {getSourceIcon(source)} {count}
                 </span>
               ))}
-              {!conversationStats?.bySource && <span className="text-neutral-400">-</span>}
+              {!conversationStats?.bySource && <span className="text-muted-foreground">-</span>}
             </div>
           )}
         </div>
@@ -148,7 +148,7 @@ export function HomeContent({ userName }: HomeContentProps) {
 
       {/* Recent Activity */}
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Recent Activity</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h2>
         <div className="card divide-y divide-neutral-100">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
@@ -165,23 +165,23 @@ export function HomeContent({ userName }: HomeContentProps) {
               <Link
                 key={`${item.type}-${item.id}`}
                 href={item.type === 'prompt' ? `/prompts/${item.id}` : `/conversations/${item.id}`}
-                className="flex items-center gap-3 p-4 hover:bg-neutral-50 transition-colors"
+                className="flex items-center gap-3 p-4 hover:bg-secondary transition-colors"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-sm">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-sm">
                   {item.type === 'prompt' ? '📝' : getSourceIcon((item as any).source)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-neutral-900 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {item.type === 'prompt' ? 'Created prompt' : 'Saved conversation'}: {item.title}
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {formatRelativeTime(item.time)}
                   </p>
                 </div>
               </Link>
             ))
           ) : (
-            <div className="p-8 text-center text-neutral-500">
+            <div className="p-8 text-center text-muted-foreground">
               <p>No recent activity</p>
               <p className="text-sm mt-1">Start by capturing a conversation or creating a prompt</p>
             </div>
@@ -194,7 +194,7 @@ export function HomeContent({ userName }: HomeContentProps) {
         {/* Recent Prompts */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900">Recent Prompts</h2>
+            <h2 className="text-lg font-semibold text-foreground">Recent Prompts</h2>
             <Link href="/prompts" className="text-sm text-primary-600 hover:text-primary-700">
               View all
             </Link>
@@ -212,17 +212,17 @@ export function HomeContent({ userName }: HomeContentProps) {
                 <Link
                   key={prompt.id}
                   href={`/prompts/${prompt.id}`}
-                  className="block p-4 hover:bg-neutral-50 transition-colors"
+                  className="block p-4 hover:bg-secondary transition-colors"
                 >
-                  <p className="text-sm font-medium text-neutral-900 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {prompt.title}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(prompt.createdAt)}
                     </span>
                     {prompt.tags?.length > 0 && (
-                      <span className="text-xs text-neutral-400">
+                      <span className="text-xs text-muted-foreground">
                         {prompt.tags.slice(0, 2).join(', ')}
                       </span>
                     )}
@@ -230,7 +230,7 @@ export function HomeContent({ userName }: HomeContentProps) {
                 </Link>
               ))
             ) : (
-              <div className="p-8 text-center text-neutral-500">
+              <div className="p-8 text-center text-muted-foreground">
                 <p className="text-2xl mb-2">📝</p>
                 <p>No prompts yet</p>
                 <Link href="/prompts/new" className="text-sm text-primary-600 hover:underline">
@@ -244,7 +244,7 @@ export function HomeContent({ userName }: HomeContentProps) {
         {/* Recent Conversations */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900">Recent Conversations</h2>
+            <h2 className="text-lg font-semibold text-foreground">Recent Conversations</h2>
             <Link href="/conversations" className="text-sm text-primary-600 hover:text-primary-700">
               View all
             </Link>
@@ -262,15 +262,15 @@ export function HomeContent({ userName }: HomeContentProps) {
                 <Link
                   key={conv.id}
                   href={`/conversations/${conv.id}`}
-                  className="block p-4 hover:bg-neutral-50 transition-colors"
+                  className="block p-4 hover:bg-secondary transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <span>{getSourceIcon(conv.source)}</span>
-                    <p className="text-sm font-medium text-neutral-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {conv.title}
                     </p>
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{conv.source}</span>
                     <span>·</span>
                     <span>{formatRelativeTime(conv.createdAt)}</span>
@@ -278,7 +278,7 @@ export function HomeContent({ userName }: HomeContentProps) {
                 </Link>
               ))
             ) : (
-              <div className="p-8 text-center text-neutral-500">
+              <div className="p-8 text-center text-muted-foreground">
                 <p className="text-2xl mb-2">💬</p>
                 <p>No conversations yet</p>
                 <p className="text-sm mt-1">Use the extension to capture chats</p>
@@ -290,39 +290,39 @@ export function HomeContent({ userName }: HomeContentProps) {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/prompts/new"
             className="card p-4 hover:border-primary-300 hover:shadow-md transition-all"
           >
             <div className="text-2xl mb-2">✨</div>
-            <h3 className="font-medium text-neutral-900">New Prompt</h3>
-            <p className="text-sm text-neutral-500">Create from scratch</p>
+            <h3 className="font-medium text-foreground">New Prompt</h3>
+            <p className="text-sm text-muted-foreground">Create from scratch</p>
           </Link>
           <Link
             href="/prompts"
             className="card p-4 hover:border-primary-300 hover:shadow-md transition-all"
           >
             <div className="text-2xl mb-2">📚</div>
-            <h3 className="font-medium text-neutral-900">Library</h3>
-            <p className="text-sm text-neutral-500">Browse prompts</p>
+            <h3 className="font-medium text-foreground">Library</h3>
+            <p className="text-sm text-muted-foreground">Browse prompts</p>
           </Link>
           <Link
             href="/collections"
             className="card p-4 hover:border-primary-300 hover:shadow-md transition-all"
           >
             <div className="text-2xl mb-2">📁</div>
-            <h3 className="font-medium text-neutral-900">Collections</h3>
-            <p className="text-sm text-neutral-500">Organize prompts</p>
+            <h3 className="font-medium text-foreground">Collections</h3>
+            <p className="text-sm text-muted-foreground">Organize prompts</p>
           </Link>
           <Link
             href="/workspaces"
             className="card p-4 hover:border-primary-300 hover:shadow-md transition-all"
           >
             <div className="text-2xl mb-2">👥</div>
-            <h3 className="font-medium text-neutral-900">Workspaces</h3>
-            <p className="text-sm text-neutral-500">Team collaboration</p>
+            <h3 className="font-medium text-foreground">Workspaces</h3>
+            <p className="text-sm text-muted-foreground">Team collaboration</p>
           </Link>
         </div>
       </div>

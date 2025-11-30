@@ -167,17 +167,17 @@ export function PromptPickerModal({
         role="document"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-200">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <h2
             id="prompt-picker-title"
-            className="text-xl font-semibold text-neutral-900"
+            className="text-xl font-semibold text-foreground"
           >
             Add Prompts to Collection
           </h2>
           <button
             onClick={onClose}
             disabled={isAdding}
-            className="p-2 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors disabled:opacity-50"
+            className="p-2 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-secondary transition-colors disabled:opacity-50"
             aria-label="Close modal"
           >
             <svg
@@ -198,10 +198,10 @@ export function PromptPickerModal({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-neutral-200">
+        <div className="p-4 border-b border-border">
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -236,19 +236,19 @@ export function PromptPickerModal({
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg border border-neutral-200">
+                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg border border-border">
                   <div className="h-5 w-5 bg-neutral-200 rounded" />
                   <div className="flex-1">
                     <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-neutral-100 rounded w-1/2" />
+                    <div className="h-3 bg-secondary rounded w-1/2" />
                   </div>
                 </div>
               ))}
             </div>
           ) : prompts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-lg font-medium text-neutral-900">No prompts found</p>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="text-lg font-medium text-foreground">No prompts found</p>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {searchQuery
                   ? `No prompts match "${searchQuery}"`
                   : 'Create some prompts first to add them to collections'}
@@ -267,25 +267,25 @@ export function PromptPickerModal({
                     disabled={isExisting || isAdding}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
                       isExisting
-                        ? 'border-neutral-200 bg-neutral-50 opacity-60 cursor-not-allowed'
+                        ? 'border-border bg-secondary opacity-60 cursor-not-allowed'
                         : isSelected
                         ? 'border-primary-500 bg-primary-50'
-                        : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+                        : 'border-border hover:border-input hover:bg-secondary'
                     }`}
                   >
                     {/* Checkbox */}
                     <div
                       className={`flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center ${
                         isExisting
-                          ? 'border-neutral-300 bg-neutral-200'
+                          ? 'border-input bg-neutral-200'
                           : isSelected
                           ? 'border-primary-500 bg-primary-500'
-                          : 'border-neutral-300'
+                          : 'border-input'
                       }`}
                     >
                       {(isSelected || isExisting) && (
                         <svg
-                          className={`h-3 w-3 ${isExisting ? 'text-neutral-400' : 'text-white'}`}
+                          className={`h-3 w-3 ${isExisting ? 'text-muted-foreground' : 'text-white'}`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -303,25 +303,25 @@ export function PromptPickerModal({
 
                     {/* Prompt Info */}
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${isExisting ? 'text-neutral-500' : 'text-neutral-900'}`}>
+                      <p className={`font-medium truncate ${isExisting ? 'text-muted-foreground' : 'text-foreground'}`}>
                         {prompt.title}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         {isExisting && (
-                          <span className="text-xs text-neutral-500 bg-neutral-200 px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-muted-foreground bg-neutral-200 px-1.5 py-0.5 rounded">
                             Already added
                           </span>
                         )}
                         {prompt.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag}
-                            className="text-xs text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded"
+                            className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded"
                           >
                             {tag}
                           </span>
                         ))}
                         {prompt.tags.length > 2 && (
-                          <span className="text-xs text-neutral-400">
+                          <span className="text-xs text-muted-foreground">
                             +{prompt.tags.length - 2}
                           </span>
                         )}
@@ -329,7 +329,7 @@ export function PromptPickerModal({
                     </div>
 
                     {/* Usage count */}
-                    <div className="flex-shrink-0 text-sm text-neutral-400">
+                    <div className="flex-shrink-0 text-sm text-muted-foreground">
                       {prompt.usageCount} uses
                     </div>
                   </button>
@@ -353,7 +353,7 @@ export function PromptPickerModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-neutral-200 p-4 bg-neutral-50 flex justify-end gap-3">
+        <div className="border-t border-border p-4 bg-secondary flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={isAdding}

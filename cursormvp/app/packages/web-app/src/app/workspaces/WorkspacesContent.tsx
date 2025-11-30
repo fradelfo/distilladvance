@@ -87,8 +87,8 @@ export function WorkspacesContent() {
         {/* Page Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Workspaces</h1>
-            <p className="mt-1 text-sm text-neutral-600">
+            <h1 className="text-2xl font-bold text-foreground">Workspaces</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Collaborate on prompts with your team
             </p>
           </div>
@@ -119,7 +119,7 @@ export function WorkspacesContent() {
         <EmptyState
           icon={
             <svg
-              className="h-12 w-12 text-neutral-400"
+              className="h-12 w-12 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -170,8 +170,8 @@ export function WorkspacesContent() {
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Workspaces</h1>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h1 className="text-2xl font-bold text-foreground">Workspaces</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -297,12 +297,12 @@ function Modal({ title, children, onClose }: ModalProps) {
       <div className="relative z-10 w-full max-w-md mx-4 card p-6 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 id="modal-title" className="text-lg font-semibold text-neutral-900">
+          <h2 id="modal-title" className="text-lg font-semibold text-foreground">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
+            className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-secondary"
             aria-label="Close modal"
           >
             <svg

@@ -118,8 +118,8 @@ export function ConversationsContent() {
       <div>
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Conversations</h1>
-            <p className="mt-1 text-sm text-neutral-600">
+            <h1 className="text-2xl font-bold text-foreground">Conversations</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Your captured AI conversations
             </p>
           </div>
@@ -147,8 +147,8 @@ export function ConversationsContent() {
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Conversations</h1>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h1 className="text-2xl font-bold text-foreground">Conversations</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -158,14 +158,14 @@ export function ConversationsContent() {
       <div className="mb-6 flex flex-wrap gap-4">
         {/* Source Filter */}
         <div className="flex items-center gap-2">
-          <label htmlFor="source-filter" className="text-sm font-medium text-neutral-700">
+          <label htmlFor="source-filter" className="text-sm font-medium text-foreground">
             Source:
           </label>
           <select
             id="source-filter"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <option value="all">All Sources</option>
             {uniqueSources.map((source) => (
@@ -178,14 +178,14 @@ export function ConversationsContent() {
 
         {/* Privacy Mode Filter */}
         <div className="flex items-center gap-2">
-          <label htmlFor="privacy-filter" className="text-sm font-medium text-neutral-700">
+          <label htmlFor="privacy-filter" className="text-sm font-medium text-foreground">
             Privacy:
           </label>
           <select
             id="privacy-filter"
             value={privacyFilter}
             onChange={(e) => setPrivacyFilter(e.target.value)}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <option value="all">All</option>
             <option value="FULL">Full Content</option>
@@ -258,7 +258,7 @@ export function ConversationsContent() {
               >
                 <div className="flex items-start gap-4">
                   {/* Source Icon */}
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-100">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-secondary">
                     {sourceIcons[conversation.source] ? (
                       <img
                         src={sourceIcons[conversation.source]}
@@ -272,10 +272,10 @@ export function ConversationsContent() {
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-medium text-neutral-900">
+                    <h3 className="truncate font-medium text-foreground">
                       {conversation.title}
                     </h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <span>{sourceNames[conversation.source] || conversation.source}</span>
                       <span>·</span>
                       <span>{formatDate(conversation.createdAt)}</span>
@@ -293,7 +293,7 @@ export function ConversationsContent() {
                     className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       conversation.privacyMode === 'FULL'
                         ? 'bg-primary-100 text-primary-700'
-                        : 'bg-neutral-100 text-neutral-700'
+                        : 'bg-secondary text-foreground'
                     }`}
                   >
                     {conversation.privacyMode === 'FULL' ? 'Full' : 'Prompt Only'}

@@ -70,9 +70,9 @@ export function EmptyState({
       className={`card flex flex-col items-center justify-center py-16 text-center ${className}`}
     >
       {icon && <div className="mb-4 text-5xl">{icon}</div>}
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-neutral-600">{description}</p>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
       )}
       {(primaryAction || secondaryAction) && (
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

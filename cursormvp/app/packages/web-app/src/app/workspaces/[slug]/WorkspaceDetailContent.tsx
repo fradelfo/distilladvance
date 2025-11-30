@@ -253,12 +253,12 @@ export function WorkspaceDetailContent({
               <div className="w-16 h-16 rounded-lg bg-neutral-200 animate-pulse" />
               <div className="flex-1">
                 <div className="h-7 bg-neutral-200 rounded w-1/2 mb-2" />
-                <div className="h-4 bg-neutral-100 rounded w-3/4" />
+                <div className="h-4 bg-secondary rounded w-3/4" />
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="h-9 w-20 bg-neutral-100 rounded" />
-              <div className="h-9 w-20 bg-neutral-100 rounded" />
+              <div className="h-9 w-20 bg-secondary rounded" />
+              <div className="h-9 w-20 bg-secondary rounded" />
             </div>
           </div>
         </div>
@@ -271,16 +271,16 @@ export function WorkspaceDetailContent({
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 animate-pulse"
+              className="flex items-center justify-between p-3 rounded-lg border border-border animate-pulse"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-neutral-200" />
                 <div>
                   <div className="h-4 bg-neutral-200 rounded w-32 mb-1" />
-                  <div className="h-3 bg-neutral-100 rounded w-40" />
+                  <div className="h-3 bg-secondary rounded w-40" />
                 </div>
               </div>
-              <div className="h-6 bg-neutral-100 rounded-full w-16" />
+              <div className="h-6 bg-secondary rounded-full w-16" />
             </div>
           ))}
         </div>
@@ -294,7 +294,7 @@ export function WorkspaceDetailContent({
       <div>
         <Link
           href="/workspaces"
-          className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <svg
             className="h-4 w-4"
@@ -333,7 +333,7 @@ export function WorkspaceDetailContent({
       <div>
         <Link
           href="/workspaces"
-          className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <svg
             className="h-4 w-4"
@@ -353,7 +353,7 @@ export function WorkspaceDetailContent({
         </Link>
 
         <div className="card p-6 text-center">
-          <p className="text-sm text-neutral-600">Workspace not found</p>
+          <p className="text-sm text-muted-foreground">Workspace not found</p>
         </div>
       </div>
     );
@@ -367,7 +367,7 @@ export function WorkspaceDetailContent({
       {/* Back Link */}
       <Link
         href="/workspaces"
-        className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <svg
           className="h-4 w-4"
@@ -417,10 +417,10 @@ export function WorkspaceDetailContent({
             )}
 
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-neutral-900">
+              <h1 className="text-xl font-bold text-foreground">
                 {workspace.name}
               </h1>
-              <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span>{workspace.members.length} members</span>
                 <span>-</span>
                 <span>{workspace._count.prompts} prompts</span>
@@ -428,7 +428,7 @@ export function WorkspaceDetailContent({
                 <span>{workspace._count.collections} collections</span>
               </div>
               {workspace.description && (
-                <p className="text-sm text-neutral-600 mt-3">
+                <p className="text-sm text-muted-foreground mt-3">
                   {workspace.description}
                 </p>
               )}
@@ -492,7 +492,7 @@ export function WorkspaceDetailContent({
       {/* Members Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">Members</h2>
+          <h2 className="text-lg font-semibold text-foreground">Members</h2>
           {canManageInvites && (
             <button
               onClick={() => setIsInviteModalOpen(true)}
@@ -537,7 +537,7 @@ export function WorkspaceDetailContent({
       {/* Pending Invites Section (only for owners/admins) */}
       {canManageInvites && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Pending Invites
           </h2>
 
@@ -546,16 +546,16 @@ export function WorkspaceDetailContent({
               {Array.from({ length: 2 }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 animate-pulse"
+                  className="flex items-center justify-between p-3 rounded-lg border border-border animate-pulse"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-neutral-200" />
                     <div>
                       <div className="h-4 bg-neutral-200 rounded w-40 mb-1" />
-                      <div className="h-3 bg-neutral-100 rounded w-24" />
+                      <div className="h-3 bg-secondary rounded w-24" />
                     </div>
                   </div>
-                  <div className="h-8 w-16 bg-neutral-100 rounded" />
+                  <div className="h-8 w-16 bg-secondary rounded" />
                 </div>
               ))}
             </div>
@@ -564,13 +564,13 @@ export function WorkspaceDetailContent({
               {invites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 bg-white"
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
                 >
                   <div className="flex items-center gap-3">
                     {/* Email icon */}
-                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
                       <svg
-                        className="h-4 w-4 text-neutral-500"
+                        className="h-4 w-4 text-muted-foreground"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -586,10 +586,10 @@ export function WorkspaceDetailContent({
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-neutral-900">
+                      <p className="text-sm font-medium text-foreground">
                         {invite.email}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-muted-foreground">
                         Invited as{' '}
                         {invite.role.charAt(0) +
                           invite.role.slice(1).toLowerCase()}{' '}
@@ -601,7 +601,7 @@ export function WorkspaceDetailContent({
                   <button
                     onClick={() => handleRevokeInvite(invite.id)}
                     disabled={revokeInviteMutation.isPending}
-                    className="text-sm text-neutral-500 hover:text-error-600 px-2 py-1"
+                    className="text-sm text-muted-foreground hover:text-error-600 px-2 py-1"
                   >
                     Revoke
                   </button>
@@ -609,9 +609,9 @@ export function WorkspaceDetailContent({
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 border border-dashed border-neutral-200 rounded-lg">
+            <div className="text-center py-6 border border-dashed border-border rounded-lg">
               <svg
-                className="mx-auto h-8 w-8 text-neutral-400"
+                className="mx-auto h-8 w-8 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -624,7 +624,7 @@ export function WorkspaceDetailContent({
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              <p className="mt-2 text-sm text-neutral-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 No pending invites
               </p>
             </div>
@@ -687,7 +687,7 @@ export function WorkspaceDetailContent({
           onClose={() => setIsDeleteModalOpen(false)}
         >
           <div className="space-y-4">
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to delete{' '}
               <span className="font-medium">{workspace.name}</span>? This action
               cannot be undone. All prompts and collections in this workspace
@@ -723,7 +723,7 @@ export function WorkspaceDetailContent({
           }}
         >
           <div className="space-y-4">
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-muted-foreground">
               {memberToRemove.isSelf ? (
                 <>
                   Are you sure you want to leave{' '}
@@ -803,13 +803,13 @@ function Modal({ title, children, onClose }: ModalProps) {
         <div className="flex items-center justify-between mb-4">
           <h2
             id="modal-title"
-            className="text-lg font-semibold text-neutral-900"
+            className="text-lg font-semibold text-foreground"
           >
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
+            className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-secondary"
             aria-label="Close modal"
           >
             <svg

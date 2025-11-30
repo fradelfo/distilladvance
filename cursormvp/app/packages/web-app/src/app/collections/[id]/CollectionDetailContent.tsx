@@ -137,11 +137,11 @@ export function CollectionDetailContent({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="h-7 bg-neutral-200 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-neutral-100 rounded w-3/4" />
+              <div className="h-4 bg-secondary rounded w-3/4" />
             </div>
             <div className="flex gap-2">
-              <div className="h-9 w-20 bg-neutral-100 rounded" />
-              <div className="h-9 w-20 bg-neutral-100 rounded" />
+              <div className="h-9 w-20 bg-secondary rounded" />
+              <div className="h-9 w-20 bg-secondary rounded" />
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export function CollectionDetailContent({
       <div>
         <Link
           href="/collections"
-          className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <svg
             className="h-4 w-4"
@@ -200,7 +200,7 @@ export function CollectionDetailContent({
       <div>
         <Link
           href="/collections"
-          className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <svg
             className="h-4 w-4"
@@ -220,7 +220,7 @@ export function CollectionDetailContent({
         </Link>
 
         <div className="card p-6 text-center">
-          <p className="text-sm text-neutral-600">Collection not found</p>
+          <p className="text-sm text-muted-foreground">Collection not found</p>
         </div>
       </div>
     );
@@ -231,7 +231,7 @@ export function CollectionDetailContent({
       {/* Back Link */}
       <Link
         href="/collections"
-        className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 mb-6"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <svg
           className="h-4 w-4"
@@ -273,7 +273,7 @@ export function CollectionDetailContent({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-neutral-900">
+                <h1 className="text-xl font-bold text-foreground">
                   {collection.name}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
@@ -282,7 +282,7 @@ export function CollectionDetailContent({
                       Public
                     </span>
                   )}
-                  <span className="text-sm text-neutral-500">
+                  <span className="text-sm text-muted-foreground">
                     {collection.prompts.length} prompt
                     {collection.prompts.length !== 1 ? 's' : ''}
                   </span>
@@ -290,7 +290,7 @@ export function CollectionDetailContent({
               </div>
             </div>
             {collection.description && (
-              <p className="text-sm text-neutral-600 mt-3">
+              <p className="text-sm text-muted-foreground mt-3">
                 {collection.description}
               </p>
             )}
@@ -350,7 +350,7 @@ export function CollectionDetailContent({
 
       {/* Prompts Section */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900">
+        <h2 className="text-lg font-semibold text-foreground">
           Prompts in this collection
         </h2>
         {collection.isOwner && (
@@ -405,7 +405,7 @@ export function CollectionDetailContent({
           onClose={() => setIsDeleteModalOpen(false)}
         >
           <div className="space-y-4">
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to delete{' '}
               <span className="font-medium">{collection.name}</span>? This
               action cannot be undone. The prompts in this collection will not
@@ -475,13 +475,13 @@ function Modal({ title, children, onClose }: ModalProps) {
         <div className="flex items-center justify-between mb-4">
           <h2
             id="modal-title"
-            className="text-lg font-semibold text-neutral-900"
+            className="text-lg font-semibold text-foreground"
           >
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100"
+            className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-secondary"
             aria-label="Close modal"
           >
             <svg

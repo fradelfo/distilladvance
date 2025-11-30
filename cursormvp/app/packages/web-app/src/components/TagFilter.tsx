@@ -5,7 +5,13 @@
  *
  * Displays a list of tag chips for filtering prompts.
  * Supports single and multi-select modes.
+ * Uses shadcn/ui Badge component.
  */
+
+import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface TagFilterProps {
   /** Available tags to display */
@@ -50,14 +56,16 @@ export function TagFilter({
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {selectedTags.length > 0 && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={clearAll}
-          className="text-xs text-neutral-500 hover:text-neutral-700 underline"
+          className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
         >
           Clear all
-        </button>
+        </Button>
       )}
       {tags.map((tag) => {
         const isSelected = selectedTags.includes(tag);
@@ -65,34 +73,21 @@ export function TagFilter({
           <button
             key={tag}
             onClick={() => handleTagClick(tag)}
-            className={`
-              inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
-              transition-colors duration-150
-              ${
-                isSelected
-                  ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }
-            `}
+            className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full"
             aria-pressed={isSelected}
           >
-            {tag}
-            {isSelected && (
-              <svg
-                className="ml-1.5 h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            )}
+            <Badge
+              variant={isSelected ? 'default' : 'secondary'}
+              className={cn(
+                'cursor-pointer transition-colors',
+                isSelected && 'pr-1.5'
+              )}
+            >
+              {tag}
+              {isSelected && (
+                <X className="ml-1 h-3 w-3" aria-hidden="true" />
+              )}
+            </Badge>
           </button>
         );
       })}
@@ -112,17 +107,15 @@ interface TagChipProps {
 }
 
 export function TagChip({ tag, size = 'sm', className = '' }: TagChipProps) {
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
-
   return (
-    <span
-      className={`
-        inline-flex items-center rounded-full bg-neutral-100 text-neutral-600 font-medium
-        ${sizeClasses}
-        ${className}
-      `}
+    <Badge
+      variant="secondary"
+      className={cn(
+        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
+        className
+      )}
     >
       {tag}
-    </span>
+    </Badge>
   );
 }

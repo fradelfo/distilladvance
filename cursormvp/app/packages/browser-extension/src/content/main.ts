@@ -36,7 +36,7 @@ function detectPlatform(): ConversationSource {
 }
 
 // Extract conversation from the page
-function extractConversation(): ConversationMessage[] {
+async function extractConversation(): Promise<ConversationMessage[]> {
   const platform = detectPlatform();
   const messages: ConversationMessage[] = [];
 
@@ -45,7 +45,7 @@ function extractConversation(): ConversationMessage[] {
       messages.push(...extractChatGPTMessages());
       break;
     case 'claude':
-      messages.push(...extractClaudeMessages());
+      messages.push(...await extractClaudeMessages());
       break;
     case 'gemini':
       messages.push(...extractGeminiMessages());
@@ -79,37 +79,67 @@ function extractChatGPTMessages(): ConversationMessage[] {
   return messages;
 }
 
-function extractClaudeMessages(): ConversationMessage[] {
+async function extractClaudeMessages(): Promise<ConversationMessage[]> {
+  console.log('[Distill] Starting Claude extraction with scroll loading...');
+
+  // Step 1: Scroll to load all messages (handles virtualization)
+  await scrollToLoadAllMessages();
+
   const messages: ConversationMessage[] = [];
+  const seenIds = new Set<string>(); // Deduplicate by element position/index
+  const seenContent = new Set<string>(); // Deduplicate by content for fallback strategies
 
   // Claude's DOM structure uses conversation turns
   // Try multiple selector strategies for robustness
 
   // Strategy 1: Look for message containers with data attributes
   const turnContainers = document.querySelectorAll('[data-testid^="conversation-turn"]');
+  console.log(`[Distill] Found ${turnContainers.length} turn containers with data-testid`);
 
   if (turnContainers.length > 0) {
     turnContainers.forEach((turn, index) => {
+      // Try multiple ways to detect if this is a human message
       const isHuman = turn.querySelector('[data-testid="user-message"]') !== null ||
                       turn.classList.contains('human-turn') ||
-                      turn.getAttribute('data-is-human') === 'true';
+                      turn.getAttribute('data-is-human') === 'true' ||
+                      turn.querySelector('[class*="user"]') !== null;
 
-      const contentEl = turn.querySelector('.whitespace-pre-wrap, .prose, [class*="message-content"]');
-      const content = contentEl?.textContent?.trim() || turn.textContent?.trim() || '';
+      // Try multiple ways to get content
+      const contentEl = turn.querySelector('.whitespace-pre-wrap, .prose, [class*="message-content"], [class*="font-"]');
+      let content = '';
 
-      if (content) {
+      if (contentEl) {
+        content = contentEl.textContent?.trim() || '';
+      } else {
+        // Fallback: get all text from the turn container, but filter out UI elements
+        const allText = turn.textContent?.trim() || '';
+        // Remove common UI text patterns
+        content = allText.replace(/^(Human|Claude|Assistant|You):\s*/i, '').trim();
+      }
+
+      const messageId = `turn-${index}`;
+
+      if (content && content.length > 10 && !seenIds.has(messageId)) {
+        seenIds.add(messageId);
         messages.push({
-          id: `turn-${index}`,
+          id: messageId,
           role: isHuman ? 'user' : 'assistant',
           content,
         });
+        console.log(`[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`);
+      } else if (!content) {
+        console.warn(`[Distill] Skipped turn ${index}: no content found`);
+      } else if (content.length <= 10) {
+        console.warn(`[Distill] Skipped turn ${index}: content too short (${content.length} chars)`);
       }
     });
+    console.log('[Distill] Strategy 1: Found', messages.length, 'messages');
     return messages;
   }
 
   // Strategy 2: Look for font-based message classes (Claude's styling)
   const allMessages = document.querySelectorAll('.font-user-message, .font-claude-message, [class*="human"], [class*="assistant"]');
+  console.log(`[Distill] Strategy 2: Found ${allMessages.length} font-based messages`);
 
   if (allMessages.length > 0) {
     allMessages.forEach((el, index) => {
@@ -117,14 +147,18 @@ function extractClaudeMessages(): ConversationMessage[] {
       const isHuman = classList.includes('user') || classList.includes('human');
       const content = el.textContent?.trim() || '';
 
-      if (content) {
+      const messageId = `msg-${index}`;
+      if (content && content.length > 10 && !seenIds.has(messageId)) {
+        seenIds.add(messageId);
         messages.push({
-          id: `msg-${index}`,
+          id: messageId,
           role: isHuman ? 'user' : 'assistant',
           content,
         });
+        console.log(`[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`);
       }
     });
+    console.log('[Distill] Strategy 2 result: Found', messages.length, 'messages');
     return messages;
   }
 
@@ -140,14 +174,17 @@ function extractClaudeMessages(): ConversationMessage[] {
       // Skip empty or very short blocks (likely UI elements)
       if (text.length < 10) return;
 
-      // Heuristic: odd indexes are often user messages in alternating UI
-      const isHuman = index % 2 === 0;
+      if (!seenContent.has(text)) {
+        seenContent.add(text);
+        // Heuristic: odd indexes are often user messages in alternating UI
+        const isHuman = index % 2 === 0;
 
-      messages.push({
-        id: `block-${index}`,
-        role: isHuman ? 'user' : 'assistant',
-        content: text,
-      });
+        messages.push({
+          id: `block-${index}`,
+          role: isHuman ? 'user' : 'assistant',
+          content: text,
+        });
+      }
     });
   }
 
@@ -156,7 +193,8 @@ function extractClaudeMessages(): ConversationMessage[] {
     const streamingMessages = document.querySelectorAll('[data-is-streaming], [data-message-id]');
     streamingMessages.forEach((el, index) => {
       const content = el.textContent?.trim() || '';
-      if (content) {
+      if (content && !seenContent.has(content)) {
+        seenContent.add(content);
         messages.push({
           id: `stream-${index}`,
           role: index % 2 === 0 ? 'user' : 'assistant',
@@ -166,8 +204,98 @@ function extractClaudeMessages(): ConversationMessage[] {
     });
   }
 
-  console.log('[Distill] Claude extraction found', messages.length, 'messages');
+  console.log('[Distill] Claude extraction complete:', messages.length, 'messages');
   return messages;
+}
+
+/**
+ * Scroll through the conversation to load all messages (handles virtualization)
+ */
+async function scrollToLoadAllMessages(): Promise<void> {
+  return new Promise((resolve) => {
+    const scrollContainer = findScrollContainer();
+
+    if (!scrollContainer) {
+      console.log('[Distill] No scroll container found, skipping scroll loading');
+      resolve();
+      return;
+    }
+
+    console.log('[Distill] Starting scroll loading sequence...');
+
+    let previousMessageCount = 0;
+    let stableCount = 0;
+    const maxAttempts = 15; // Increased for longer conversations
+    let attempts = 0;
+    let scrollDirection: 'top' | 'bottom' = 'bottom'; // Start by scrolling to bottom
+
+    const scrollInterval = setInterval(() => {
+      attempts++;
+
+      // Count current messages in DOM
+      const currentMessageCount = document.querySelectorAll(
+        '[data-testid^="conversation-turn"], .font-user-message, .font-claude-message, [class*="message"]'
+      ).length;
+
+      console.log(`[Distill] Scroll attempt ${attempts}: ${currentMessageCount} messages (scrolling to ${scrollDirection})`);
+
+      // Alternate between scrolling to bottom and top to load all messages
+      if (scrollDirection === 'bottom') {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollDirection = 'top';
+      } else {
+        scrollContainer.scrollTop = 0;
+        scrollDirection = 'bottom';
+      }
+
+      // Check if message count stabilized
+      if (currentMessageCount === previousMessageCount) {
+        stableCount++;
+      } else {
+        stableCount = 0;
+        previousMessageCount = currentMessageCount;
+      }
+
+      // Stop when stable for 3 checks or max attempts reached
+      if (stableCount >= 3 || attempts >= maxAttempts) {
+        clearInterval(scrollInterval);
+        console.log(`[Distill] Scroll loading complete: ${currentMessageCount} messages in DOM`);
+
+        // Scroll to top one final time so messages are in order
+        scrollContainer.scrollTop = 0;
+
+        // Wait for any final rendering
+        setTimeout(resolve, 800);
+      }
+    }, 500); // Increased to 500ms to give DOM time to update
+  });
+}
+
+/**
+ * Find the scrollable container for the conversation
+ */
+function findScrollContainer(): HTMLElement | null {
+  // Try to find Claude's scroll container
+  const candidates = [
+    document.querySelector('[class*="conversation"]'),
+    document.querySelector('[class*="chat-messages"]'),
+    document.querySelector('main'),
+    document.querySelector('[role="main"]'),
+    document.documentElement,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && candidate instanceof HTMLElement) {
+      const style = window.getComputedStyle(candidate);
+      if (style.overflow === 'auto' || style.overflow === 'scroll' ||
+          style.overflowY === 'auto' || style.overflowY === 'scroll') {
+        return candidate;
+      }
+    }
+  }
+
+  // Fallback to document element
+  return document.documentElement;
 }
 
 function extractGeminiMessages(): ConversationMessage[] {
@@ -194,9 +322,9 @@ function getConversationTitle(): string {
 }
 
 // Build captured conversation object
-function buildCapturedConversation(): CapturedConversation {
+async function buildCapturedConversation(): Promise<CapturedConversation> {
   const platform = detectPlatform();
-  const messages = extractConversation();
+  const messages = await extractConversation();
 
   return {
     source: platform,
@@ -208,14 +336,17 @@ function buildCapturedConversation(): CapturedConversation {
 }
 
 // Open the capture modal overlay
-function openCaptureModal(): void {
+async function openCaptureModal(): Promise<void> {
   // Close existing modal if open
   if (currentModal) {
     currentModal.remove();
     currentModal = null;
   }
 
-  const conversation = buildCapturedConversation();
+  // Show loading indicator while capturing
+  console.log('[Distill] Capturing conversation...');
+
+  const conversation = await buildCapturedConversation();
 
   currentModal = showCaptureModal({
     conversation,
@@ -229,57 +360,60 @@ function openCaptureModal(): void {
 }
 
 // Listen for messages from background script and popup
-chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
-  switch (message.type) {
-    case MessageTypes.CAPTURE_CONVERSATION: {
-      const capturedData = buildCapturedConversation();
+chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
+  // Handle async operations properly
+  (async () => {
+    switch (message.type) {
+      case MessageTypes.CAPTURE_CONVERSATION: {
+        const capturedData = await buildCapturedConversation();
 
-      // Send back to background script
-      chrome.runtime.sendMessage({
-        type: MessageTypes.CONVERSATION_CAPTURED,
-        payload: capturedData,
-        source: 'content',
-        timestamp: Date.now(),
-      });
+        // Send back to background script
+        chrome.runtime.sendMessage({
+          type: MessageTypes.CONVERSATION_CAPTURED,
+          payload: capturedData,
+          source: 'content',
+          timestamp: Date.now(),
+        });
 
-      sendResponse({ success: true, data: capturedData });
-      break;
-    }
-
-    case MessageTypes.OPEN_CAPTURE_MODAL: {
-      openCaptureModal();
-      sendResponse({ success: true });
-      break;
-    }
-
-    case MessageTypes.CLOSE_CAPTURE_MODAL: {
-      if (currentModal) {
-        currentModal.remove();
-        currentModal = null;
+        sendResponse({ success: true, data: capturedData });
+        break;
       }
-      sendResponse({ success: true });
-      break;
+
+      case MessageTypes.OPEN_CAPTURE_MODAL: {
+        await openCaptureModal();
+        sendResponse({ success: true });
+        break;
+      }
+
+      case MessageTypes.CLOSE_CAPTURE_MODAL: {
+        if (currentModal) {
+          currentModal.remove();
+          currentModal = null;
+        }
+        sendResponse({ success: true });
+        break;
+      }
+
+      case MessageTypes.GET_PAGE_STATUS: {
+        const platform = detectPlatform();
+        const messages = await extractConversation();
+
+        sendResponse({
+          success: true,
+          data: {
+            supported: platform !== 'other',
+            platform,
+            hasConversation: messages.length > 0,
+            messageCount: messages.length,
+          },
+        });
+        break;
+      }
+
+      default:
+        sendResponse({ success: false, error: 'Unknown message type' });
     }
-
-    case MessageTypes.GET_PAGE_STATUS: {
-      const platform = detectPlatform();
-      const messages = extractConversation();
-
-      sendResponse({
-        success: true,
-        data: {
-          supported: platform !== 'other',
-          platform,
-          hasConversation: messages.length > 0,
-          messageCount: messages.length,
-        },
-      });
-      break;
-    }
-
-    default:
-      sendResponse({ success: false, error: 'Unknown message type' });
-  }
+  })();
 
   return true;
 });

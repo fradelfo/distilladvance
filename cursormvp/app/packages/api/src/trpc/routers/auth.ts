@@ -1,6 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../index.js";
+import {
+  createVerificationToken,
+  sendVerificationEmail,
+  verifyEmailToken,
+  resendVerificationEmail,
+} from "../../services/email-verification.js";
 
 // Password hashing using Web Crypto API (available in Node.js 20+)
 // For production, consider using bcrypt or argon2
@@ -144,9 +150,19 @@ export const authRouter = router({
         },
       });
 
+      // Send verification email
+      try {
+        const token = await createVerificationToken(email.toLowerCase());
+        await sendVerificationEmail(email.toLowerCase(), token);
+      } catch (error) {
+        console.error('[Auth] Failed to send verification email:', error);
+        // Don't fail registration if email fails - user can resend
+      }
+
       return {
         success: true,
         user,
+        message: 'Account created. Please check your email to verify your account.',
       };
     }),
 
@@ -188,6 +204,49 @@ export const authRouter = router({
         email: user.email,
         name: user.name,
         image: user.image,
+      };
+    }),
+
+  /**
+   * Verify email with token
+   */
+  verifyEmail: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await verifyEmailToken(input.token);
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: result.error || "Failed to verify email",
+        });
+      }
+
+      return {
+        success: true,
+        email: result.email,
+        message: "Email verified successfully",
+      };
+    }),
+
+  /**
+   * Resend verification email
+   */
+  resendVerification: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      const result = await resendVerificationEmail(input.email.toLowerCase());
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: result.error || "Failed to resend verification email",
+        });
+      }
+
+      return {
+        success: true,
+        message: "Verification email sent",
       };
     }),
 });

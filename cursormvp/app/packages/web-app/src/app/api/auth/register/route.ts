@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/password';
+import { createVerificationToken, sendVerificationEmail } from '@/lib/email-verification';
 
 // Validation schema for registration
 const registerSchema = z.object({
@@ -73,10 +74,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
 
+    // Send verification email
+    try {
+      const token = await createVerificationToken(normalizedEmail);
+      await sendVerificationEmail(normalizedEmail, token);
+    } catch (emailError) {
+      console.error('[Register] Failed to send verification email:', emailError);
+      // Don't fail registration if email fails - user can resend later
+    }
+
     return NextResponse.json(
       {
         success: true,
-        message: 'Account created successfully',
+        message: 'Account created. Please check your email to verify your account.',
         user,
       },
       { status: 201 }

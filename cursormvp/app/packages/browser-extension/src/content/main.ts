@@ -81,27 +81,92 @@ function extractChatGPTMessages(): ConversationMessage[] {
 
 function extractClaudeMessages(): ConversationMessage[] {
   const messages: ConversationMessage[] = [];
-  // Claude-specific selectors
-  const humanMessages = document.querySelectorAll('[data-testid="human-message"]');
-  const assistantMessages = document.querySelectorAll('[data-testid="ai-message"]');
 
-  // Interleave messages (this is simplified, actual implementation needs ordering)
-  humanMessages.forEach((el, index) => {
-    messages.push({
-      id: `human-${index}`,
-      role: 'user',
-      content: el.textContent?.trim() || '',
+  // Claude's DOM structure uses conversation turns
+  // Try multiple selector strategies for robustness
+
+  // Strategy 1: Look for message containers with data attributes
+  const turnContainers = document.querySelectorAll('[data-testid^="conversation-turn"]');
+
+  if (turnContainers.length > 0) {
+    turnContainers.forEach((turn, index) => {
+      const isHuman = turn.querySelector('[data-testid="user-message"]') !== null ||
+                      turn.classList.contains('human-turn') ||
+                      turn.getAttribute('data-is-human') === 'true';
+
+      const contentEl = turn.querySelector('.whitespace-pre-wrap, .prose, [class*="message-content"]');
+      const content = contentEl?.textContent?.trim() || turn.textContent?.trim() || '';
+
+      if (content) {
+        messages.push({
+          id: `turn-${index}`,
+          role: isHuman ? 'user' : 'assistant',
+          content,
+        });
+      }
     });
-  });
+    return messages;
+  }
 
-  assistantMessages.forEach((el, index) => {
-    messages.push({
-      id: `assistant-${index}`,
-      role: 'assistant',
-      content: el.textContent?.trim() || '',
+  // Strategy 2: Look for font-based message classes (Claude's styling)
+  const allMessages = document.querySelectorAll('.font-user-message, .font-claude-message, [class*="human"], [class*="assistant"]');
+
+  if (allMessages.length > 0) {
+    allMessages.forEach((el, index) => {
+      const classList = el.className || '';
+      const isHuman = classList.includes('user') || classList.includes('human');
+      const content = el.textContent?.trim() || '';
+
+      if (content) {
+        messages.push({
+          id: `msg-${index}`,
+          role: isHuman ? 'user' : 'assistant',
+          content,
+        });
+      }
     });
-  });
+    return messages;
+  }
 
+  // Strategy 3: Look for the main conversation container and parse structure
+  const conversationContainer = document.querySelector('[class*="conversation"], [class*="chat-messages"], main');
+
+  if (conversationContainer) {
+    // Look for alternating message blocks
+    const blocks = conversationContainer.querySelectorAll('[class*="message"], [class*="turn"], [class*="block"]');
+
+    blocks.forEach((block, index) => {
+      const text = block.textContent?.trim() || '';
+      // Skip empty or very short blocks (likely UI elements)
+      if (text.length < 10) return;
+
+      // Heuristic: odd indexes are often user messages in alternating UI
+      const isHuman = index % 2 === 0;
+
+      messages.push({
+        id: `block-${index}`,
+        role: isHuman ? 'user' : 'assistant',
+        content: text,
+      });
+    });
+  }
+
+  // Strategy 4: Last resort - check for any data-is-streaming or similar attributes
+  if (messages.length === 0) {
+    const streamingMessages = document.querySelectorAll('[data-is-streaming], [data-message-id]');
+    streamingMessages.forEach((el, index) => {
+      const content = el.textContent?.trim() || '';
+      if (content) {
+        messages.push({
+          id: `stream-${index}`,
+          role: index % 2 === 0 ? 'user' : 'assistant',
+          content,
+        });
+      }
+    });
+  }
+
+  console.log('[Distill] Claude extraction found', messages.length, 'messages');
   return messages;
 }
 

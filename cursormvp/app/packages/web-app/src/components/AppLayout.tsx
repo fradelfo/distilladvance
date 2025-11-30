@@ -15,7 +15,7 @@ export function AppLayout({ user, currentPage, children }: AppLayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden">
       <AppSidebar user={user} currentPage={currentPage} />
-      <main className="flex-1 overflow-auto bg-neutral-50">
+      <main className="flex-1 overflow-auto bg-muted/50">
         {children}
       </main>
     </div>

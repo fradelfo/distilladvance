@@ -4,14 +4,17 @@
  * Client-side Providers
  *
  * Wraps the application with necessary context providers
- * for authentication, tRPC, React Query, analytics, and other client-side state.
+ * for authentication, tRPC, React Query, analytics, theme, and other client-side state.
  */
 
 import { useState, useEffect } from 'react';
 import { SessionProvider, useSession } from 'next-auth/react';
+import { ThemeProvider } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc, createTRPCClient } from './trpc';
 import { initAnalytics, identifyUser, resetUser } from './analytics';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from '@/components/ui/sonner';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -61,11 +64,21 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <SessionProvider>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AnalyticsProvider>{children}</AnalyticsProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <AnalyticsProvider>{children}</AnalyticsProvider>
+              <Toaster />
+            </TooltipProvider>
+          </QueryClientProvider>
+        </trpc.Provider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

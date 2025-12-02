@@ -7,7 +7,7 @@
  * and shows execution history.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -21,6 +21,13 @@ import {
   XCircle,
   Loader2,
   History,
+  Copy,
+  Check,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Square,
+  Timer,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,9 +58,46 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
 import { trpc } from '@/lib/trpc';
 import { extractVariables } from '@/lib/variables';
+import {
+  trackWorkflowDeleted,
+  trackWorkflowExecutionStarted,
+  trackWorkflowExecutionCompleted,
+  trackWorkflowExecutionFailed,
+  trackWorkflowExecutionCancelled,
+} from '@/lib/analytics';
+
+// Helper to format duration
+function formatDuration(ms: number | null | undefined): string {
+  if (!ms) return '-';
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds.toFixed(0)}s`;
+}
+
+// Helper to format cost
+function formatCost(cost: number | null | undefined): string {
+  if (cost === null || cost === undefined) return '$0.00';
+  if (cost < 0.01) return `$${cost.toFixed(4)}`;
+  return `$${cost.toFixed(2)}`;
+}
 
 interface WorkflowDetailContentProps {
   workflowId: string;
@@ -103,10 +147,13 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
 
   const [isRunDialogOpen, setIsRunDialogOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [runInputs, setRunInputs] = useState<Record<string, string>>({});
   const [runError, setRunError] = useState<string | null>(null);
-  const [lastExecution, setLastExecution] = useState<any>(null);
+  const [activeExecutionId, setActiveExecutionId] = useState<string | null>(null);
+  const [expandedExecutionId, setExpandedExecutionId] = useState<string | null>(null);
+  const [copiedStepId, setCopiedStepId] = useState<string | null>(null);
 
   // Fetch workflow
   const {
@@ -124,14 +171,66 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
   const {
     data: executionsData,
     isLoading: isLoadingExecutions,
+    refetch: refetchExecutions,
   } = trpc.workflow.listExecutions.useQuery(
     { workflowId, limit: 10 },
-    { staleTime: 30 * 1000 }
+    { staleTime: 10 * 1000 }
+  );
+
+  // Fetch active execution status (polling when running)
+  const {
+    data: activeExecutionData,
+    refetch: refetchActiveExecution,
+  } = trpc.workflow.getExecution.useQuery(
+    { executionId: activeExecutionId! },
+    {
+      enabled: !!activeExecutionId,
+      refetchInterval: isRunning ? 1000 : false, // Poll every second while running
+      staleTime: 0,
+    }
   );
 
   // Mutations
   const executeWorkflow = trpc.workflow.execute.useMutation();
+  const cancelExecution = trpc.workflow.cancelExecution.useMutation();
   const deleteWorkflow = trpc.workflow.delete.useMutation();
+
+  // Update running state based on execution status
+  useEffect(() => {
+    if (activeExecutionData?.execution && activeExecutionId) {
+      const exec = activeExecutionData.execution;
+      const status = exec.status;
+
+      if (status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED') {
+        setIsRunning(false);
+        setIsCancelling(false);
+        // Refresh executions list
+        refetchExecutions();
+
+        // Track analytics for completion/failure
+        if (status === 'COMPLETED') {
+          const durationMs = exec.completedAt && exec.startedAt
+            ? new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime()
+            : 0;
+          trackWorkflowExecutionCompleted(
+            activeExecutionId,
+            exec.steps?.length || 0,
+            exec.totalTokens || 0,
+            exec.totalCost || 0,
+            durationMs
+          );
+        } else if (status === 'FAILED') {
+          const failedStep = exec.steps?.findIndex((s: any) => s.status === 'FAILED') || 0;
+          const errorStep = exec.steps?.find((s: any) => s.status === 'FAILED');
+          trackWorkflowExecutionFailed(
+            activeExecutionId,
+            failedStep,
+            errorStep?.errorMessage || 'Unknown error'
+          );
+        }
+      }
+    }
+  }, [activeExecutionData, activeExecutionId, refetchExecutions]);
 
   // Calculate required initial inputs
   const requiredInputs = useMemo(() => {
@@ -164,15 +263,58 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
         initialInput: runInputs,
       });
 
-      setLastExecution(result.execution);
+      setActiveExecutionId(result.execution.id);
       setIsRunDialogOpen(false);
-      utils.workflow.listExecutions.invalidate({ workflowId });
+
+      // Track analytics
+      trackWorkflowExecutionStarted(
+        workflowId,
+        result.execution.id,
+        workflowData?.workflow?.steps?.length || 0
+      );
     } catch (err) {
       setRunError(err instanceof Error ? err.message : 'Failed to run workflow');
-    } finally {
       setIsRunning(false);
     }
   };
+
+  // Handle cancel execution
+  const handleCancel = async () => {
+    if (!activeExecutionId) return;
+    setIsCancelling(true);
+
+    try {
+      await cancelExecution.mutateAsync({ executionId: activeExecutionId });
+
+      // Track analytics
+      const completedSteps = activeExecutionData?.execution?.steps?.filter(
+        (s: any) => s.status === 'COMPLETED'
+      ).length || 0;
+      trackWorkflowExecutionCancelled(activeExecutionId, completedSteps);
+    } catch (err) {
+      console.error('Failed to cancel execution:', err);
+      setIsCancelling(false);
+    }
+  };
+
+  // Handle re-run with same inputs
+  const handleRerun = useCallback((execution: any) => {
+    if (execution.initialInput) {
+      setRunInputs(execution.initialInput as Record<string, string>);
+    }
+    setIsRunDialogOpen(true);
+  }, []);
+
+  // Handle copy output
+  const handleCopyOutput = useCallback(async (output: string, stepId: string) => {
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopiedStepId(stepId);
+      setTimeout(() => setCopiedStepId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }, []);
 
   // Handle delete
   const handleDelete = async () => {
@@ -180,6 +322,10 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
     try {
       await deleteWorkflow.mutateAsync({ id: workflowId });
       utils.workflow.list.invalidate();
+
+      // Track analytics
+      trackWorkflowDeleted(workflowId);
+
       router.push('/workflows');
     } catch (err) {
       console.error('Failed to delete workflow:', err);
@@ -350,45 +496,139 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
         </div>
       </div>
 
-      {/* Last Execution Result */}
-      {lastExecution && (
-        <Card className="border-primary">
-          <CardHeader>
+      {/* Active Execution Progress */}
+      {activeExecutionId && activeExecutionData?.execution && (
+        <Card className={isRunning ? 'border-blue-500' : activeExecutionData.execution.status === 'COMPLETED' ? 'border-green-500' : activeExecutionData.execution.status === 'FAILED' ? 'border-destructive' : 'border-muted'}>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Latest Execution</CardTitle>
-              <StatusBadge status={lastExecution.status} />
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-lg">
+                  {isRunning ? 'Running Workflow' : 'Execution Result'}
+                </CardTitle>
+                <StatusBadge status={activeExecutionData.execution.status} />
+              </div>
+              {isRunning && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={isCancelling}
+                  className="text-destructive"
+                >
+                  {isCancelling ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Square className="h-3 w-3 mr-2 fill-current" />
+                      Cancel
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
+            {/* Progress bar */}
+            {activeExecutionData.execution.steps && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span>
+                    Step {activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length} of {activeExecutionData.execution.steps.length}
+                  </span>
+                  <span>
+                    {Math.round((activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length / activeExecutionData.execution.steps.length) * 100)}%
+                  </span>
+                </div>
+                <Progress
+                  value={(activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length / activeExecutionData.execution.steps.length) * 100}
+                  className="h-2"
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {lastExecution.steps?.map((step: any, index: number) => (
+              {activeExecutionData.execution.steps?.map((step: any, index: number) => (
                 <div key={step.id} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{index + 1}</Badge>
-                    <span className="font-medium">Step {index + 1}</span>
-                    <StatusBadge status={step.status} />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="w-6 h-6 flex items-center justify-center p-0">
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">{step.step?.prompt?.title || `Step ${index + 1}`}</span>
+                      <StatusBadge status={step.status} />
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {step.durationMs && (
+                        <span className="flex items-center gap-1">
+                          <Timer className="h-3 w-3" />
+                          {formatDuration(step.durationMs)}
+                        </span>
+                      )}
+                      {step.tokens > 0 && (
+                        <span>{step.tokens.toLocaleString()} tokens</span>
+                      )}
+                      {step.cost > 0 && (
+                        <span>{formatCost(step.cost)}</span>
+                      )}
+                    </div>
                   </div>
                   {step.output && (
-                    <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                      {step.output}
-                    </pre>
+                    <div className="relative group">
+                      <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
+                        {step.output}
+                      </pre>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleCopyOutput(step.output, step.id)}
+                            >
+                              {copiedStepId === step.id ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{copiedStepId === step.id ? 'Copied!' : 'Copy output'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   )}
-                  {step.error && (
-                    <p className="text-sm text-destructive">{step.error}</p>
+                  {step.errorMessage && (
+                    <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                      {step.errorMessage}
+                    </p>
                   )}
                 </div>
               ))}
 
               <Separator />
 
-              <div className="flex gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span>{lastExecution.totalTokens} tokens</span>
+              <div className="flex items-center justify-between">
+                <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Coins className="h-4 w-4" />
+                    <span>{activeExecutionData.execution.totalTokens?.toLocaleString() || 0} tokens</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>{formatCost(activeExecutionData.execution.totalCost)}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span>${lastExecution.totalCost?.toFixed(4)}</span>
-                </div>
+                {!isRunning && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRerun(activeExecutionData.execution)}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Run Again
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
@@ -445,27 +685,142 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
             </div>
           ) : executionsData?.executions?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
+              <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No execution history yet.</p>
+              <p className="text-sm mt-1">Run your workflow to see executions here.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {executionsData?.executions?.map((exec: any) => (
-                <Card key={exec.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <StatusBadge status={exec.status} />
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(exec.startedAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{exec.totalTokens} tokens</span>
-                        <span>${exec.totalCost?.toFixed(4)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Collapsible
+                  key={exec.id}
+                  open={expandedExecutionId === exec.id}
+                  onOpenChange={(open) => setExpandedExecutionId(open ? exec.id : null)}
+                >
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <CardContent className="py-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <StatusBadge status={exec.status} />
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(exec.startedAt).toLocaleString()}
+                              </span>
+                              {exec.completedAt && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Timer className="h-3 w-3" />
+                                  {formatDuration(new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime())}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>{exec.totalTokens?.toLocaleString() || 0} tokens</span>
+                              <span>{formatCost(exec.totalCost)}</span>
+                            </div>
+                            {expandedExecutionId === exec.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent className="pt-0 border-t">
+                        <div className="space-y-4 pt-4">
+                          {/* Step outputs */}
+                          {exec.steps?.map((step: any, index: number) => (
+                            <div key={step.id} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="w-6 h-6 flex items-center justify-center p-0">
+                                    {index + 1}
+                                  </Badge>
+                                  <span className="font-medium text-sm">
+                                    {step.step?.prompt?.title || `Step ${index + 1}`}
+                                  </span>
+                                  <StatusBadge status={step.status} />
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  {step.durationMs && (
+                                    <span>{formatDuration(step.durationMs)}</span>
+                                  )}
+                                  {step.tokens > 0 && (
+                                    <span>{step.tokens.toLocaleString()} tok</span>
+                                  )}
+                                </div>
+                              </div>
+                              {step.output && (
+                                <div className="relative group">
+                                  <pre className="text-xs bg-muted p-2 rounded overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                    {step.output}
+                                  </pre>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCopyOutput(step.output, step.id);
+                                    }}
+                                  >
+                                    {copiedStepId === step.id ? (
+                                      <Check className="h-3 w-3 text-green-500" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              )}
+                              {step.errorMessage && (
+                                <p className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+                                  {step.errorMessage}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+
+                          {/* Summary and actions */}
+                          <Separator />
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-4 text-xs text-muted-foreground sm:hidden">
+                              <span>{exec.totalTokens?.toLocaleString() || 0} tokens</span>
+                              <span>{formatCost(exec.totalCost)}</span>
+                            </div>
+                            <div className="flex items-center gap-2 ml-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveExecutionId(exec.id);
+                                  setExpandedExecutionId(null);
+                                }}
+                              >
+                                View Details
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRerun(exec);
+                                }}
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                Re-run
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
               ))}
             </div>
           )}

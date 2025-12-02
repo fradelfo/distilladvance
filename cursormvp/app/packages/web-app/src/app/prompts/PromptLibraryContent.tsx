@@ -7,16 +7,16 @@
  * including search, filtering, sorting, and displaying prompts.
  */
 
-import { useState, useCallback, useMemo, lazy, Suspense } from 'react';
-import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import { EmptyState } from '@/components/EmptyState';
 import { PromptCard, PromptCardSkeleton } from '@/components/PromptCard';
 import { PromptSearch } from '@/components/PromptSearch';
+import { type SortOption, SortSelect } from '@/components/SortSelect';
 import { TagFilter } from '@/components/TagFilter';
-import { SortSelect, type SortOption } from '@/components/SortSelect';
-import { EmptyState } from '@/components/EmptyState';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
 import { trpc } from '@/lib/trpc';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useCallback, useMemo, useState } from 'react';
 
 // Lazy load SemanticSearch - only loaded when user switches to semantic mode
 const SemanticSearch = dynamic(
@@ -108,16 +108,10 @@ export function PromptLibraryContent() {
     const sorted = [...prompts];
     switch (sortBy) {
       case 'recent':
-        sorted.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
       case 'oldest':
-        sorted.sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
+        sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         break;
       case 'most_used':
         sorted.sort((a, b) => b.usageCount - a.usageCount);
@@ -135,14 +129,17 @@ export function PromptLibraryContent() {
   }, []);
 
   // Handle copy prompt
-  const handleCopy = useCallback(async (id: string) => {
-    const prompt = prompts.find((p: PromptListItem) => p.id === id);
-    if (prompt) {
-      // For now, we just copy the title. In detail view, we copy the full template
-      await navigator.clipboard.writeText(`Prompt: ${prompt.title}`);
-      // TODO: Show toast notification
-    }
-  }, [prompts]);
+  const handleCopy = useCallback(
+    async (id: string) => {
+      const prompt = prompts.find((p: PromptListItem) => p.id === id);
+      if (prompt) {
+        // For now, we just copy the title. In detail view, we copy the full template
+        await navigator.clipboard.writeText(`Prompt: ${prompt.title}`);
+        // TODO: Show toast notification
+      }
+    },
+    [prompts]
+  );
 
   // Handle run prompt (navigate to detail with run mode)
   const handleRun = useCallback((id: string) => {
@@ -169,12 +166,7 @@ export function PromptLibraryContent() {
           </div>
           <Link href="/prompts/new" className="btn-primary px-4 py-2">
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -206,9 +198,7 @@ export function PromptLibraryContent() {
 
   // Empty state for no search results
   const noSearchResults =
-    !isLoading &&
-    prompts.length === 0 &&
-    (searchQuery || selectedTags.length > 0);
+    !isLoading && prompts.length === 0 && (searchQuery || selectedTags.length > 0);
 
   return (
     <div>
@@ -222,12 +212,7 @@ export function PromptLibraryContent() {
         </div>
         <Link href="/prompts/new" className="btn-primary px-4 py-2 self-start">
           <span className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -303,9 +288,7 @@ export function PromptLibraryContent() {
       </div>
 
       {/* Semantic Search Mode */}
-      {searchMode === 'semantic' && (
-        <SemanticSearch includePublic={true} />
-      )}
+      {searchMode === 'semantic' && <SemanticSearch includePublic={true} />}
 
       {/* Browse Mode - Search and Filters */}
       {searchMode === 'browse' && (
@@ -313,11 +296,7 @@ export function PromptLibraryContent() {
           <div className="mb-6 space-y-4">
             {/* Search Bar */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <PromptSearch
-                onSearch={handleSearch}
-                initialValue={searchQuery}
-                className="flex-1"
-              />
+              <PromptSearch onSearch={handleSearch} initialValue={searchQuery} className="flex-1" />
               <div className="flex items-center gap-4">
                 <SortSelect value={sortBy} onChange={setSortBy} />
                 {/* View Mode Toggle */}
@@ -403,9 +382,7 @@ export function PromptLibraryContent() {
           {isLoading && (
             <div
               className={
-                viewMode === 'grid'
-                  ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                  : 'space-y-4'
+                viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'
               }
             >
               {Array.from({ length: 6 }).map((_, i) => (
@@ -439,9 +416,7 @@ export function PromptLibraryContent() {
             <>
               <div
                 className={
-                  viewMode === 'grid'
-                    ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                    : 'space-y-4'
+                  viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'
                 }
               >
                 {sortedPrompts.map((prompt) => (

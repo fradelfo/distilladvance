@@ -13,14 +13,14 @@
  * - Public/private toggle
  */
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { toast } from 'sonner';
-import { Check, Loader2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
+import { Check, Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // Lazy load CoachPanel - only loads when editing a prompt
 const CoachPanel = dynamic(
@@ -137,8 +137,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
         description !== (prompt.metadata?.description || '') ||
         isPublic !== (prompt.isPublic || false) ||
         JSON.stringify(tags) !== JSON.stringify(prompt.tags || []) ||
-        JSON.stringify(variables) !==
-          JSON.stringify(prompt.metadata?.variables || []);
+        JSON.stringify(variables) !== JSON.stringify(prompt.metadata?.variables || []);
       setHasChanges(hasContentChanges);
     }
   }, [title, content, description, tags, isPublic, variables, prompt]);
@@ -209,9 +208,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
   // Update variable metadata
   const updateVariable = useCallback(
     (index: number, field: keyof Variable, value: string | boolean) => {
-      setVariables((prev) =>
-        prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
-      );
+      setVariables((prev) => prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
     },
     []
   );
@@ -249,17 +246,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    promptId,
-    title,
-    description,
-    content,
-    variables,
-    tags,
-    isPublic,
-    updateMutation,
-    router,
-  ]);
+  }, [promptId, title, description, content, variables, tags, isPublic, updateMutation, router]);
 
   // Loading state
   if (isLoading) {
@@ -280,9 +267,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
     return (
       <div className="card p-8 text-center">
         <p className="text-lg font-medium text-foreground mb-2">
-          {error?.message === 'Prompt not found'
-            ? 'Prompt not found'
-            : 'Failed to load prompt'}
+          {error?.message === 'Prompt not found' ? 'Prompt not found' : 'Failed to load prompt'}
         </p>
         <p className="text-sm text-muted-foreground mb-6">
           {error?.message ||
@@ -302,18 +287,8 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
         href={`/prompts/${promptId}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Back to Prompt
       </Link>
@@ -337,10 +312,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href={`/prompts/${promptId}`}
-            className="btn-outline px-4 py-2"
-          >
+          <Link href={`/prompts/${promptId}`} className="btn-outline px-4 py-2">
             Cancel
           </Link>
           <button
@@ -359,10 +331,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
 
       {/* Title */}
       <div className="card p-6 mb-4">
-        <label
-          htmlFor="prompt-title"
-          className="block text-sm font-medium text-foreground mb-2"
-        >
+        <label htmlFor="prompt-title" className="block text-sm font-medium text-foreground mb-2">
           Title <span className="text-error-500">*</span>
         </label>
         <input
@@ -424,12 +393,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
         {mode === 'edit' && (
           <div className="relative group">
             <button className="btn-outline px-3 py-2 text-sm flex items-center gap-2">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -467,9 +431,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
                     if (name && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
                       insertVariable(name);
                     } else if (name) {
-                      alert(
-                        'Invalid variable name. Use letters, numbers, and underscores only.'
-                      );
+                      alert('Invalid variable name. Use letters, numbers, and underscores only.');
                     }
                   }}
                   className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-secondary text-primary-600"
@@ -547,9 +509,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
       {extractedVarNames.length > 0 && (
         <div className="card p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Variable Settings
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Variable Settings</h2>
             <button
               onClick={() => setShowVariablePanel(!showVariablePanel)}
               className="text-sm text-muted-foreground hover:text-foreground"
@@ -566,9 +526,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
                     <th className="text-left py-2 px-2 font-medium text-foreground w-28">
                       Variable
                     </th>
-                    <th className="text-left py-2 px-2 font-medium text-foreground">
-                      Description
-                    </th>
+                    <th className="text-left py-2 px-2 font-medium text-foreground">Description</th>
                     <th className="text-left py-2 px-2 font-medium text-foreground w-36">
                       Example
                     </th>
@@ -589,9 +547,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
                         <input
                           type="text"
                           value={variable.description}
-                          onChange={(e) =>
-                            updateVariable(index, 'description', e.target.value)
-                          }
+                          onChange={(e) => updateVariable(index, 'description', e.target.value)}
                           placeholder="What this variable represents"
                           className="input w-full text-xs py-1"
                         />
@@ -600,9 +556,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
                         <input
                           type="text"
                           value={variable.example}
-                          onChange={(e) =>
-                            updateVariable(index, 'example', e.target.value)
-                          }
+                          onChange={(e) => updateVariable(index, 'example', e.target.value)}
                           placeholder="Example value"
                           className="input w-full text-xs py-1"
                         />
@@ -611,9 +565,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
                         <input
                           type="checkbox"
                           checked={variable.required}
-                          onChange={(e) =>
-                            updateVariable(index, 'required', e.target.checked)
-                          }
+                          onChange={(e) => updateVariable(index, 'required', e.target.checked)}
                           className="h-4 w-4 rounded border-input text-primary-600 focus:ring-primary-500"
                         />
                       </td>
@@ -628,9 +580,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
 
       {/* Tags */}
       <div className="card p-6 mb-4">
-        <label className="block text-sm font-medium text-foreground mb-2">
-          Tags
-        </label>
+        <label className="block text-sm font-medium text-foreground mb-2">Tags</label>
         <div className="flex flex-wrap gap-2 p-2 border border-border rounded-lg bg-background min-h-[42px]">
           {tags.map((tag) => (
             <span
@@ -638,17 +588,8 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
               className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-foreground rounded-md text-sm"
             >
               {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="hover:text-error-500"
-              >
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+              <button type="button" onClick={() => removeTag(tag)} className="hover:text-error-500">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -678,9 +619,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
       <div className="card p-6 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-foreground">
-              Public Prompt
-            </h3>
+            <h3 className="text-sm font-medium text-foreground">Public Prompt</h3>
             <p className="text-xs text-muted-foreground">
               Make this prompt discoverable by others in your workspace
             </p>
@@ -710,10 +649,7 @@ export function PromptEditContent({ promptId }: PromptEditContentProps) {
           onApplySuggestion={(suggestion) => {
             // Apply the suggested text if there's a current/suggested pair
             if (suggestion.current && suggestion.suggested) {
-              const newContent = content.replace(
-                suggestion.current,
-                suggestion.suggested
-              );
+              const newContent = content.replace(suggestion.current, suggestion.suggested);
               if (newContent !== content) {
                 setContent(newContent);
                 setHasChanges(true);

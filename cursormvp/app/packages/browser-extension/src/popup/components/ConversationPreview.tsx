@@ -1,5 +1,5 @@
-import React from 'react';
 import type { ConversationMessage } from '@distill/shared-types';
+import type React from 'react';
 
 interface ConversationPreviewProps {
   messages: ConversationMessage[];

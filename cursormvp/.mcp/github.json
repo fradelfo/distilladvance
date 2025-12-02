@@ -9,9 +9,7 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
       "config": {
-        "repositories": [
-          "${GITHUB_OWNER}/${GITHUB_REPO}"
-        ],
+        "repositories": ["${GITHUB_OWNER}/${GITHUB_REPO}"],
         "features": {
           "issues": true,
           "pull_requests": true,
@@ -32,12 +30,7 @@
             "metadata",
             "repository_projects"
           ],
-          "write": [
-            "issues",
-            "pull_requests",
-            "discussions",
-            "actions"
-          ]
+          "write": ["issues", "pull_requests", "discussions", "actions"]
         },
         "automation": {
           "issue_templates": {
@@ -60,12 +53,7 @@
           },
           "pr_automation": {
             "auto_assign_reviewers": true,
-            "required_checks": [
-              "ci/tests",
-              "ci/lint",
-              "ci/security-scan",
-              "ci/build"
-            ],
+            "required_checks": ["ci/tests", "ci/lint", "ci/security-scan", "ci/build"],
             "auto_merge": {
               "enabled": false,
               "conditions": [
@@ -218,11 +206,7 @@
       },
       "pr_review": {
         "auto_review_small_prs": true,
-        "review_agents": [
-          "code-reviewer",
-          "security-agent",
-          "quality-agent"
-        ],
+        "review_agents": ["code-reviewer", "security-agent", "quality-agent"],
         "review_criteria": [
           "code_quality",
           "security_vulnerabilities",

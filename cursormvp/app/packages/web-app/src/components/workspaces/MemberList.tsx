@@ -90,9 +90,7 @@ export function MemberList({
             {/* Info */}
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">
-                  {member.user.name || 'Unnamed'}
-                </span>
+                <span className="font-medium text-foreground">{member.user.name || 'Unnamed'}</span>
                 {member.userId === currentUserId && (
                   <span className="text-xs text-muted-foreground">(you)</span>
                 )}
@@ -150,12 +148,7 @@ export function MemberList({
                 className="p-1.5 rounded-md text-muted-foreground hover:text-error-600 hover:bg-error-50"
                 title={member.userId === currentUserId ? 'Leave workspace' : 'Remove member'}
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

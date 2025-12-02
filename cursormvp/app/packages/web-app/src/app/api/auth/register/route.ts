@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { hashPassword } from '@/lib/password';
 import { createVerificationToken, sendVerificationEmail } from '@/lib/email-verification';
+import { hashPassword } from '@/lib/password';
+import { prisma } from '@/lib/prisma';
+import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 // Validation schema for registration
 const registerSchema = z.object({
@@ -11,11 +11,7 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters'),
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name is too long')
-    .optional(),
+  name: z.string().min(1, 'Name is required').max(100, 'Name is too long').optional(),
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -95,10 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error('Registration error:', error);
 
     // Handle Prisma unique constraint error
-    if (
-      error instanceof Error &&
-      error.message.includes('Unique constraint failed')
-    ) {
+    if (error instanceof Error && error.message.includes('Unique constraint failed')) {
       return NextResponse.json(
         {
           success: false,

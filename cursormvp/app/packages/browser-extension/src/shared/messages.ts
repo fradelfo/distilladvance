@@ -4,11 +4,11 @@
  */
 
 import type {
-  ExtensionMessage,
-  ExtensionMessageType,
   CapturedConversation,
   ConversationMessage,
   DistillResult,
+  ExtensionMessage,
+  ExtensionMessageType,
   ExtensionSettings,
 } from '@distill/shared-types';
 
@@ -220,12 +220,10 @@ export function createMessageListener(handlers: MessageHandlers) {
       const result = handler(message.payload, sender);
 
       if (result instanceof Promise) {
-        result
-          .then(sendResponse)
-          .catch((error) => {
-            console.error('[Distill] Handler error:', error);
-            sendResponse({ success: false, error: error.message });
-          });
+        result.then(sendResponse).catch((error) => {
+          console.error('[Distill] Handler error:', error);
+          sendResponse({ success: false, error: error.message });
+        });
         return true; // Keep channel open for async response
       }
 

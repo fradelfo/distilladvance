@@ -6,7 +6,7 @@
 
 import { randomBytes } from 'crypto';
 import { prisma } from '../lib/prisma.js';
-import { resend, EMAIL_FROM } from '../lib/resend.js';
+import { EMAIL_FROM, resend } from '../lib/resend.js';
 
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 const WEB_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -128,7 +128,9 @@ If you didn't create an account with Distill, you can safely ignore this email.
 /**
  * Verify email with token
  */
-export async function verifyEmailToken(token: string): Promise<{ success: boolean; email?: string; error?: string }> {
+export async function verifyEmailToken(
+  token: string
+): Promise<{ success: boolean; email?: string; error?: string }> {
   try {
     // Find the token
     const verificationToken = await prisma.verificationToken.findUnique({
@@ -172,7 +174,9 @@ export async function verifyEmailToken(token: string): Promise<{ success: boolea
 /**
  * Resend verification email for a user
  */
-export async function resendVerificationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+export async function resendVerificationEmail(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
   try {
     // Check if user exists and is not already verified
     const user = await prisma.user.findUnique({

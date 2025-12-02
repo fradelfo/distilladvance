@@ -6,7 +6,7 @@
  * Form for creating and editing workspaces.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface WorkspaceFormData {
   name: string;
@@ -37,9 +37,7 @@ export function WorkspaceForm({
   onCancel,
   error,
 }: WorkspaceFormProps) {
-  const [formData, setFormData] = useState<WorkspaceFormData>(
-    initialValues || defaultValues
-  );
+  const [formData, setFormData] = useState<WorkspaceFormData>(initialValues || defaultValues);
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
     slug?: string;
@@ -99,9 +97,7 @@ export function WorkspaceForm({
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -120,11 +116,7 @@ export function WorkspaceForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Alert */}
       {error && (
-        <div
-          className="rounded-md bg-error-50 p-4"
-          role="alert"
-          aria-live="polite"
-        >
+        <div className="rounded-md bg-error-50 p-4" role="alert" aria-live="polite">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
@@ -149,10 +141,7 @@ export function WorkspaceForm({
 
       {/* Name Field */}
       <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="name" className="block text-sm font-medium text-foreground">
           Workspace Name <span className="text-error-500">*</span>
         </label>
         <input
@@ -177,10 +166,7 @@ export function WorkspaceForm({
 
       {/* Slug Field */}
       <div>
-        <label
-          htmlFor="slug"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="slug" className="block text-sm font-medium text-foreground">
           URL Slug <span className="text-error-500">*</span>
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
@@ -208,18 +194,14 @@ export function WorkspaceForm({
         )}
         {!isEditing && (
           <p className="mt-1 text-xs text-muted-foreground">
-            Lowercase letters, numbers, and hyphens only. Cannot be changed
-            later.
+            Lowercase letters, numbers, and hyphens only. Cannot be changed later.
           </p>
         )}
       </div>
 
       {/* Description Field */}
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="description" className="block text-sm font-medium text-foreground">
           Description
         </label>
         <textarea
@@ -238,9 +220,7 @@ export function WorkspaceForm({
           maxLength={500}
         />
         {validationErrors.description && (
-          <p className="mt-1 text-sm text-error-600">
-            {validationErrors.description}
-          </p>
+          <p className="mt-1 text-sm text-error-600">{validationErrors.description}</p>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
           {formData.description.length}/500 characters
@@ -260,11 +240,7 @@ export function WorkspaceForm({
         <button type="submit" disabled={isLoading} className="btn-primary px-4 py-2">
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"

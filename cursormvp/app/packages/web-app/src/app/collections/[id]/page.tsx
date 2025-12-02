@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppLayout';
+import { redirect } from 'next/navigation';
 import { CollectionDetailContent } from './CollectionDetailContent';
 
 interface CollectionDetailPageProps {
@@ -15,9 +15,7 @@ export async function generateMetadata({ params }: CollectionDetailPageProps) {
   };
 }
 
-export default async function CollectionDetailPage({
-  params,
-}: CollectionDetailPageProps) {
+export default async function CollectionDetailPage({ params }: CollectionDetailPageProps) {
   const session = await auth();
   const { id } = await params;
 

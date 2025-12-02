@@ -1,5 +1,5 @@
-import React from 'react';
 import type { DistillResult } from '@distill/shared-types';
+import type React from 'react';
 
 interface SuccessStateProps {
   result: DistillResult;

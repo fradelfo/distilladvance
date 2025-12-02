@@ -1,21 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import Stripe from 'stripe';
-import { stripe, STRIPE_WEBHOOK_SECRET } from '@/lib/stripe';
 import {
   createSubscriptionFromCheckout,
-  updateSubscriptionFromStripe,
   handleSubscriptionDeleted,
+  updateSubscriptionFromStripe,
 } from '@/lib/billing';
+import { STRIPE_WEBHOOK_SECRET, stripe } from '@/lib/stripe';
 import type { PlanType } from '@/lib/stripe';
+import { headers } from 'next/headers';
+import { type NextRequest, NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!stripe) {
     console.warn('[Webhook] Stripe not configured');
-    return NextResponse.json(
-      { success: false, message: 'Stripe not configured' },
-      { status: 503 }
-    );
+    return NextResponse.json({ success: false, message: 'Stripe not configured' }, { status: 503 });
   }
 
   const body = await request.text();
@@ -60,9 +57,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
           if (userId) {
             // Access subscription period timestamps
-            const sub = subscription as unknown as { current_period_start: number; current_period_end: number };
+            const sub = subscription as unknown as {
+              current_period_start: number;
+              current_period_end: number;
+            };
             const periodStart = sub.current_period_start || Math.floor(Date.now() / 1000);
-            const periodEnd = sub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+            const periodEnd =
+              sub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
 
             await createSubscriptionFromCheckout(
               userId,
@@ -82,9 +83,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const subscription = event.data.object as Stripe.Subscription;
 
         // Access subscription period timestamps
-        const sub = subscription as unknown as { current_period_start: number; current_period_end: number };
+        const sub = subscription as unknown as {
+          current_period_start: number;
+          current_period_end: number;
+        };
         const periodStart = sub.current_period_start || Math.floor(Date.now() / 1000);
-        const periodEnd = sub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+        const periodEnd =
+          sub.current_period_end || Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
 
         await updateSubscriptionFromStripe(
           subscription.id,

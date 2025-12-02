@@ -1,7 +1,7 @@
-import { defineConfig, build } from 'vite';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, existsSync, readdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 import react from '@vitejs/plugin-react';
+import { build, defineConfig } from 'vite';
 
 // Plugin to copy static files, fix output paths, and build content script as IIFE
 function copyStaticFiles() {
@@ -51,7 +51,10 @@ function copyStaticFiles() {
             mkdirSync(distOptionsDir, { recursive: true });
           }
           if (existsSync(resolve(srcOptionsDir, 'index.html'))) {
-            copyFileSync(resolve(srcOptionsDir, 'index.html'), resolve(distOptionsDir, 'index.html'));
+            copyFileSync(
+              resolve(srcOptionsDir, 'index.html'),
+              resolve(distOptionsDir, 'index.html')
+            );
           }
         }
 

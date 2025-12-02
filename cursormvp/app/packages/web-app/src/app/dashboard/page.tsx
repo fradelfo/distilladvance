@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
+import { AppLayout } from '@/components/AppLayout';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AppLayout } from '@/components/AppLayout';
 import { HomeContent } from './HomeContent';
 
 export const metadata = {
@@ -29,12 +29,7 @@ export default async function HomePage() {
           </div>
           <Link href="/prompts/new" className="btn-primary px-4 py-2">
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

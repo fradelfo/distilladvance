@@ -1,5 +1,5 @@
-import React from 'react';
 import type { ConversationSource } from '@distill/shared-types';
+import type React from 'react';
 
 interface CaptureButtonProps {
   onClick: () => void;

@@ -17,10 +17,7 @@ export default function HomePage() {
             >
               Log in
             </Link>
-            <Link
-              href="/signup"
-              className="btn-primary px-4 py-2 text-sm"
-            >
+            <Link href="/signup" className="btn-primary px-4 py-2 text-sm">
               Get Started
             </Link>
           </nav>
@@ -35,21 +32,15 @@ export default function HomePage() {
             <span className="text-primary-600"> Reusable Prompts</span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Capture your best AI conversations and distill them into team-ready prompt
-            templates. With built-in coaching and privacy controls, Distill helps your
-            team work smarter with AI.
+            Capture your best AI conversations and distill them into team-ready prompt templates.
+            With built-in coaching and privacy controls, Distill helps your team work smarter with
+            AI.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="btn-primary w-full px-8 py-3 text-base sm:w-auto"
-            >
+            <Link href="/signup" className="btn-primary w-full px-8 py-3 text-base sm:w-auto">
               Start for Free
             </Link>
-            <Link
-              href="#features"
-              className="btn-outline w-full px-8 py-3 text-base sm:w-auto"
-            >
+            <Link href="#features" className="btn-outline w-full px-8 py-3 text-base sm:w-auto">
               Learn More
             </Link>
           </div>
@@ -60,32 +51,26 @@ export default function HomePage() {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="card p-6">
               <div className="mb-4 text-3xl">📸</div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                Capture in One Click
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">Capture in One Click</h3>
               <p className="text-sm text-muted-foreground">
-                Our browser extension captures conversations from ChatGPT, Claude,
-                Gemini, and more with a single click.
+                Our browser extension captures conversations from ChatGPT, Claude, Gemini, and more
+                with a single click.
               </p>
             </div>
             <div className="card p-6">
               <div className="mb-4 text-3xl">✨</div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                Auto-Distill Templates
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">Auto-Distill Templates</h3>
               <p className="text-sm text-muted-foreground">
-                AI automatically extracts reusable prompt templates with variables,
-                tags, and examples.
+                AI automatically extracts reusable prompt templates with variables, tags, and
+                examples.
               </p>
             </div>
             <div className="card p-6">
               <div className="mb-4 text-3xl">👥</div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                Team Sharing
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">Team Sharing</h3>
               <p className="text-sm text-muted-foreground">
-                Share prompts across your workspace with privacy controls. Build a
-                team prompt playbook.
+                Share prompts across your workspace with privacy controls. Build a team prompt
+                playbook.
               </p>
             </div>
           </div>
@@ -103,16 +88,10 @@ export default function HomePage() {
               </span>
             </div>
             <nav className="flex gap-6">
-              <Link
-                href="/privacy"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
+              <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
                 Privacy
               </Link>
-              <Link
-                href="/terms"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
+              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">
                 Terms
               </Link>
             </nav>

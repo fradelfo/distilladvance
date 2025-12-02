@@ -1,16 +1,16 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { signupSchema, type SignupFormData } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { type SignupFormData, signupSchema } from '@/lib/validations/auth';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -76,9 +76,7 @@ export default function SignupPage() {
             <span className="text-3xl">💧</span>
             <span className="text-2xl font-semibold text-foreground">Distill</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-foreground">
-            Create your account
-          </h1>
+          <h1 className="mt-6 text-2xl font-bold text-foreground">Create your account</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Start capturing and sharing your best AI prompts
           </p>
@@ -142,9 +140,7 @@ export default function SignupPage() {
                 placeholder="John Doe"
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -158,9 +154,7 @@ export default function SignupPage() {
                 placeholder="you@company.com"
                 disabled={isSubmitting}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -191,17 +185,11 @@ export default function SignupPage() {
                 disabled={isSubmitting}
               />
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive">
-                  {errors.confirmPassword.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
               )}
             </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12"
-            >
+            <Button type="submit" disabled={isSubmitting} className="w-full h-12">
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -229,10 +217,7 @@ export default function SignupPage() {
         {/* Sign In Link */}
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-primary hover:text-primary/80"
-          >
+          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
             Sign in
           </Link>
         </p>

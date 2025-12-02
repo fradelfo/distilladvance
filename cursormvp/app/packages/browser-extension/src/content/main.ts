@@ -4,13 +4,13 @@
  */
 
 import type {
+  CapturedConversation,
   ConversationMessage,
   ConversationSource,
   ExtensionMessage,
-  CapturedConversation,
 } from '@distill/shared-types';
-import { showCaptureModal, CaptureModal } from './components/CaptureModal';
 import { MessageTypes } from '../shared/messages';
+import { type CaptureModal, showCaptureModal } from './components/CaptureModal';
 
 // Module state
 let currentModal: CaptureModal | null = null;
@@ -45,7 +45,7 @@ async function extractConversation(): Promise<ConversationMessage[]> {
       messages.push(...extractChatGPTMessages());
       break;
     case 'claude':
-      messages.push(...await extractClaudeMessages());
+      messages.push(...(await extractClaudeMessages()));
       break;
     case 'gemini':
       messages.push(...extractGeminiMessages());
@@ -99,13 +99,16 @@ async function extractClaudeMessages(): Promise<ConversationMessage[]> {
   if (turnContainers.length > 0) {
     turnContainers.forEach((turn, index) => {
       // Try multiple ways to detect if this is a human message
-      const isHuman = turn.querySelector('[data-testid="user-message"]') !== null ||
-                      turn.classList.contains('human-turn') ||
-                      turn.getAttribute('data-is-human') === 'true' ||
-                      turn.querySelector('[class*="user"]') !== null;
+      const isHuman =
+        turn.querySelector('[data-testid="user-message"]') !== null ||
+        turn.classList.contains('human-turn') ||
+        turn.getAttribute('data-is-human') === 'true' ||
+        turn.querySelector('[class*="user"]') !== null;
 
       // Try multiple ways to get content
-      const contentEl = turn.querySelector('.whitespace-pre-wrap, .prose, [class*="message-content"], [class*="font-"]');
+      const contentEl = turn.querySelector(
+        '.whitespace-pre-wrap, .prose, [class*="message-content"], [class*="font-"]'
+      );
       let content = '';
 
       if (contentEl) {
@@ -126,11 +129,15 @@ async function extractClaudeMessages(): Promise<ConversationMessage[]> {
           role: isHuman ? 'user' : 'assistant',
           content,
         });
-        console.log(`[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`);
+        console.log(
+          `[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`
+        );
       } else if (!content) {
         console.warn(`[Distill] Skipped turn ${index}: no content found`);
       } else if (content.length <= 10) {
-        console.warn(`[Distill] Skipped turn ${index}: content too short (${content.length} chars)`);
+        console.warn(
+          `[Distill] Skipped turn ${index}: content too short (${content.length} chars)`
+        );
       }
     });
     console.log('[Distill] Strategy 1: Found', messages.length, 'messages');
@@ -138,7 +145,9 @@ async function extractClaudeMessages(): Promise<ConversationMessage[]> {
   }
 
   // Strategy 2: Look for font-based message classes (Claude's styling)
-  const allMessages = document.querySelectorAll('.font-user-message, .font-claude-message, [class*="human"], [class*="assistant"]');
+  const allMessages = document.querySelectorAll(
+    '.font-user-message, .font-claude-message, [class*="human"], [class*="assistant"]'
+  );
   console.log(`[Distill] Strategy 2: Found ${allMessages.length} font-based messages`);
 
   if (allMessages.length > 0) {
@@ -155,7 +164,9 @@ async function extractClaudeMessages(): Promise<ConversationMessage[]> {
           role: isHuman ? 'user' : 'assistant',
           content,
         });
-        console.log(`[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`);
+        console.log(
+          `[Distill] Extracted message ${index + 1}: ${isHuman ? 'user' : 'assistant'} (${content.length} chars)`
+        );
       }
     });
     console.log('[Distill] Strategy 2 result: Found', messages.length, 'messages');
@@ -163,11 +174,15 @@ async function extractClaudeMessages(): Promise<ConversationMessage[]> {
   }
 
   // Strategy 3: Look for the main conversation container and parse structure
-  const conversationContainer = document.querySelector('[class*="conversation"], [class*="chat-messages"], main');
+  const conversationContainer = document.querySelector(
+    '[class*="conversation"], [class*="chat-messages"], main'
+  );
 
   if (conversationContainer) {
     // Look for alternating message blocks
-    const blocks = conversationContainer.querySelectorAll('[class*="message"], [class*="turn"], [class*="block"]');
+    const blocks = conversationContainer.querySelectorAll(
+      '[class*="message"], [class*="turn"], [class*="block"]'
+    );
 
     blocks.forEach((block, index) => {
       const text = block.textContent?.trim() || '';
@@ -237,7 +252,9 @@ async function scrollToLoadAllMessages(): Promise<void> {
         '[data-testid^="conversation-turn"], .font-user-message, .font-claude-message, [class*="message"]'
       ).length;
 
-      console.log(`[Distill] Scroll attempt ${attempts}: ${currentMessageCount} messages (scrolling to ${scrollDirection})`);
+      console.log(
+        `[Distill] Scroll attempt ${attempts}: ${currentMessageCount} messages (scrolling to ${scrollDirection})`
+      );
 
       // Alternate between scrolling to bottom and top to load all messages
       if (scrollDirection === 'bottom') {
@@ -287,8 +304,12 @@ function findScrollContainer(): HTMLElement | null {
   for (const candidate of candidates) {
     if (candidate && candidate instanceof HTMLElement) {
       const style = window.getComputedStyle(candidate);
-      if (style.overflow === 'auto' || style.overflow === 'scroll' ||
-          style.overflowY === 'auto' || style.overflowY === 'scroll') {
+      if (
+        style.overflow === 'auto' ||
+        style.overflow === 'scroll' ||
+        style.overflowY === 'auto' ||
+        style.overflowY === 'scroll'
+      ) {
         return candidate;
       }
     }
@@ -373,14 +394,16 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendRe
           console.log('[Distill] Conversation captured:', capturedData.messages.length, 'messages');
 
           // Send back to background script
-          chrome.runtime.sendMessage({
-            type: MessageTypes.CONVERSATION_CAPTURED,
-            payload: capturedData,
-            source: 'content',
-            timestamp: Date.now(),
-          }).catch((err) => {
-            console.warn('[Distill] Failed to send to background:', err);
-          });
+          chrome.runtime
+            .sendMessage({
+              type: MessageTypes.CONVERSATION_CAPTURED,
+              payload: capturedData,
+              source: 'content',
+              timestamp: Date.now(),
+            })
+            .catch((err) => {
+              console.warn('[Distill] Failed to send to background:', err);
+            });
 
           sendResponse({ success: true, data: capturedData });
           break;
@@ -493,5 +516,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
-export {};

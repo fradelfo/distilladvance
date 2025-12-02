@@ -4,7 +4,7 @@
  * Tests for tracking endpoints and dashboard metrics queries.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Create mocks at module scope
 const mockTrackChatCaptured = vi.fn().mockResolvedValue(undefined);
@@ -21,7 +21,7 @@ const mockGetTeamHealthMetrics = vi.fn();
 const mockGetFeatureAdoptionMetrics = vi.fn();
 
 // Mock the analytics service - use arrow functions to reference module-scoped mocks
-vi.mock("../../services/analytics.js", () => ({
+vi.mock('../../services/analytics.js', () => ({
   trackChatCaptured: (...args: any[]) => mockTrackChatCaptured(...args),
   trackPromptCreated: (...args: any[]) => mockTrackPromptCreated(...args),
   trackPromptRun: (...args: any[]) => mockTrackPromptRun(...args),
@@ -37,22 +37,22 @@ vi.mock("../../services/analytics.js", () => ({
 }));
 
 // Import test utilities
-import { analyticsRouter } from "./analytics.js";
+import { analyticsRouter } from './analytics.js';
 
 // Helper to create a mock context
-function createMockContext(userId: string = "test-user-123") {
+function createMockContext(userId = 'test-user-123') {
   return {
     userId,
     session: {
       user: {
         id: userId,
-        email: "test@example.com",
+        email: 'test@example.com',
       },
     },
   };
 }
 
-describe("Analytics Router", () => {
+describe('Analytics Router', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -61,36 +61,36 @@ describe("Analytics Router", () => {
   // Tracking Mutation Tests
   // ============================================================================
 
-  describe("trackChatCaptured", () => {
-    it("should validate platform input", async () => {
+  describe('trackChatCaptured', () => {
+    it('should validate platform input', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackChatCaptured({
-        platform: "chatgpt",
-        privacyMode: "prompt_only",
+        platform: 'chatgpt',
+        privacyMode: 'prompt_only',
         tokenCount: 1500,
         messageCount: 10,
       });
 
       expect(mockTrackChatCaptured).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: "test-user-123",
-          platform: "chatgpt",
-          privacyMode: "prompt_only",
+          userId: 'test-user-123',
+          platform: 'chatgpt',
+          privacyMode: 'prompt_only',
           tokenCount: 1500,
           messageCount: 10,
         })
       );
     });
 
-    it("should accept all valid platforms", async () => {
+    it('should accept all valid platforms', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
-      const platforms = ["chatgpt", "claude", "gemini", "copilot", "other"] as const;
+      const platforms = ['chatgpt', 'claude', 'gemini', 'copilot', 'other'] as const;
 
       for (const platform of platforms) {
         await caller.trackChatCaptured({
           platform,
-          privacyMode: "full_chat",
+          privacyMode: 'full_chat',
           tokenCount: 1000,
           messageCount: 5,
         });
@@ -99,31 +99,31 @@ describe("Analytics Router", () => {
       expect(mockTrackChatCaptured).toHaveBeenCalledTimes(5);
     });
 
-    it("should include workspace ID when provided", async () => {
+    it('should include workspace ID when provided', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackChatCaptured({
-        platform: "claude",
-        privacyMode: "prompt_only",
+        platform: 'claude',
+        privacyMode: 'prompt_only',
         tokenCount: 2000,
         messageCount: 15,
-        workspaceId: "ws-456",
+        workspaceId: 'ws-456',
       });
 
       expect(mockTrackChatCaptured).toHaveBeenCalledWith(
         expect.objectContaining({
-          workspaceId: "ws-456",
+          workspaceId: 'ws-456',
         })
       );
     });
   });
 
-  describe("trackPromptCreated", () => {
-    it("should track prompt creation from capture", async () => {
+  describe('trackPromptCreated', () => {
+    it('should track prompt creation from capture', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptCreated({
-        source: "capture",
+        source: 'capture',
         hasVariables: true,
         variableCount: 3,
         tagCount: 2,
@@ -131,7 +131,7 @@ describe("Analytics Router", () => {
 
       expect(mockTrackPromptCreated).toHaveBeenCalledWith(
         expect.objectContaining({
-          source: "capture",
+          source: 'capture',
           hasVariables: true,
           variableCount: 3,
           tagCount: 2,
@@ -139,11 +139,11 @@ describe("Analytics Router", () => {
       );
     });
 
-    it("should track manual prompt creation", async () => {
+    it('should track manual prompt creation', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptCreated({
-        source: "manual",
+        source: 'manual',
         hasVariables: false,
         variableCount: 0,
         tagCount: 5,
@@ -151,16 +151,16 @@ describe("Analytics Router", () => {
 
       expect(mockTrackPromptCreated).toHaveBeenCalledWith(
         expect.objectContaining({
-          source: "manual",
+          source: 'manual',
         })
       );
     });
 
-    it("should track import prompt creation", async () => {
+    it('should track import prompt creation', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptCreated({
-        source: "import",
+        source: 'import',
         hasVariables: true,
         variableCount: 5,
         tagCount: 3,
@@ -168,38 +168,38 @@ describe("Analytics Router", () => {
 
       expect(mockTrackPromptCreated).toHaveBeenCalledWith(
         expect.objectContaining({
-          source: "import",
+          source: 'import',
         })
       );
     });
   });
 
-  describe("trackPromptRun", () => {
-    it("should track prompt run to clipboard", async () => {
+  describe('trackPromptRun', () => {
+    it('should track prompt run to clipboard', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptRun({
-        promptId: "prompt-123",
-        platform: "clipboard",
+        promptId: 'prompt-123',
+        platform: 'clipboard',
         variableCount: 2,
         isShared: false,
       });
 
       expect(mockTrackPromptRun).toHaveBeenCalledWith(
         expect.objectContaining({
-          promptId: "prompt-123",
-          platform: "clipboard",
+          promptId: 'prompt-123',
+          platform: 'clipboard',
           isShared: false,
         })
       );
     });
 
-    it("should track shared prompt run", async () => {
+    it('should track shared prompt run', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptRun({
-        promptId: "prompt-456",
-        platform: "chatgpt",
+        promptId: 'prompt-456',
+        platform: 'chatgpt',
         variableCount: 1,
         isShared: true,
       });
@@ -212,31 +212,31 @@ describe("Analytics Router", () => {
     });
   });
 
-  describe("trackPromptEdited", () => {
-    it("should track content edit", async () => {
+  describe('trackPromptEdited', () => {
+    it('should track content edit', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackPromptEdited({
-        promptId: "prompt-123",
-        editType: "content",
+        promptId: 'prompt-123',
+        editType: 'content',
         timeSinceCreationMs: 86400000,
       });
 
       expect(mockTrackPromptEdited).toHaveBeenCalledWith(
         expect.objectContaining({
-          editType: "content",
+          editType: 'content',
           timeSinceCreationMs: 86400000,
         })
       );
     });
 
-    it("should accept all edit types", async () => {
+    it('should accept all edit types', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
-      const editTypes = ["title", "content", "variables", "tags", "multiple"] as const;
+      const editTypes = ['title', 'content', 'variables', 'tags', 'multiple'] as const;
 
       for (const editType of editTypes) {
         await caller.trackPromptEdited({
-          promptId: "prompt-123",
+          promptId: 'prompt-123',
           editType,
           timeSinceCreationMs: 3600000,
         });
@@ -246,15 +246,15 @@ describe("Analytics Router", () => {
     });
   });
 
-  describe("trackCoachUsed", () => {
-    it("should track coach usage with all fields", async () => {
+  describe('trackCoachUsed', () => {
+    it('should track coach usage with all fields', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackCoachUsed({
-        promptId: "prompt-123",
+        promptId: 'prompt-123',
         suggestionsShown: 5,
         suggestionsApplied: 2,
-        focusArea: "clarity",
+        focusArea: 'clarity',
         qualityScore: 75,
       });
 
@@ -262,17 +262,17 @@ describe("Analytics Router", () => {
         expect.objectContaining({
           suggestionsShown: 5,
           suggestionsApplied: 2,
-          focusArea: "clarity",
+          focusArea: 'clarity',
           qualityScore: 75,
         })
       );
     });
 
-    it("should allow optional fields", async () => {
+    it('should allow optional fields', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackCoachUsed({
-        promptId: "prompt-123",
+        promptId: 'prompt-123',
         suggestionsShown: 3,
         suggestionsApplied: 0,
       });
@@ -285,12 +285,12 @@ describe("Analytics Router", () => {
       );
     });
 
-    it("should validate quality score range", async () => {
+    it('should validate quality score range', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       // Valid score
       await caller.trackCoachUsed({
-        promptId: "prompt-123",
+        promptId: 'prompt-123',
         suggestionsShown: 3,
         suggestionsApplied: 1,
         qualityScore: 100,
@@ -300,71 +300,71 @@ describe("Analytics Router", () => {
     });
   });
 
-  describe("trackMemberInvited", () => {
-    it("should track email invite", async () => {
+  describe('trackMemberInvited', () => {
+    it('should track email invite', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackMemberInvited({
         count: 3,
-        method: "email",
+        method: 'email',
       });
 
       expect(mockTrackMemberInvited).toHaveBeenCalledWith(
         expect.objectContaining({
           count: 3,
-          method: "email",
+          method: 'email',
         })
       );
     });
 
-    it("should track link invite", async () => {
+    it('should track link invite', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackMemberInvited({
         count: 1,
-        method: "link",
+        method: 'link',
       });
 
       expect(mockTrackMemberInvited).toHaveBeenCalledWith(
         expect.objectContaining({
-          method: "link",
+          method: 'link',
         })
       );
     });
   });
 
-  describe("trackSearchPerformed", () => {
-    it("should track text search", async () => {
+  describe('trackSearchPerformed', () => {
+    it('should track text search', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackSearchPerformed({
         queryLength: 25,
         resultsCount: 10,
-        searchType: "text",
+        searchType: 'text',
         hasFilters: false,
       });
 
       expect(mockTrackSearchPerformed).toHaveBeenCalledWith(
         expect.objectContaining({
-          searchType: "text",
+          searchType: 'text',
           hasFilters: false,
         })
       );
     });
 
-    it("should track semantic search with filters", async () => {
+    it('should track semantic search with filters', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.trackSearchPerformed({
         queryLength: 50,
         resultsCount: 5,
-        searchType: "semantic",
+        searchType: 'semantic',
         hasFilters: true,
       });
 
       expect(mockTrackSearchPerformed).toHaveBeenCalledWith(
         expect.objectContaining({
-          searchType: "semantic",
+          searchType: 'semantic',
           hasFilters: true,
         })
       );
@@ -375,7 +375,7 @@ describe("Analytics Router", () => {
   // Query Tests
   // ============================================================================
 
-  describe("getDashboard", () => {
+  describe('getDashboard', () => {
     beforeEach(() => {
       mockGetDashboardMetrics.mockResolvedValue({
         activation: {
@@ -419,40 +419,37 @@ describe("Analytics Router", () => {
           },
         },
         period: {
-          start: "2024-01-01T00:00:00.000Z",
-          end: "2024-01-31T00:00:00.000Z",
+          start: '2024-01-01T00:00:00.000Z',
+          end: '2024-01-31T00:00:00.000Z',
         },
       });
     });
 
-    it("should return dashboard metrics with default date range", async () => {
+    it('should return dashboard metrics with default date range', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const result = await caller.getDashboard({});
 
       expect(mockGetDashboardMetrics).toHaveBeenCalled();
-      expect(result).toHaveProperty("activation");
-      expect(result).toHaveProperty("engagement");
-      expect(result).toHaveProperty("teamHealth");
-      expect(result).toHaveProperty("featureAdoption");
+      expect(result).toHaveProperty('activation');
+      expect(result).toHaveProperty('engagement');
+      expect(result).toHaveProperty('teamHealth');
+      expect(result).toHaveProperty('featureAdoption');
     });
 
-    it("should accept custom date range", async () => {
+    it('should accept custom date range', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       await caller.getDashboard({
-        startDate: "2024-01-01T00:00:00.000Z",
-        endDate: "2024-01-31T00:00:00.000Z",
+        startDate: '2024-01-01T00:00:00.000Z',
+        endDate: '2024-01-31T00:00:00.000Z',
       });
 
-      expect(mockGetDashboardMetrics).toHaveBeenCalledWith(
-        expect.any(Date),
-        expect.any(Date)
-      );
+      expect(mockGetDashboardMetrics).toHaveBeenCalledWith(expect.any(Date), expect.any(Date));
     });
   });
 
-  describe("getActivationFunnel", () => {
+  describe('getActivationFunnel', () => {
     beforeEach(() => {
       mockGetActivationMetrics.mockResolvedValue({
         signups: 100,
@@ -470,18 +467,18 @@ describe("Analytics Router", () => {
       });
     });
 
-    it("should return activation funnel metrics", async () => {
+    it('should return activation funnel metrics', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const result = await caller.getActivationFunnel({});
 
       expect(mockGetActivationMetrics).toHaveBeenCalled();
-      expect(result).toHaveProperty("signups");
-      expect(result).toHaveProperty("conversionRates");
+      expect(result).toHaveProperty('signups');
+      expect(result).toHaveProperty('conversionRates');
     });
   });
 
-  describe("getEngagement", () => {
+  describe('getEngagement', () => {
     beforeEach(() => {
       mockGetEngagementMetrics.mockResolvedValue({
         dailyActiveUsers: 50,
@@ -493,18 +490,18 @@ describe("Analytics Router", () => {
       });
     });
 
-    it("should return engagement metrics", async () => {
+    it('should return engagement metrics', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const result = await caller.getEngagement({});
 
       expect(mockGetEngagementMetrics).toHaveBeenCalled();
-      expect(result).toHaveProperty("dailyActiveUsers");
-      expect(result).toHaveProperty("promptsPerUser");
+      expect(result).toHaveProperty('dailyActiveUsers');
+      expect(result).toHaveProperty('promptsPerUser');
     });
   });
 
-  describe("getTeamHealth", () => {
+  describe('getTeamHealth', () => {
     beforeEach(() => {
       mockGetTeamHealthMetrics.mockResolvedValue({
         activeWorkspaces: 40,
@@ -514,18 +511,18 @@ describe("Analytics Router", () => {
       });
     });
 
-    it("should return team health metrics", async () => {
+    it('should return team health metrics', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const result = await caller.getTeamHealth({});
 
       expect(mockGetTeamHealthMetrics).toHaveBeenCalled();
-      expect(result).toHaveProperty("activeWorkspaces");
-      expect(result).toHaveProperty("seatsPerWorkspace");
+      expect(result).toHaveProperty('activeWorkspaces');
+      expect(result).toHaveProperty('seatsPerWorkspace');
     });
   });
 
-  describe("getFeatureAdoption", () => {
+  describe('getFeatureAdoption', () => {
     beforeEach(() => {
       mockGetFeatureAdoptionMetrics.mockResolvedValue({
         coachUsageRate: 0.25,
@@ -541,14 +538,14 @@ describe("Analytics Router", () => {
       });
     });
 
-    it("should return feature adoption metrics", async () => {
+    it('should return feature adoption metrics', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const result = await caller.getFeatureAdoption({});
 
       expect(mockGetFeatureAdoptionMetrics).toHaveBeenCalled();
-      expect(result).toHaveProperty("privacyModeDistribution");
-      expect(result).toHaveProperty("platformDistribution");
+      expect(result).toHaveProperty('privacyModeDistribution');
+      expect(result).toHaveProperty('platformDistribution');
     });
   });
 
@@ -556,26 +553,26 @@ describe("Analytics Router", () => {
   // Return Value Tests
   // ============================================================================
 
-  describe("Return Values", () => {
-    it("should return success for all tracking mutations", async () => {
+  describe('Return Values', () => {
+    it('should return success for all tracking mutations', async () => {
       const caller = analyticsRouter.createCaller(createMockContext() as any);
 
       const results = await Promise.all([
         caller.trackChatCaptured({
-          platform: "chatgpt",
-          privacyMode: "prompt_only",
+          platform: 'chatgpt',
+          privacyMode: 'prompt_only',
           tokenCount: 100,
           messageCount: 5,
         }),
         caller.trackPromptCreated({
-          source: "manual",
+          source: 'manual',
           hasVariables: false,
           variableCount: 0,
           tagCount: 0,
         }),
         caller.trackPromptRun({
-          promptId: "p1",
-          platform: "clipboard",
+          promptId: 'p1',
+          platform: 'clipboard',
           variableCount: 0,
           isShared: false,
         }),

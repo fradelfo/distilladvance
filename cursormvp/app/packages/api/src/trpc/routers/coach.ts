@@ -4,38 +4,38 @@
  * Provides prompt improvement suggestions using AI analysis.
  */
 
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { authedProcedure, router } from "../index.js";
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import {
-  generateCoachingSuggestions,
-  createCoachingUsageLogEntry,
   type CoachingArea,
   type PromptForCoaching,
-} from "../../services/coaching.js";
+  createCoachingUsageLogEntry,
+  generateCoachingSuggestions,
+} from '../../services/coaching.js';
+import { authedProcedure, router } from '../index.js';
 
 // ============================================================================
 // Validation Schemas
 // ============================================================================
 
 const coachingAreaSchema = z.enum([
-  "clarity",
-  "structure",
-  "variables",
-  "specificity",
-  "output_format",
-  "comprehensive",
+  'clarity',
+  'structure',
+  'variables',
+  'specificity',
+  'output_format',
+  'comprehensive',
 ]);
 
 const generateSuggestionsInputSchema = z.object({
-  promptId: z.string().min(1, "Prompt ID is required"),
-  focusArea: coachingAreaSchema.default("comprehensive"),
+  promptId: z.string().min(1, 'Prompt ID is required'),
+  focusArea: coachingAreaSchema.default('comprehensive'),
 });
 
 const coachPromptDirectInputSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100),
+  title: z.string().min(1, 'Title is required').max(100),
   description: z.string().max(500).optional(),
-  template: z.string().min(1, "Template content is required"),
+  template: z.string().min(1, 'Template content is required'),
   variables: z
     .array(
       z.object({
@@ -47,7 +47,7 @@ const coachPromptDirectInputSchema = z.object({
     )
     .optional(),
   tags: z.array(z.string()).optional(),
-  focusArea: coachingAreaSchema.default("comprehensive"),
+  focusArea: coachingAreaSchema.default('comprehensive'),
 });
 
 // ============================================================================
@@ -68,8 +68,8 @@ export const coachRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to use coaching",
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to use coaching',
         });
       }
 
@@ -80,16 +80,16 @@ export const coachRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
       // Check access: user owns it or it's public
       if (prompt.userId !== userId && !prompt.isPublic) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to coach this prompt",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to coach this prompt',
         });
       }
 
@@ -142,8 +142,8 @@ export const coachRouter = router({
 
       if (!result.success) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Failed to generate coaching suggestions",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: result.error || 'Failed to generate coaching suggestions',
         });
       }
 
@@ -172,8 +172,8 @@ export const coachRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to use coaching",
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to use coaching',
         });
       }
 
@@ -194,7 +194,7 @@ export const coachRouter = router({
       // Log usage to database (without promptId since it's a draft)
       const usageLog = createCoachingUsageLogEntry(
         result,
-        "draft",
+        'draft',
         input.focusArea as CoachingArea,
         userId
       );
@@ -215,8 +215,8 @@ export const coachRouter = router({
 
       if (!result.success) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Failed to generate coaching suggestions",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: result.error || 'Failed to generate coaching suggestions',
         });
       }
 
@@ -237,40 +237,40 @@ export const coachRouter = router({
   getFocusAreas: authedProcedure.query(() => {
     return [
       {
-        id: "comprehensive",
-        name: "Comprehensive Review",
-        description: "Full analysis across all dimensions",
-        icon: "sparkles",
+        id: 'comprehensive',
+        name: 'Comprehensive Review',
+        description: 'Full analysis across all dimensions',
+        icon: 'sparkles',
       },
       {
-        id: "clarity",
-        name: "Clarity",
-        description: "Is the prompt clear and unambiguous?",
-        icon: "eye",
+        id: 'clarity',
+        name: 'Clarity',
+        description: 'Is the prompt clear and unambiguous?',
+        icon: 'eye',
       },
       {
-        id: "structure",
-        name: "Structure",
-        description: "Is the prompt well-organized?",
-        icon: "layout",
+        id: 'structure',
+        name: 'Structure',
+        description: 'Is the prompt well-organized?',
+        icon: 'layout',
       },
       {
-        id: "variables",
-        name: "Variables",
-        description: "Are placeholders well-defined?",
-        icon: "brackets",
+        id: 'variables',
+        name: 'Variables',
+        description: 'Are placeholders well-defined?',
+        icon: 'brackets',
       },
       {
-        id: "specificity",
-        name: "Specificity",
-        description: "Is there enough context and constraints?",
-        icon: "target",
+        id: 'specificity',
+        name: 'Specificity',
+        description: 'Is there enough context and constraints?',
+        icon: 'target',
       },
       {
-        id: "output_format",
-        name: "Output Format",
-        description: "Is the expected output specified?",
-        icon: "file-text",
+        id: 'output_format',
+        name: 'Output Format',
+        description: 'Is the expected output specified?',
+        icon: 'file-text',
       },
     ];
   }),

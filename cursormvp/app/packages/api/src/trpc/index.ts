@@ -1,5 +1,5 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import type { Context, AuthedContext } from "./context.js";
+import { TRPCError, initTRPC } from '@trpc/server';
+import type { AuthedContext, Context } from './context.js';
 
 /**
  * Initialize tRPC with the context type.
@@ -24,8 +24,8 @@ export const middleware = t.middleware;
 export const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.userId) {
     throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You must be logged in to perform this action",
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to perform this action',
     });
   }
 

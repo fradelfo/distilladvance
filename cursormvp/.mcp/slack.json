@@ -24,12 +24,7 @@
           "development": {
             "name": "#development",
             "purpose": "General development discussions and updates",
-            "notifications": [
-              "pr_opened",
-              "pr_merged",
-              "deployment_completed",
-              "build_failed"
-            ]
+            "notifications": ["pr_opened", "pr_merged", "deployment_completed", "build_failed"]
           },
           "alerts": {
             "name": "#alerts",
@@ -493,10 +488,7 @@
         "reactions:write",
         "users:read"
       ],
-      "restricted_channels": [
-        "#admin-only",
-        "#security-private"
-      ]
+      "restricted_channels": ["#admin-only", "#security-private"]
     },
     "message_filtering": {
       "prevent_sensitive_data": true,

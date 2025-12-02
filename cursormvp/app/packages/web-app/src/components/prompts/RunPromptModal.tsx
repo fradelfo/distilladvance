@@ -7,21 +7,21 @@
  * Uses shadcn/ui Dialog component and Lucide icons.
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Copy, Check, X, ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
-import { trpc } from '@/lib/trpc';
-import { extractVariables, fillVariables } from '@/lib/variables';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { trpc } from '@/lib/trpc';
+import { extractVariables, fillVariables } from '@/lib/variables';
+import { Check, Copy, ExternalLink } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface RunPromptModalProps {
   /** The prompt to run */
@@ -44,14 +44,8 @@ const AI_PLATFORM_URLS = {
   claude: 'https://claude.ai/new',
 } as const;
 
-export function RunPromptModal({
-  prompt,
-  isOpen,
-  onClose,
-}: RunPromptModalProps) {
-  const [variableValues, setVariableValues] = useState<Record<string, string>>(
-    {}
-  );
+export function RunPromptModal({ prompt, isOpen, onClose }: RunPromptModalProps) {
+  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,10 +99,7 @@ export function RunPromptModal({
 
   // Handle copy to clipboard
   const handleCopy = useCallback(async () => {
-    const textToCopy =
-      variables.length > 0 && allVariablesFilled
-        ? filledPrompt
-        : prompt.content;
+    const textToCopy = variables.length > 0 && allVariablesFilled ? filledPrompt : prompt.content;
 
     await trackAndExecute(async () => {
       await navigator.clipboard.writeText(textToCopy);
@@ -121,34 +112,19 @@ export function RunPromptModal({
         },
       });
     });
-  }, [
-    filledPrompt,
-    prompt.content,
-    variables.length,
-    allVariablesFilled,
-    trackAndExecute,
-  ]);
+  }, [filledPrompt, prompt.content, variables.length, allVariablesFilled, trackAndExecute]);
 
   // Handle open in AI platform
   const handleOpenInPlatform = useCallback(
     async (platform: keyof typeof AI_PLATFORM_URLS) => {
-      const textToCopy =
-        variables.length > 0 && allVariablesFilled
-          ? filledPrompt
-          : prompt.content;
+      const textToCopy = variables.length > 0 && allVariablesFilled ? filledPrompt : prompt.content;
 
       await trackAndExecute(async () => {
         await navigator.clipboard.writeText(textToCopy);
         window.open(AI_PLATFORM_URLS[platform], '_blank', 'noopener,noreferrer');
       });
     },
-    [
-      filledPrompt,
-      prompt.content,
-      variables.length,
-      allVariablesFilled,
-      trackAndExecute,
-    ]
+    [filledPrompt, prompt.content, variables.length, allVariablesFilled, trackAndExecute]
   );
 
   const isDisabled = variables.length > 0 && !allVariablesFilled;
@@ -164,14 +140,14 @@ export function RunPromptModal({
           {/* Variables Section */}
           {variables.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground">
-                Fill in Variables
-              </h3>
+              <h3 className="text-sm font-medium text-foreground">Fill in Variables</h3>
               {variables.map((varName, index) => (
                 <div key={varName} className="space-y-2">
                   <Label htmlFor={`var-${varName}`}>
                     {varName}
-                    <span className="text-destructive ml-1" aria-hidden="true">*</span>
+                    <span className="text-destructive ml-1" aria-hidden="true">
+                      *
+                    </span>
                     <span className="sr-only">(required)</span>
                   </Label>
                   <Input
@@ -208,11 +184,7 @@ export function RunPromptModal({
 
         <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
           {/* Copy Button */}
-          <Button
-            onClick={handleCopy}
-            disabled={isDisabled}
-            className="flex-1"
-          >
+          <Button onClick={handleCopy} disabled={isDisabled} className="flex-1">
             {copied ? (
               <>
                 <Check className="h-4 w-4 mr-2" />

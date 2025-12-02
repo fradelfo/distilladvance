@@ -7,10 +7,10 @@
  * Steps: Welcome -> Create/Join Workspace -> Install Extension -> Complete
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { trpc } from '@/lib/trpc';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 interface OnboardingContentProps {
   user: {
@@ -133,9 +133,7 @@ export function OnboardingContent({ user }: OnboardingContentProps) {
             <div
               key={step}
               className={`h-2 w-2 rounded-full transition-colors ${
-                index <= currentStepIndex
-                  ? 'bg-primary-600'
-                  : 'bg-neutral-300'
+                index <= currentStepIndex ? 'bg-primary-600' : 'bg-neutral-300'
               }`}
               aria-label={`Step ${index + 1} ${index <= currentStepIndex ? 'completed' : 'pending'}`}
             />
@@ -146,10 +144,7 @@ export function OnboardingContent({ user }: OnboardingContentProps) {
         <div className="card p-8">
           {/* Step 1: Welcome */}
           {currentStep === 'welcome' && (
-            <WelcomeStep
-              userName={user.name || 'there'}
-              onNext={goToNextStep}
-            />
+            <WelcomeStep userName={user.name || 'there'} onNext={goToNextStep} />
           )}
 
           {/* Step 2: Workspace */}
@@ -172,18 +167,12 @@ export function OnboardingContent({ user }: OnboardingContentProps) {
 
           {/* Step 3: Extension */}
           {currentStep === 'extension' && (
-            <ExtensionStep
-              onNext={goToNextStep}
-              onBack={goToPreviousStep}
-            />
+            <ExtensionStep onNext={goToNextStep} onBack={goToPreviousStep} />
           )}
 
           {/* Step 4: Complete */}
           {currentStep === 'complete' && (
-            <CompleteStep
-              userName={user.name || 'there'}
-              onComplete={handleCompleteOnboarding}
-            />
+            <CompleteStep userName={user.name || 'there'} onComplete={handleCompleteOnboarding} />
           )}
         </div>
       </div>
@@ -201,9 +190,7 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
   return (
     <div className="text-center">
       <div className="mb-6 text-5xl">👋</div>
-      <h1 className="text-2xl font-bold text-foreground">
-        Welcome, {userName}!
-      </h1>
+      <h1 className="text-2xl font-bold text-foreground">Welcome, {userName}!</h1>
       <p className="mt-4 text-muted-foreground">
         Distill helps you capture, organize, and share your best AI prompts.
       </p>
@@ -214,7 +201,8 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
             1
           </div>
           <p className="text-sm text-foreground">
-            <span className="font-medium">Capture conversations</span> from ChatGPT, Claude, and other AI tools
+            <span className="font-medium">Capture conversations</span> from ChatGPT, Claude, and
+            other AI tools
           </p>
         </div>
         <div className="flex items-start gap-3">
@@ -235,10 +223,7 @@ function WelcomeStep({ userName, onNext }: WelcomeStepProps) {
         </div>
       </div>
 
-      <button
-        onClick={onNext}
-        className="btn-primary mt-8 w-full px-6 py-3"
-      >
+      <button onClick={onNext} className="btn-primary mt-8 w-full px-6 py-3">
         Get Started
       </button>
     </div>
@@ -273,12 +258,10 @@ function WorkspaceStep({
     <div>
       <div className="mb-6 text-center">
         <div className="mb-4 text-4xl">🏢</div>
-        <h2 className="text-xl font-bold text-foreground">
-          Create a workspace
-        </h2>
+        <h2 className="text-xl font-bold text-foreground">Create a workspace</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Workspaces let you organize prompts and collaborate with your team.
-          You can skip this and use your personal space instead.
+          Workspaces let you organize prompts and collaborate with your team. You can skip this and
+          use your personal space instead.
         </p>
       </div>
 
@@ -310,15 +293,15 @@ function WorkspaceStep({
               id="workspace-slug"
               type="text"
               value={workspaceSlug}
-              onChange={(e) => onSlugChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              onChange={(e) =>
+                onSlugChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }
               className="input rounded-l-none"
               placeholder="my-team"
               disabled={isCreating}
             />
           </div>
-          {slugError && (
-            <p className="mt-1 text-sm text-error-600">{slugError}</p>
-          )}
+          {slugError && <p className="mt-1 text-sm text-error-600">{slugError}</p>}
           <p className="mt-1 text-xs text-muted-foreground">
             Lowercase letters, numbers, and hyphens only
           </p>
@@ -333,11 +316,7 @@ function WorkspaceStep({
         >
           {isCreating ? (
             <span className="flex items-center justify-center gap-2">
-              <svg
-                className="h-4 w-4 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -374,12 +353,7 @@ function WorkspaceStep({
           disabled={isCreating}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -405,9 +379,7 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
     <div>
       <div className="mb-6 text-center">
         <div className="mb-4 text-4xl">🧩</div>
-        <h2 className="text-xl font-bold text-foreground">
-          Install the browser extension
-        </h2>
+        <h2 className="text-xl font-bold text-foreground">Install the browser extension</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           The Distill extension lets you capture conversations directly from AI chat interfaces.
         </p>
@@ -437,9 +409,7 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-foreground">Chrome Extension</h3>
-            <p className="text-sm text-muted-foreground">
-              Works with Chrome, Edge, and Brave
-            </p>
+            <p className="text-sm text-muted-foreground">Works with Chrome, Edge, and Brave</p>
           </div>
         </div>
 
@@ -449,12 +419,7 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
           rel="noopener noreferrer"
           className="btn-primary mt-4 flex w-full items-center justify-center gap-2 px-6 py-3"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -470,16 +435,14 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
         <p className="text-sm text-primary-800">
           <span className="font-medium">Tip:</span> After installing, use the keyboard shortcut{' '}
           <kbd className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-mono">Ctrl+Shift+D</kbd>{' '}
-          (or <kbd className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-mono">Cmd+Shift+D</kbd> on Mac)
-          to capture a conversation.
+          (or{' '}
+          <kbd className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-mono">Cmd+Shift+D</kbd>{' '}
+          on Mac) to capture a conversation.
         </p>
       </div>
 
       <div className="mt-8 space-y-3">
-        <button
-          onClick={onNext}
-          className="btn-primary w-full px-6 py-3"
-        >
+        <button onClick={onNext} className="btn-primary w-full px-6 py-3">
           Continue
         </button>
 
@@ -496,12 +459,7 @@ function ExtensionStep({ onNext, onBack }: ExtensionStepProps) {
           onClick={onBack}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -526,9 +484,7 @@ function CompleteStep({ userName, onComplete }: CompleteStepProps) {
   return (
     <div className="text-center">
       <div className="mb-6 text-5xl">🎉</div>
-      <h2 className="text-2xl font-bold text-foreground">
-        You're all set, {userName}!
-      </h2>
+      <h2 className="text-2xl font-bold text-foreground">You're all set, {userName}!</h2>
       <p className="mt-4 text-muted-foreground">
         Your account is ready. Start capturing and distilling your best AI conversations.
       </p>
@@ -551,10 +507,7 @@ function CompleteStep({ userName, onComplete }: CompleteStepProps) {
         </ul>
       </div>
 
-      <button
-        onClick={onComplete}
-        className="btn-primary mt-8 w-full px-6 py-3"
-      >
+      <button onClick={onComplete} className="btn-primary mt-8 w-full px-6 py-3">
         Go to Dashboard
       </button>
     </div>

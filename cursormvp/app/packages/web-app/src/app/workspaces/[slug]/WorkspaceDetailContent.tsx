@@ -7,13 +7,13 @@
  * with edit and delete capabilities for owners/admins.
  */
 
-import { useState, useCallback } from 'react';
+import { InviteForm, MemberList, WorkspaceForm } from '@/components/workspaces';
+import { trpc } from '@/lib/trpc';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { WorkspaceForm, MemberList, InviteForm } from '@/components/workspaces';
-import { trpc } from '@/lib/trpc';
 
 interface WorkspaceDetailContentProps {
   workspaceSlug: string;
@@ -21,9 +21,7 @@ interface WorkspaceDetailContentProps {
 
 type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
-export function WorkspaceDetailContent({
-  workspaceSlug,
-}: WorkspaceDetailContentProps) {
+export function WorkspaceDetailContent({ workspaceSlug }: WorkspaceDetailContentProps) {
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -56,12 +54,9 @@ export function WorkspaceDetailContent({
 
   // Fetch pending invites (only if user is owner/admin)
   const currentUserId = session?.user?.id;
-  const currentMember = workspace?.members.find(
-    (m) => m.userId === currentUserId
-  );
+  const currentMember = workspace?.members.find((m) => m.userId === currentUserId);
   const currentUserRole = currentMember?.role as WorkspaceRole | undefined;
-  const canManageInvites =
-    currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+  const canManageInvites = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
 
   const {
     data: invites,
@@ -314,13 +309,8 @@ export function WorkspaceDetailContent({
         </Link>
 
         <div className="card p-6 text-center">
-          <p className="text-sm text-error-600">
-            {error?.message || 'Failed to load workspace'}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 btn-outline px-4 py-2"
-          >
+          <p className="text-sm text-error-600">{error?.message || 'Failed to load workspace'}</p>
+          <button onClick={() => refetch()} className="mt-4 btn-outline px-4 py-2">
             Retry
           </button>
         </div>
@@ -376,12 +366,7 @@ export function WorkspaceDetailContent({
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Back to Workspaces
       </Link>
@@ -417,9 +402,7 @@ export function WorkspaceDetailContent({
             )}
 
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">
-                {workspace.name}
-              </h1>
+              <h1 className="text-xl font-bold text-foreground">{workspace.name}</h1>
               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span>{workspace.members.length} members</span>
                 <span>-</span>
@@ -428,9 +411,7 @@ export function WorkspaceDetailContent({
                 <span>{workspace._count.collections} collections</span>
               </div>
               {workspace.description && (
-                <p className="text-sm text-muted-foreground mt-3">
-                  {workspace.description}
-                </p>
+                <p className="text-sm text-muted-foreground mt-3">{workspace.description}</p>
               )}
             </div>
           </div>
@@ -526,10 +507,7 @@ export function WorkspaceDetailContent({
             currentUserRole={currentUserRole}
             onUpdateRole={isOwner ? handleUpdateMemberRole : undefined}
             onRemoveMember={handleRemoveMemberClick}
-            isLoading={
-              removeMemberMutation.isPending ||
-              updateMemberRoleMutation.isPending
-            }
+            isLoading={removeMemberMutation.isPending || updateMemberRoleMutation.isPending}
           />
         )}
       </div>
@@ -537,9 +515,7 @@ export function WorkspaceDetailContent({
       {/* Pending Invites Section (only for owners/admins) */}
       {canManageInvites && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
-            Pending Invites
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Pending Invites</h2>
 
           {invitesLoading ? (
             <div className="space-y-2">
@@ -586,14 +562,10 @@ export function WorkspaceDetailContent({
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {invite.email}
-                      </p>
+                      <p className="text-sm font-medium text-foreground">{invite.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        Invited as{' '}
-                        {invite.role.charAt(0) +
-                          invite.role.slice(1).toLowerCase()}{' '}
-                        - Expires {formatDate(invite.expiresAt)}
+                        Invited as {invite.role.charAt(0) + invite.role.slice(1).toLowerCase()} -
+                        Expires {formatDate(invite.expiresAt)}
                       </p>
                     </div>
                   </div>
@@ -624,9 +596,7 @@ export function WorkspaceDetailContent({
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              <p className="mt-2 text-sm text-muted-foreground">
-                No pending invites
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">No pending invites</p>
             </div>
           )}
         </div>
@@ -682,16 +652,12 @@ export function WorkspaceDetailContent({
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <Modal
-          title="Delete Workspace"
-          onClose={() => setIsDeleteModalOpen(false)}
-        >
+        <Modal title="Delete Workspace" onClose={() => setIsDeleteModalOpen(false)}>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete{' '}
-              <span className="font-medium">{workspace.name}</span>? This action
-              cannot be undone. All prompts and collections in this workspace
-              will be deleted.
+              Are you sure you want to delete <span className="font-medium">{workspace.name}</span>?
+              This action cannot be undone. All prompts and collections in this workspace will be
+              deleted.
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -727,15 +693,13 @@ export function WorkspaceDetailContent({
               {memberToRemove.isSelf ? (
                 <>
                   Are you sure you want to leave{' '}
-                  <span className="font-medium">{workspace.name}</span>? You
-                  will lose access to all prompts and collections in this
-                  workspace.
+                  <span className="font-medium">{workspace.name}</span>? You will lose access to all
+                  prompts and collections in this workspace.
                 </>
               ) : (
                 <>
                   Are you sure you want to remove{' '}
-                  <span className="font-medium">{memberToRemove.name}</span>{' '}
-                  from this workspace?
+                  <span className="font-medium">{memberToRemove.name}</span> from this workspace?
                 </>
               )}
             </p>
@@ -801,10 +765,7 @@ function Modal({ title, children, onClose }: ModalProps) {
       <div className="relative z-10 w-full max-w-md mx-4 card p-6 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2
-            id="modal-title"
-            className="text-lg font-semibold text-foreground"
-          >
+          <h2 id="modal-title" className="text-lg font-semibold text-foreground">
             {title}
           </h2>
           <button

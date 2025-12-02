@@ -4,10 +4,10 @@
  * Handles Stripe checkout, customer portal, and subscription management.
  */
 
-import { stripe, STRIPE_PRICES, PLANS, type PlanType } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
+import { PLANS, type PlanType, stripe } from '@/lib/stripe';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002';
 
 /**
  * Get or create a Stripe customer for a user
@@ -165,7 +165,10 @@ export async function updateSubscriptionFromStripe(
   }
 
   // Map Stripe status to our status
-  const statusMap: Record<string, 'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'UNPAID' | 'TRIALING' | 'INCOMPLETE'> = {
+  const statusMap: Record<
+    string,
+    'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'UNPAID' | 'TRIALING' | 'INCOMPLETE'
+  > = {
     active: 'ACTIVE',
     canceled: 'CANCELED',
     past_due: 'PAST_DUE',

@@ -38,12 +38,7 @@ export function ErrorWithRetry({
       <AlertCircle className="h-12 w-12 text-destructive mb-4" aria-hidden="true" />
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-md">{message}</p>
-      <Button
-        onClick={onRetry}
-        disabled={isRetrying}
-        variant="outline"
-        className="min-w-[120px]"
-      >
+      <Button onClick={onRetry} disabled={isRetrying} variant="outline" className="min-w-[120px]">
         {isRetrying ? (
           <>
             <RefreshCw className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
@@ -94,11 +89,7 @@ export function ErrorWithRetryInline({
         size="sm"
         className="flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
       >
-        {isRetrying ? (
-          <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-        ) : (
-          'Retry'
-        )}
+        {isRetrying ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Retry'}
       </Button>
     </div>
   );

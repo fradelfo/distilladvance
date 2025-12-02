@@ -1,7 +1,7 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { authedProcedure, publicProcedure, router } from "../index.js";
-import { randomBytes } from "crypto";
+import { randomBytes } from 'crypto';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { authedProcedure, publicProcedure, router } from '../index.js';
 
 /**
  * Workspace router for team/workspace management.
@@ -18,7 +18,7 @@ export const workspaceRouter = router({
           .string()
           .min(3)
           .max(50)
-          .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+          .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
         description: z.string().max(500).optional(),
       })
     )
@@ -30,8 +30,8 @@ export const workspaceRouter = router({
 
       if (existing) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Workspace slug already exists",
+          code: 'CONFLICT',
+          message: 'Workspace slug already exists',
         });
       }
 
@@ -44,7 +44,7 @@ export const workspaceRouter = router({
           members: {
             create: {
               userId: ctx.userId!,
-              role: "OWNER",
+              role: 'OWNER',
             },
           },
         },
@@ -65,66 +65,62 @@ export const workspaceRouter = router({
   /**
    * Get workspace by slug.
    */
-  bySlug: publicProcedure
-    .input(z.object({ slug: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const workspace = await ctx.prisma.workspace.findUnique({
-        where: { slug: input.slug },
-        include: {
-          members: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
+  bySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ ctx, input }) => {
+    const workspace = await ctx.prisma.workspace.findUnique({
+      where: { slug: input.slug },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, image: true },
             },
           },
-          _count: {
-            select: { prompts: true, collections: true },
-          },
         },
+        _count: {
+          select: { prompts: true, collections: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Workspace not found',
       });
+    }
 
-      if (!workspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
-
-      return workspace;
-    }),
+    return workspace;
+  }),
 
   /**
    * Get workspace by ID.
    */
-  byId: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const workspace = await ctx.prisma.workspace.findUnique({
-        where: { id: input.id },
-        include: {
-          members: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
+  byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const workspace = await ctx.prisma.workspace.findUnique({
+      where: { id: input.id },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, image: true },
             },
           },
-          _count: {
-            select: { prompts: true, collections: true },
-          },
         },
+        _count: {
+          select: { prompts: true, collections: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Workspace not found',
       });
+    }
 
-      if (!workspace) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
-
-      return workspace;
-    }),
+    return workspace;
+  }),
 
   /**
    * List workspaces for the current user.
@@ -141,7 +137,7 @@ export const workspaceRouter = router({
           },
         },
       },
-      orderBy: { joinedAt: "desc" },
+      orderBy: { joinedAt: 'desc' },
     });
 
     return memberships.map((m) => ({
@@ -174,10 +170,10 @@ export const workspaceRouter = router({
         },
       });
 
-      if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+      if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners and admins can update workspace",
+          code: 'FORBIDDEN',
+          message: 'Only owners and admins can update workspace',
         });
       }
 
@@ -193,31 +189,29 @@ export const workspaceRouter = router({
   /**
    * Delete workspace (owner only).
    */
-  delete: authedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const membership = await ctx.prisma.workspaceMember.findUnique({
-        where: {
-          workspaceId_userId: {
-            workspaceId: input.id,
-            userId: ctx.userId!,
-          },
+  delete: authedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    const membership = await ctx.prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId: input.id,
+          userId: ctx.userId!,
         },
+      },
+    });
+
+    if (!membership || membership.role !== 'OWNER') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only owners can delete workspace',
       });
+    }
 
-      if (!membership || membership.role !== "OWNER") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners can delete workspace",
-        });
-      }
+    await ctx.prisma.workspace.delete({
+      where: { id: input.id },
+    });
 
-      await ctx.prisma.workspace.delete({
-        where: { id: input.id },
-      });
-
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 
   /**
    * Create invite link for workspace.
@@ -227,7 +221,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         email: z.string().email(),
-        role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER"),
+        role: z.enum(['ADMIN', 'MEMBER']).default('MEMBER'),
         expiresInDays: z.number().min(1).max(30).default(7),
       })
     )
@@ -242,10 +236,10 @@ export const workspaceRouter = router({
         },
       });
 
-      if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+      if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners and admins can create invites",
+          code: 'FORBIDDEN',
+          message: 'Only owners and admins can create invites',
         });
       }
 
@@ -259,13 +253,13 @@ export const workspaceRouter = router({
 
       if (existingMember) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "User is already a member of this workspace",
+          code: 'CONFLICT',
+          message: 'User is already a member of this workspace',
         });
       }
 
       // Generate invite token
-      const token = randomBytes(32).toString("hex");
+      const token = randomBytes(32).toString('hex');
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + input.expiresInDays);
 
@@ -300,22 +294,22 @@ export const workspaceRouter = router({
 
       if (!invite) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Invite not found",
+          code: 'NOT_FOUND',
+          message: 'Invite not found',
         });
       }
 
       if (invite.acceptedAt) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invite has already been used",
+          code: 'BAD_REQUEST',
+          message: 'Invite has already been used',
         });
       }
 
       if (invite.expiresAt < new Date()) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invite has expired",
+          code: 'BAD_REQUEST',
+          message: 'Invite has expired',
         });
       }
 
@@ -326,8 +320,8 @@ export const workspaceRouter = router({
 
       if (!user || user.email !== invite.email) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "This invite is for a different email address",
+          code: 'FORBIDDEN',
+          message: 'This invite is for a different email address',
         });
       }
 
@@ -364,10 +358,10 @@ export const workspaceRouter = router({
         },
       });
 
-      if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+      if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners and admins can view invites",
+          code: 'FORBIDDEN',
+          message: 'Only owners and admins can view invites',
         });
       }
 
@@ -377,7 +371,7 @@ export const workspaceRouter = router({
           acceptedAt: null,
           expiresAt: { gt: new Date() },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       return invites;
@@ -395,8 +389,8 @@ export const workspaceRouter = router({
 
       if (!invite) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Invite not found",
+          code: 'NOT_FOUND',
+          message: 'Invite not found',
         });
       }
 
@@ -409,10 +403,10 @@ export const workspaceRouter = router({
         },
       });
 
-      if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+      if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners and admins can revoke invites",
+          code: 'FORBIDDEN',
+          message: 'Only owners and admins can revoke invites',
         });
       }
 
@@ -454,8 +448,8 @@ export const workspaceRouter = router({
 
       if (!targetMembership) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Member not found",
+          code: 'NOT_FOUND',
+          message: 'Member not found',
         });
       }
 
@@ -465,29 +459,29 @@ export const workspaceRouter = router({
       // Only owners can remove admins, owners/admins can remove members
       const canRemove =
         isSelf ||
-        (membership?.role === "OWNER" && targetMembership.role !== "OWNER") ||
-        (membership?.role === "ADMIN" && targetMembership.role === "MEMBER");
+        (membership?.role === 'OWNER' && targetMembership.role !== 'OWNER') ||
+        (membership?.role === 'ADMIN' && targetMembership.role === 'MEMBER');
 
       if (!canRemove) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to remove this member",
         });
       }
 
       // Prevent removing the last owner
-      if (targetMembership.role === "OWNER") {
+      if (targetMembership.role === 'OWNER') {
         const ownerCount = await ctx.prisma.workspaceMember.count({
           where: {
             workspaceId: input.workspaceId,
-            role: "OWNER",
+            role: 'OWNER',
           },
         });
 
         if (ownerCount <= 1) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Cannot remove the last owner",
+            code: 'BAD_REQUEST',
+            message: 'Cannot remove the last owner',
           });
         }
       }
@@ -512,7 +506,7 @@ export const workspaceRouter = router({
       z.object({
         workspaceId: z.string(),
         userId: z.string(),
-        role: z.enum(["OWNER", "ADMIN", "MEMBER"]),
+        role: z.enum(['OWNER', 'ADMIN', 'MEMBER']),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -525,26 +519,26 @@ export const workspaceRouter = router({
         },
       });
 
-      if (!membership || membership.role !== "OWNER") {
+      if (!membership || membership.role !== 'OWNER') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only owners can change member roles",
+          code: 'FORBIDDEN',
+          message: 'Only owners can change member roles',
         });
       }
 
       // Prevent demoting yourself if you're the only owner
-      if (ctx.userId === input.userId && input.role !== "OWNER") {
+      if (ctx.userId === input.userId && input.role !== 'OWNER') {
         const ownerCount = await ctx.prisma.workspaceMember.count({
           where: {
             workspaceId: input.workspaceId,
-            role: "OWNER",
+            role: 'OWNER',
           },
         });
 
         if (ownerCount <= 1) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Cannot demote the last owner",
+            code: 'BAD_REQUEST',
+            message: 'Cannot demote the last owner',
           });
         }
       }

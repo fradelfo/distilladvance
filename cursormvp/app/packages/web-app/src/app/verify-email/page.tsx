@@ -6,12 +6,12 @@
  * Handles email verification when user clicks the link from their email.
  */
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CheckCircle, Loader2, Mail, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 function VerifyEmailContent() {
@@ -19,36 +19,41 @@ function VerifyEmailContent() {
   const router = useRouter();
   const token = searchParams.get('token');
 
-  const [verificationState, setVerificationState] = useState<'loading' | 'success' | 'error' | 'no-token'>('loading');
+  const [verificationState, setVerificationState] = useState<
+    'loading' | 'success' | 'error' | 'no-token'
+  >('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [resendEmail, setResendEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
 
-  const verifyToken = useCallback(async (verificationToken: string) => {
-    try {
-      const response = await fetch('/api/auth/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: verificationToken }),
-      });
+  const verifyToken = useCallback(
+    async (verificationToken: string) => {
+      try {
+        const response = await fetch('/api/auth/verify-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: verificationToken }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
+        if (!response.ok) {
+          setVerificationState('error');
+          setErrorMessage(result.message || 'Failed to verify email');
+          return;
+        }
+
+        setVerificationState('success');
+        toast.success('Email verified successfully!');
+        // Redirect to login after 3 seconds
+        setTimeout(() => router.push('/login'), 3000);
+      } catch {
         setVerificationState('error');
-        setErrorMessage(result.message || 'Failed to verify email');
-        return;
+        setErrorMessage('Failed to verify email. Please try again.');
       }
-
-      setVerificationState('success');
-      toast.success('Email verified successfully!');
-      // Redirect to login after 3 seconds
-      setTimeout(() => router.push('/login'), 3000);
-    } catch {
-      setVerificationState('error');
-      setErrorMessage('Failed to verify email. Please try again.');
-    }
-  }, [router]);
+    },
+    [router]
+  );
 
   useEffect(() => {
     if (!token) {
@@ -116,9 +121,7 @@ function VerifyEmailContent() {
           {verificationState === 'success' && (
             <div className="text-center">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h1 className="text-xl font-semibold text-foreground mb-2">
-                Email Verified!
-              </h1>
+              <h1 className="text-xl font-semibold text-foreground mb-2">Email Verified!</h1>
               <p className="text-muted-foreground mb-6">
                 Your email has been verified successfully. You can now sign in to your account.
               </p>
@@ -131,12 +134,8 @@ function VerifyEmailContent() {
           {verificationState === 'error' && (
             <div className="text-center">
               <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h1 className="text-xl font-semibold text-foreground mb-2">
-                Verification Failed
-              </h1>
-              <p className="text-muted-foreground mb-6">
-                {errorMessage}
-              </p>
+              <h1 className="text-xl font-semibold text-foreground mb-2">Verification Failed</h1>
+              <p className="text-muted-foreground mb-6">{errorMessage}</p>
 
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -168,10 +167,7 @@ function VerifyEmailContent() {
               </div>
 
               <div className="mt-6 pt-6 border-t">
-                <Link
-                  href="/login"
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/login" className="text-sm text-primary hover:underline">
                   Back to Sign In
                 </Link>
               </div>
@@ -181,11 +177,10 @@ function VerifyEmailContent() {
           {verificationState === 'no-token' && (
             <div className="text-center">
               <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h1 className="text-xl font-semibold text-foreground mb-2">
-                Check Your Email
-              </h1>
+              <h1 className="text-xl font-semibold text-foreground mb-2">Check Your Email</h1>
               <p className="text-muted-foreground mb-6">
-                We sent a verification link to your email address. Click the link to verify your account.
+                We sent a verification link to your email address. Click the link to verify your
+                account.
               </p>
 
               <div className="space-y-4">
@@ -218,10 +213,7 @@ function VerifyEmailContent() {
               </div>
 
               <div className="mt-6 pt-6 border-t">
-                <Link
-                  href="/login"
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/login" className="text-sm text-primary hover:underline">
                   Back to Sign In
                 </Link>
               </div>
@@ -235,11 +227,13 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
       <VerifyEmailContent />
     </Suspense>
   );

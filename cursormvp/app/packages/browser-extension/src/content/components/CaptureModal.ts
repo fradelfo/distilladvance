@@ -4,7 +4,7 @@
  * Uses Shadow DOM for style isolation
  */
 
-import type { ConversationMessage, CapturedConversation } from '@distill/shared-types';
+import type { CapturedConversation } from '@distill/shared-types';
 import { MessageTypes } from '../../shared/messages';
 
 type ModalState = 'preview' | 'processing' | 'success' | 'error';

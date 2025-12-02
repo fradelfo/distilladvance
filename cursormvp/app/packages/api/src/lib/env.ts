@@ -1,5 +1,5 @@
-import { config } from "dotenv";
-import { z } from "zod";
+import { config } from 'dotenv';
+import { z } from 'zod';
 
 // Load environment variables from .env file
 config();
@@ -9,9 +9,7 @@ config();
  */
 const envSchema = z.object({
   // Server
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   API_PORT: z.coerce.number().default(3001),
   API_SECRET: z.string().optional(),
 
@@ -22,8 +20,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   DATABASE_SSL: z
     .string()
-    .transform((val) => val === "true")
-    .default("false"),
+    .transform((val) => val === 'true')
+    .default('false'),
 
   // Redis
   REDIS_URL: z.string().url().optional(),
@@ -32,18 +30,18 @@ const envSchema = z.object({
   CHROMA_URL: z.string().url().optional(),
 
   // CORS
-  WEB_URL: z.string().url().default("http://localhost:3000"),
+  WEB_URL: z.string().url().default('http://localhost:3000'),
 
   // AI Services - Anthropic
   ANTHROPIC_API_KEY: z.string().optional(),
-  ANTHROPIC_MODEL_DEFAULT: z.string().default("claude-sonnet-4-20250514"),
+  ANTHROPIC_MODEL_DEFAULT: z.string().default('claude-sonnet-4-20250514'),
 
   // AI Services - OpenAI (fallback)
   OPENAI_API_KEY: z.string().optional(),
-  OPENAI_MODEL_DEFAULT: z.string().default("gpt-4-turbo-preview"),
+  OPENAI_MODEL_DEFAULT: z.string().default('gpt-4-turbo-preview'),
 
   // Embedding Configuration
-  OPENAI_EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
   EMBEDDING_DIMENSIONS: z.coerce.number().default(1536),
   EMBEDDING_BATCH_SIZE: z.coerce.number().default(10),
 
@@ -57,11 +55,11 @@ const envSchema = z.object({
 
   // Analytics (PostHog)
   POSTHOG_API_KEY: z.string().optional(),
-  POSTHOG_HOST: z.string().url().default("http://localhost:8080"),
+  POSTHOG_HOST: z.string().url().default('http://localhost:8080'),
   ANALYTICS_ENABLED: z
     .string()
-    .transform((val) => val === "true")
-    .default("true"),
+    .transform((val) => val === 'true')
+    .default('true'),
 });
 
 /**
@@ -71,11 +69,8 @@ function loadEnv() {
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    console.error(
-      "Invalid environment variables:",
-      JSON.stringify(parsed.error.format(), null, 2)
-    );
-    throw new Error("Invalid environment variables");
+    console.error('Invalid environment variables:', JSON.stringify(parsed.error.format(), null, 2));
+    throw new Error('Invalid environment variables');
   }
 
   return parsed.data;

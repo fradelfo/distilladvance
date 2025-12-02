@@ -9,9 +9,7 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
       "config": {
-        "repositories": [
-          "${GITHUB_OWNER}/${GITHUB_REPO}"
-        ],
+        "repositories": ["${GITHUB_OWNER}/${GITHUB_REPO}"],
         "features": {
           "issues": true,
           "pull_requests": true,
@@ -52,12 +50,7 @@
         "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}"
       },
       "config": {
-        "channels": [
-          "#development",
-          "#alerts",
-          "#deployments",
-          "#ai-experiments"
-        ],
+        "channels": ["#development", "#alerts", "#deployments", "#ai-experiments"],
         "features": {
           "send_messages": true,
           "read_messages": true,
@@ -132,14 +125,7 @@
         "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"
       },
       "config": {
-        "services": [
-          "s3",
-          "rds",
-          "eks",
-          "cloudwatch",
-          "lambda",
-          "secretsmanager"
-        ],
+        "services": ["s3", "rds", "eks", "cloudwatch", "lambda", "secretsmanager"],
         "s3": {
           "allowed_buckets": [
             "${PROJECT_NAME}-assets",
@@ -148,10 +134,7 @@
           ]
         },
         "rds": {
-          "allowed_instances": [
-            "${PROJECT_NAME}-main",
-            "${PROJECT_NAME}-staging"
-          ]
+          "allowed_instances": ["${PROJECT_NAME}-main", "${PROJECT_NAME}-staging"]
         },
         "readonly": true
       },
@@ -170,10 +153,7 @@
           "build_image"
         ],
         "container_filters": {
-          "label": [
-            "project=${PROJECT_NAME}",
-            "environment=${NODE_ENV}"
-          ]
+          "label": ["project=${PROJECT_NAME}", "environment=${NODE_ENV}"]
         },
         "security": {
           "readonly": true,
@@ -191,11 +171,7 @@
         "KUBECONFIG": "${KUBECONFIG:-~/.kube/config}"
       },
       "config": {
-        "namespaces": [
-          "${PROJECT_NAME}-dev",
-          "${PROJECT_NAME}-staging",
-          "${PROJECT_NAME}-prod"
-        ],
+        "namespaces": ["${PROJECT_NAME}-dev", "${PROJECT_NAME}-staging", "${PROJECT_NAME}-prod"],
         "allowed_resources": [
           "pods",
           "services",
@@ -227,11 +203,7 @@
           "alerts": true
         },
         "time_range": "24h",
-        "environment_filter": [
-          "development",
-          "staging",
-          "production"
-        ]
+        "environment_filter": ["development", "staging", "production"]
       },
       "description": "Sentry integration for error tracking, performance monitoring, and alerting"
     },
@@ -243,22 +215,8 @@
         "REDIS_URL": "${REDIS_URL}"
       },
       "config": {
-        "allowed_commands": [
-          "GET",
-          "SET",
-          "DEL",
-          "EXISTS",
-          "TTL",
-          "KEYS",
-          "INFO",
-          "MEMORY"
-        ],
-        "key_patterns": [
-          "cache:*",
-          "session:*",
-          "queue:*",
-          "analytics:*"
-        ],
+        "allowed_commands": ["GET", "SET", "DEL", "EXISTS", "TTL", "KEYS", "INFO", "MEMORY"],
+        "key_patterns": ["cache:*", "session:*", "queue:*", "analytics:*"],
         "readonly": false
       },
       "description": "Redis integration for cache management, session storage, and queue operations"
@@ -267,14 +225,7 @@
 
   "environments": {
     "development": {
-      "enabled_servers": [
-        "github",
-        "postgresql",
-        "filesystem",
-        "web",
-        "docker",
-        "redis"
-      ],
+      "enabled_servers": ["github", "postgresql", "filesystem", "web", "docker", "redis"],
       "config_overrides": {
         "postgresql": {
           "readonly": false
@@ -294,15 +245,7 @@
     },
 
     "staging": {
-      "enabled_servers": [
-        "github",
-        "postgresql",
-        "web",
-        "aws",
-        "kubernetes",
-        "sentry",
-        "redis"
-      ],
+      "enabled_servers": ["github", "postgresql", "web", "aws", "kubernetes", "sentry", "redis"],
       "config_overrides": {
         "postgresql": {
           "readonly": true
@@ -330,12 +273,7 @@
       "config_overrides": {
         "postgresql": {
           "readonly": true,
-          "allowed_tables": [
-            "users",
-            "conversations",
-            "distillations",
-            "extension_analytics"
-          ]
+          "allowed_tables": ["users", "conversations", "distillations", "extension_analytics"]
         },
         "aws": {
           "readonly": true
@@ -357,10 +295,7 @@
 
   "security": {
     "environment_variables": {
-      "required": [
-        "GITHUB_TOKEN",
-        "DATABASE_URL"
-      ],
+      "required": ["GITHUB_TOKEN", "DATABASE_URL"],
       "optional": [
         "SLACK_BOT_TOKEN",
         "SLACK_APP_TOKEN",
@@ -380,17 +315,11 @@
     "access_controls": {
       "production": {
         "readonly_by_default": true,
-        "require_approval": [
-          "database_writes",
-          "infrastructure_changes",
-          "sensitive_operations"
-        ]
+        "require_approval": ["database_writes", "infrastructure_changes", "sensitive_operations"]
       },
       "staging": {
         "readonly_by_default": true,
-        "require_approval": [
-          "database_writes"
-        ]
+        "require_approval": ["database_writes"]
       },
       "development": {
         "readonly_by_default": false,
@@ -404,22 +333,12 @@
       "enabled": true,
       "interval": "5m",
       "timeout": "30s",
-      "endpoints": [
-        "github",
-        "postgresql",
-        "redis",
-        "sentry"
-      ]
+      "endpoints": ["github", "postgresql", "redis", "sentry"]
     },
 
     "usage_tracking": {
       "enabled": true,
-      "metrics": [
-        "request_count",
-        "response_time",
-        "error_rate",
-        "data_transfer"
-      ],
+      "metrics": ["request_count", "response_time", "error_rate", "data_transfer"],
       "retention": "30d"
     },
 

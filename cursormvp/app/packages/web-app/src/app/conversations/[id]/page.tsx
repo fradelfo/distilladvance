@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppLayout';
+import { redirect } from 'next/navigation';
 import { ConversationDetailContent } from './ConversationDetailContent';
 
 interface ConversationDetailPageProps {
@@ -14,9 +14,7 @@ export const metadata = {
   description: 'View and manage your captured conversation',
 };
 
-export default async function ConversationDetailPage({
-  params,
-}: ConversationDetailPageProps) {
+export default async function ConversationDetailPage({ params }: ConversationDetailPageProps) {
   const session = await auth();
 
   if (!session?.user) {

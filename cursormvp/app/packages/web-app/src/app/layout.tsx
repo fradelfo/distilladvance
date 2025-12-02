@@ -14,7 +14,8 @@ export const metadata: Metadata = {
     default: 'Distill - Turn AI Chats into Reusable Prompts',
     template: '%s | Distill',
   },
-  description: 'Capture your AI conversations and distill them into reusable, team-ready prompt templates with built-in coaching and privacy controls.',
+  description:
+    'Capture your AI conversations and distill them into reusable, team-ready prompt templates with built-in coaching and privacy controls.',
   keywords: ['AI prompts', 'ChatGPT', 'Claude', 'prompt management', 'team prompts'],
   authors: [{ name: 'Distill' }],
   creator: 'Distill',
@@ -24,12 +25,14 @@ export const metadata: Metadata = {
     url: 'https://distill.ai',
     siteName: 'Distill',
     title: 'Distill - Turn AI Chats into Reusable Prompts',
-    description: 'Capture your AI conversations and distill them into reusable, team-ready prompt templates.',
+    description:
+      'Capture your AI conversations and distill them into reusable, team-ready prompt templates.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Distill - Turn AI Chats into Reusable Prompts',
-    description: 'Capture your AI conversations and distill them into reusable, team-ready prompt templates.',
+    description:
+      'Capture your AI conversations and distill them into reusable, team-ready prompt templates.',
   },
   robots: {
     index: true,

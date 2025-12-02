@@ -5,9 +5,9 @@
  * and stores them in the database for semantic search.
  */
 
-import OpenAI from "openai";
-import { env } from "../lib/env.js";
-import { prisma } from "../lib/prisma.js";
+import OpenAI from 'openai';
+import { env } from '../lib/env.js';
+import { prisma } from '../lib/prisma.js';
 
 // ============================================================================
 // Types
@@ -21,7 +21,7 @@ export interface EmbeddingResult {
     promptTokens: number;
     totalTokens: number;
     model: string;
-    provider: "openai";
+    provider: 'openai';
   };
   durationMs: number;
 }
@@ -48,7 +48,7 @@ export interface BatchEmbeddingResult {
     promptTokens: number;
     totalTokens: number;
     model: string;
-    provider: "openai";
+    provider: 'openai';
   };
   durationMs: number;
 }
@@ -106,32 +106,32 @@ async function withRetry<T>(
     }
   }
 
-  throw lastError ?? new Error("Unknown error in retry loop");
+  throw lastError ?? new Error('Unknown error in retry loop');
 }
 
 function isRetryableError(error: Error): boolean {
   const message = error.message.toLowerCase();
 
   // Rate limit errors
-  if (message.includes("rate_limit") || message.includes("429")) {
+  if (message.includes('rate_limit') || message.includes('429')) {
     return true;
   }
 
   // Temporary server errors
   if (
-    message.includes("500") ||
-    message.includes("502") ||
-    message.includes("503") ||
-    message.includes("504")
+    message.includes('500') ||
+    message.includes('502') ||
+    message.includes('503') ||
+    message.includes('504')
   ) {
     return true;
   }
 
   // Network errors
   if (
-    message.includes("network") ||
-    message.includes("timeout") ||
-    message.includes("econnreset")
+    message.includes('network') ||
+    message.includes('timeout') ||
+    message.includes('econnreset')
   ) {
     return true;
   }
@@ -148,7 +148,7 @@ let openaiClient: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!openaiClient) {
     if (!env.OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+      throw new Error('OPENAI_API_KEY is not configured');
     }
     openaiClient = new OpenAI({
       apiKey: env.OPENAI_API_KEY,
@@ -166,15 +166,12 @@ function getOpenAIClient(): OpenAI {
  * As of 2024: $0.00002 per 1K tokens
  */
 const EMBEDDING_COST_PER_1K_TOKENS: Record<string, number> = {
-  "text-embedding-3-small": 0.00002,
-  "text-embedding-3-large": 0.00013,
-  "text-embedding-ada-002": 0.0001,
+  'text-embedding-3-small': 0.00002,
+  'text-embedding-3-large': 0.00013,
+  'text-embedding-ada-002': 0.0001,
 };
 
-export function estimateEmbeddingCost(
-  tokens: number,
-  model: string = "text-embedding-3-small"
-): number {
+export function estimateEmbeddingCost(tokens: number, model = 'text-embedding-3-small'): number {
   const costPer1K = EMBEDDING_COST_PER_1K_TOKENS[model] ?? 0.00002;
   return (tokens / 1000) * costPer1K;
 }
@@ -205,12 +202,12 @@ export async function generateEmbedding(
   if (!content || content.trim().length === 0) {
     return {
       success: false,
-      error: "Content cannot be empty",
+      error: 'Content cannot be empty',
       usage: {
         promptTokens: 0,
         totalTokens: 0,
         model: opts.model,
-        provider: "openai",
+        provider: 'openai',
       },
       durationMs: Date.now() - startTime,
     };
@@ -242,7 +239,7 @@ export async function generateEmbedding(
     const embedding = response.data[0]?.embedding;
 
     if (!embedding || embedding.length === 0) {
-      throw new Error("No embedding data in response");
+      throw new Error('No embedding data in response');
     }
 
     const tokens = response.usage?.prompt_tokens ?? 0;
@@ -258,13 +255,12 @@ export async function generateEmbedding(
         promptTokens: tokens,
         totalTokens: tokens,
         model: opts.model,
-        provider: "openai",
+        provider: 'openai',
       },
       durationMs: Date.now() - startTime,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     console.error(`[Embedding] Failed: ${errorMessage}`);
 
@@ -275,7 +271,7 @@ export async function generateEmbedding(
         promptTokens: 0,
         totalTokens: 0,
         model: opts.model,
-        provider: "openai",
+        provider: 'openai',
       },
       durationMs: Date.now() - startTime,
     };
@@ -302,19 +298,15 @@ export async function embedPrompt(
   }
 
   // Combine title, content, and tags for richer embedding
-  const textToEmbed = [
-    prompt.title,
-    prompt.content,
-    prompt.tags.join(" "),
-  ]
+  const textToEmbed = [prompt.title, prompt.content, prompt.tags.join(' ')]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 
   // Generate the embedding
   const result = await generateEmbedding(textToEmbed, opts);
 
   if (!result.success || !result.embedding) {
-    throw new Error(result.error || "Failed to generate embedding");
+    throw new Error(result.error || 'Failed to generate embedding');
   }
 
   // Store or update the embedding in the database
@@ -379,16 +371,12 @@ export async function embedBatch(
         });
 
         if (!prompt) {
-          return { promptId, success: false, error: "Prompt not found" };
+          return { promptId, success: false, error: 'Prompt not found' };
         }
 
-        const textToEmbed = [
-          prompt.title,
-          prompt.content,
-          prompt.tags.join(" "),
-        ]
+        const textToEmbed = [prompt.title, prompt.content, prompt.tags.join(' ')]
           .filter(Boolean)
-          .join("\n\n");
+          .join('\n\n');
 
         const result = await generateEmbedding(textToEmbed, opts);
 
@@ -396,7 +384,7 @@ export async function embedBatch(
           return {
             promptId,
             success: false,
-            error: result.error || "Failed to generate embedding",
+            error: result.error || 'Failed to generate embedding',
           };
         }
 
@@ -427,7 +415,7 @@ export async function embedBatch(
 
     // Collect results
     for (const result of batchResults) {
-      if (result.status === "fulfilled") {
+      if (result.status === 'fulfilled') {
         results.push(result.value);
         if (result.value.success) {
           totalSuccessful++;
@@ -437,11 +425,9 @@ export async function embedBatch(
       } else {
         // Handle rejected promises
         const errorMessage =
-          result.reason instanceof Error
-            ? result.reason.message
-            : "Unknown error";
+          result.reason instanceof Error ? result.reason.message : 'Unknown error';
         results.push({
-          promptId: "unknown",
+          promptId: 'unknown',
           success: false,
           error: errorMessage,
         });
@@ -471,7 +457,7 @@ export async function embedBatch(
       promptTokens: totalTokens,
       totalTokens: totalTokens,
       model: opts.model,
-      provider: "openai",
+      provider: 'openai',
     },
     durationMs,
   };
@@ -511,10 +497,7 @@ export async function getEmbedding(
 /**
  * Check if a prompt has an embedding.
  */
-export async function hasEmbedding(
-  promptId: string,
-  model?: string
-): Promise<boolean> {
+export async function hasEmbedding(promptId: string, model?: string): Promise<boolean> {
   const embeddingModel = model ?? env.OPENAI_EMBEDDING_MODEL;
 
   const count = await prisma.promptEmbedding.count({
@@ -530,10 +513,7 @@ export async function hasEmbedding(
 /**
  * Delete embedding for a prompt.
  */
-export async function deleteEmbedding(
-  promptId: string,
-  model?: string
-): Promise<boolean> {
+export async function deleteEmbedding(promptId: string, model?: string): Promise<boolean> {
   const embeddingModel = model ?? env.OPENAI_EMBEDDING_MODEL;
 
   try {
@@ -569,7 +549,7 @@ export interface EmbeddingUsageLogEntry {
 
 export function createEmbeddingUsageLogEntry(
   result: EmbeddingResult | BatchEmbeddingResult,
-  operation: "embed" | "embed_batch",
+  operation: 'embed' | 'embed_batch',
   userId?: string
 ): EmbeddingUsageLogEntry {
   const cost = estimateEmbeddingCost(result.usage.totalTokens, result.usage.model);
@@ -586,7 +566,7 @@ export function createEmbeddingUsageLogEntry(
     metadata: {
       success: result.success,
       durationMs: result.durationMs,
-      ...("totalProcessed" in result && {
+      ...('totalProcessed' in result && {
         totalProcessed: result.totalProcessed,
         totalSuccessful: result.totalSuccessful,
         totalFailed: result.totalFailed,

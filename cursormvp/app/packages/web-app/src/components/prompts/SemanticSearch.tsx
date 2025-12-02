@@ -7,11 +7,11 @@
  * using vector embeddings and cosine similarity.
  */
 
-import { useState, useCallback } from 'react';
-import Link from 'next/link';
-import { trpc } from '@/lib/trpc';
-import { TagChip } from '@/components/TagFilter';
 import { EmptyState } from '@/components/EmptyState';
+import { TagChip } from '@/components/TagFilter';
+import { trpc } from '@/lib/trpc';
+import Link from 'next/link';
+import { useCallback, useState } from 'react';
 
 interface SemanticSearchProps {
   /** Optional workspace ID to scope the search */
@@ -195,7 +195,8 @@ export function SemanticSearch({
         {meta && (
           <p className="mt-2 text-xs text-muted-foreground">
             Found {meta.resultsReturned} result{meta.resultsReturned !== 1 ? 's' : ''} from{' '}
-            {meta.totalCandidates} prompt{meta.totalCandidates !== 1 ? 's' : ''} in {meta.durationMs}ms
+            {meta.totalCandidates} prompt{meta.totalCandidates !== 1 ? 's' : ''} in{' '}
+            {meta.durationMs}ms
           </p>
         )}
       </div>
@@ -226,17 +227,20 @@ export function SemanticSearch({
       )}
 
       {/* No Results */}
-      {hasSearched && !searchMutation.isPending && !searchMutation.isError && results.length === 0 && (
-        <EmptyState
-          icon="🔍"
-          title="No matching prompts"
-          description={`No prompts found similar to "${query}". Try a different description or lower the similarity threshold.`}
-          secondaryAction={{
-            label: 'Clear search',
-            onClick: handleClear,
-          }}
-        />
-      )}
+      {hasSearched &&
+        !searchMutation.isPending &&
+        !searchMutation.isError &&
+        results.length === 0 && (
+          <EmptyState
+            icon="🔍"
+            title="No matching prompts"
+            description={`No prompts found similar to "${query}". Try a different description or lower the similarity threshold.`}
+            secondaryAction={{
+              label: 'Clear search',
+              onClick: handleClear,
+            }}
+          />
+        )}
 
       {/* Results Grid */}
       {results.length > 0 && (
@@ -290,9 +294,7 @@ function SemanticSearchResultCard({
         </div>
 
         {/* Content Preview */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {prompt.content}
-        </p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{prompt.content}</p>
 
         {/* Tags */}
         {prompt.tags.length > 0 && (

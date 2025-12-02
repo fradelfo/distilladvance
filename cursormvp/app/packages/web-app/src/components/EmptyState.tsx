@@ -42,8 +42,7 @@ export function EmptyState({
     action: NonNullable<EmptyStateProps['primaryAction']>;
     variant: 'primary' | 'secondary';
   }) => {
-    const buttonClass =
-      variant === 'primary' ? 'btn-primary px-6 py-2' : 'btn-outline px-6 py-2';
+    const buttonClass = variant === 'primary' ? 'btn-primary px-6 py-2' : 'btn-outline px-6 py-2';
 
     if (action.href) {
       return (
@@ -71,17 +70,11 @@ export function EmptyState({
     >
       {icon && <div className="mb-4 text-5xl">{icon}</div>}
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      {description && (
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {(primaryAction || secondaryAction) && (
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          {primaryAction && (
-            <ActionButton action={primaryAction} variant="primary" />
-          )}
-          {secondaryAction && (
-            <ActionButton action={secondaryAction} variant="secondary" />
-          )}
+          {primaryAction && <ActionButton action={primaryAction} variant="primary" />}
+          {secondaryAction && <ActionButton action={secondaryAction} variant="secondary" />}
         </div>
       )}
     </div>

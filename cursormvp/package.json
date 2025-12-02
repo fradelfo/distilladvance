@@ -4,9 +4,7 @@
   "private": true,
   "description": "Browser Extension + AI Web Application for Chat Conversation Distillation",
   "type": "module",
-  "workspaces": [
-    "app/packages/*"
-  ],
+  "workspaces": ["app/packages/*"],
   "scripts": {
     "dev": "bun run --parallel ext:dev web:dev api:dev",
     "build": "bun run --parallel ext:build web:build api:build",
@@ -62,9 +60,7 @@
     "web-ext": "^8.3.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "biome check --apply"
-    ]
+    "*.{ts,tsx,js,jsx}": ["biome check --apply"]
   },
   "engines": {
     "node": ">=20.0.0",
@@ -74,14 +70,7 @@
     "type": "git",
     "url": "git+https://github.com/your-org/distill.git"
   },
-  "keywords": [
-    "browser-extension",
-    "ai",
-    "llm",
-    "chat-distillation",
-    "claude",
-    "openai"
-  ],
+  "keywords": ["browser-extension", "ai", "llm", "chat-distillation", "claude", "openai"],
   "author": "Your Team",
   "license": "MIT",
   "dependencies": {

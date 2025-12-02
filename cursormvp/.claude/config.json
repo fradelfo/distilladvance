@@ -106,12 +106,7 @@
     "manifestVersion": 3,
     "targetBrowsers": ["chrome", "firefox", "edge"],
     "contentScripts": {
-      "supportedSites": [
-        "chat.openai.com",
-        "claude.ai",
-        "gemini.google.com",
-        "perplexity.ai"
-      ],
+      "supportedSites": ["chat.openai.com", "claude.ai", "gemini.google.com", "perplexity.ai"],
       "injectionStrategy": "dynamic",
       "isolationLevel": "shadow-dom"
     },

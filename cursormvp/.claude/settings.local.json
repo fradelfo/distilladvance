@@ -1,9 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(chmod:*)",
-      "mcp__MCP_DOCKER__obsidian_append_content"
-    ],
+    "allow": ["Bash(chmod:*)", "mcp__MCP_DOCKER__obsidian_append_content"],
     "deny": [],
     "ask": []
   }

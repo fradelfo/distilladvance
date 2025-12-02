@@ -5,8 +5,8 @@
  * Used alongside server-side tracking for comprehensive analytics.
  */
 
-import posthog from 'posthog-js';
 import type { AnalyticsEventType, ConversationSource } from '@distill/shared-types';
+import posthog from 'posthog-js';
 
 // ============================================================================
 // Configuration
@@ -236,6 +236,131 @@ export function trackFeatureUsed(
     feature,
     action,
     ...metadata,
+  });
+}
+
+// ============================================================================
+// Workflow Analytics
+// ============================================================================
+
+/**
+ * Track workflow created.
+ */
+export function trackWorkflowCreated(
+  workflowId: string,
+  stepCount: number,
+  workspaceId?: string
+): void {
+  trackEvent('workflow_created', {
+    workflowId,
+    stepCount,
+    workspaceId,
+  });
+}
+
+/**
+ * Track workflow updated.
+ */
+export function trackWorkflowUpdated(workflowId: string, changes: string[]): void {
+  trackEvent('workflow_updated', {
+    workflowId,
+    changes,
+  });
+}
+
+/**
+ * Track workflow deleted.
+ */
+export function trackWorkflowDeleted(workflowId: string): void {
+  trackEvent('workflow_deleted', { workflowId });
+}
+
+/**
+ * Track workflow execution started.
+ */
+export function trackWorkflowExecutionStarted(
+  workflowId: string,
+  executionId: string,
+  stepCount: number
+): void {
+  trackEvent('workflow_execution_started', {
+    workflowId,
+    executionId,
+    stepCount,
+  });
+}
+
+/**
+ * Track workflow execution completed.
+ */
+export function trackWorkflowExecutionCompleted(
+  executionId: string,
+  stepCount: number,
+  totalTokens: number,
+  totalCost: number,
+  durationMs: number
+): void {
+  trackEvent('workflow_execution_completed', {
+    executionId,
+    stepCount,
+    totalTokens,
+    totalCost,
+    durationMs,
+  });
+}
+
+/**
+ * Track workflow execution failed.
+ */
+export function trackWorkflowExecutionFailed(
+  executionId: string,
+  failedStep: number,
+  errorType: string
+): void {
+  trackEvent('workflow_execution_failed', {
+    executionId,
+    failedStep,
+    errorType,
+  });
+}
+
+/**
+ * Track workflow execution cancelled.
+ */
+export function trackWorkflowExecutionCancelled(
+  executionId: string,
+  cancelledAtStep: number
+): void {
+  trackEvent('workflow_execution_cancelled', {
+    executionId,
+    cancelledAtStep,
+  });
+}
+
+/**
+ * Track workflow step completed.
+ */
+export function trackWorkflowStepCompleted(
+  executionId: string,
+  stepOrder: number,
+  tokens: number,
+  durationMs: number
+): void {
+  trackEvent('workflow_step_completed', {
+    executionId,
+    stepOrder,
+    tokens,
+    durationMs,
+  });
+}
+
+/**
+ * Track workflow shared to workspace.
+ */
+export function trackWorkflowShared(workflowId: string, workspaceId: string): void {
+  trackEvent('workflow_shared', {
+    workflowId,
+    workspaceId,
   });
 }
 

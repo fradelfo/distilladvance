@@ -64,7 +64,7 @@ export function CollectionPromptList({
     }
   };
 
-  const truncateContent = (content: string, maxLength: number = 150) => {
+  const truncateContent = (content: string, maxLength = 150) => {
     if (content.length <= maxLength) return content;
     return content.slice(0, maxLength).trim() + '...';
   };
@@ -88,9 +88,7 @@ export function CollectionPromptList({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">
-          No prompts in this collection
-        </h3>
+        <h3 className="text-lg font-semibold text-foreground">No prompts in this collection</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           {canEdit
             ? 'Add prompts from your library to organize them here.'
@@ -132,10 +130,7 @@ export function CollectionPromptList({
           <div className="flex items-start justify-between gap-4">
             {/* Prompt Content */}
             <div className="flex-1 min-w-0">
-              <Link
-                href={`/prompts/${prompt.id}`}
-                className="block hover:text-primary-600"
-              >
+              <Link href={`/prompts/${prompt.id}`} className="block hover:text-primary-600">
                 <h4 className="text-base font-semibold text-foreground line-clamp-1">
                   {prompt.title}
                 </h4>

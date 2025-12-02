@@ -1,17 +1,17 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { type LoginFormData, loginSchema } from '@/lib/validations/auth';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { useForm } from 'react-hook-form';
 
 function LoginForm() {
   const router = useRouter();
@@ -65,12 +65,8 @@ function LoginForm() {
             <span className="text-3xl">💧</span>
             <span className="text-2xl font-semibold text-foreground">Distill</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-foreground">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your account to continue
-          </p>
+          <h1 className="mt-6 text-2xl font-bold text-foreground">Welcome back</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Sign in to your account to continue</p>
         </div>
 
         {/* Success Message */}
@@ -144,9 +140,7 @@ function LoginForm() {
                 placeholder="you@example.com"
                 disabled={isSubmitting}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -173,11 +167,7 @@ function LoginForm() {
               )}
             </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12"
-            >
+            <Button type="submit" disabled={isSubmitting} className="w-full h-12">
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -193,10 +183,7 @@ function LoginForm() {
         {/* Sign Up Link */}
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <Link
-            href="/signup"
-            className="font-medium text-primary hover:text-primary/80"
-          >
+          <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
             Sign up for free
           </Link>
         </p>

@@ -5,9 +5,9 @@
  * with React Query integration for data fetching and caching.
  */
 
-import { createTRPCReact } from '@trpc/react-query';
-import { httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@distill/api';
+import { httpBatchLink } from '@trpc/client';
+import { createTRPCReact } from '@trpc/react-query';
 
 /**
  * tRPC React hooks for type-safe API calls.

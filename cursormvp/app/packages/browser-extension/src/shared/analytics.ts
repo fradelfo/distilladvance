@@ -73,10 +73,7 @@ interface AnalyticsEvent {
 /**
  * Track an analytics event.
  */
-async function trackEvent(
-  event: string,
-  properties: Record<string, unknown>
-): Promise<void> {
+async function trackEvent(event: string, properties: Record<string, unknown>): Promise<void> {
   if (!analyticsEnabled) {
     console.log('[Analytics] Disabled:', event, properties);
     return;
@@ -105,7 +102,7 @@ async function trackEvent(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(analyticsEvent),
       }).catch(() => {

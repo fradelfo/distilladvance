@@ -4,13 +4,13 @@
  * Tests for the stats endpoint and prompt-related operations.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Prisma client
 const mockPrismaPromptCount = vi.fn();
 const mockPrismaPromptGroupBy = vi.fn();
 
-vi.mock("../../lib/prisma.js", () => ({
+vi.mock('../../lib/prisma.js', () => ({
   prisma: {
     prompt: {
       count: (...args: any[]) => mockPrismaPromptCount(...args),
@@ -20,22 +20,22 @@ vi.mock("../../lib/prisma.js", () => ({
 }));
 
 // Mock distillation service
-vi.mock("../../services/distillation.js", () => ({
+vi.mock('../../services/distillation.js', () => ({
   distillConversation: vi.fn(),
   createUsageLogEntry: vi.fn(),
 }));
 
-import { distillRouter } from "./distill.js";
+import { distillRouter } from './distill.js';
 
 // Helper to create a mock context with Prisma
-function createMockContext(userId: string | null = "test-user-123") {
+function createMockContext(userId: string | null = 'test-user-123') {
   return {
     userId,
     session: userId
       ? {
           user: {
             id: userId,
-            email: "test@example.com",
+            email: 'test@example.com',
           },
         }
       : null,
@@ -48,7 +48,7 @@ function createMockContext(userId: string | null = "test-user-123") {
   };
 }
 
-describe("Distill Router", () => {
+describe('Distill Router', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -57,9 +57,9 @@ describe("Distill Router", () => {
   // Stats Endpoint Tests
   // ============================================================================
 
-  describe("stats", () => {
-    it("should return prompt statistics for authenticated user", async () => {
-      const userId = "test-user-123";
+  describe('stats', () => {
+    it('should return prompt statistics for authenticated user', async () => {
+      const userId = 'test-user-123';
 
       // Mock Prisma responses
       mockPrismaPromptCount.mockResolvedValue(15);
@@ -85,14 +85,14 @@ describe("Distill Router", () => {
 
       // Verify groupBy was called correctly
       expect(mockPrismaPromptGroupBy).toHaveBeenCalledWith({
-        by: ["isPublic"],
+        by: ['isPublic'],
         where: { userId },
         _count: { isPublic: true },
       });
     });
 
-    it("should return zero counts for user with no prompts", async () => {
-      const userId = "new-user-456";
+    it('should return zero counts for user with no prompts', async () => {
+      const userId = 'new-user-456';
 
       mockPrismaPromptCount.mockResolvedValue(0);
       mockPrismaPromptGroupBy.mockResolvedValue([]);
@@ -108,13 +108,11 @@ describe("Distill Router", () => {
       });
     });
 
-    it("should handle user with only public prompts", async () => {
-      const userId = "public-only-user";
+    it('should handle user with only public prompts', async () => {
+      const userId = 'public-only-user';
 
       mockPrismaPromptCount.mockResolvedValue(8);
-      mockPrismaPromptGroupBy.mockResolvedValue([
-        { isPublic: true, _count: { isPublic: 8 } },
-      ]);
+      mockPrismaPromptGroupBy.mockResolvedValue([{ isPublic: true, _count: { isPublic: 8 } }]);
 
       const caller = distillRouter.createCaller(createMockContext(userId) as any);
       const result = await caller.stats();
@@ -126,13 +124,11 @@ describe("Distill Router", () => {
       });
     });
 
-    it("should handle user with only private prompts", async () => {
-      const userId = "private-only-user";
+    it('should handle user with only private prompts', async () => {
+      const userId = 'private-only-user';
 
       mockPrismaPromptCount.mockResolvedValue(12);
-      mockPrismaPromptGroupBy.mockResolvedValue([
-        { isPublic: false, _count: { isPublic: 12 } },
-      ]);
+      mockPrismaPromptGroupBy.mockResolvedValue([{ isPublic: false, _count: { isPublic: 12 } }]);
 
       const caller = distillRouter.createCaller(createMockContext(userId) as any);
       const result = await caller.stats();
@@ -144,14 +140,14 @@ describe("Distill Router", () => {
       });
     });
 
-    it("should throw UNAUTHORIZED error when user is not logged in", async () => {
+    it('should throw UNAUTHORIZED error when user is not logged in', async () => {
       const caller = distillRouter.createCaller(createMockContext(null) as any);
 
-      await expect(caller.stats()).rejects.toThrow("You must be logged in to perform this action");
+      await expect(caller.stats()).rejects.toThrow('You must be logged in to perform this action');
     });
 
-    it("should execute count and groupBy queries in parallel", async () => {
-      const userId = "parallel-test-user";
+    it('should execute count and groupBy queries in parallel', async () => {
+      const userId = 'parallel-test-user';
       let countCallTime: number | undefined;
       let groupByCallTime: number | undefined;
 

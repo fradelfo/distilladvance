@@ -1,11 +1,11 @@
-import cors from "cors";
-import compression from "compression";
-import express, { type Request, type Response } from "express";
-import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { env } from "./lib/env.js";
-import { disconnectPrisma, prisma } from "./lib/prisma.js";
-import { appRouter } from "./trpc/router.js";
-import { createContext } from "./trpc/context.js";
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import compression from 'compression';
+import cors from 'cors';
+import express, { type Request, type Response } from 'express';
+import { env } from './lib/env.js';
+import { disconnectPrisma, prisma } from './lib/prisma.js';
+import { createContext } from './trpc/context.js';
+import { appRouter } from './trpc/router.js';
 
 const app = express();
 
@@ -22,52 +22,52 @@ app.use(
       // Allow web app origins (including fallback dev ports)
       const allowedOrigins = [
         env.WEB_URL,
-        "http://localhost:3000",
-        "http://localhost:3002",
-        "http://localhost:3003",
+        'http://localhost:3000',
+        'http://localhost:3002',
+        'http://localhost:3003',
       ];
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
       // Allow Chrome extension origins
-      if (origin.startsWith("chrome-extension://")) {
+      if (origin.startsWith('chrome-extension://')) {
         return callback(null, true);
       }
 
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
   })
 );
 
 // Health check endpoint (non-tRPC for simple monitoring)
-app.get("/health", async (_req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   try {
     // Check database connection
     await prisma.$queryRaw`SELECT 1`;
     res.json({
-      status: "healthy",
+      status: 'healthy',
       timestamp: new Date().toISOString(),
       services: {
-        database: "connected",
+        database: 'connected',
       },
     });
   } catch (error) {
     res.status(503).json({
-      status: "unhealthy",
+      status: 'unhealthy',
       timestamp: new Date().toISOString(),
       services: {
-        database: "disconnected",
+        database: 'disconnected',
       },
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
 
 // tRPC API handler
 app.use(
-  "/trpc",
+  '/trpc',
   createExpressMiddleware({
     router: appRouter,
     createContext,
@@ -79,7 +79,7 @@ app.use(
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: "Not found" });
+  res.status(404).json({ error: 'Not found' });
 });
 
 // Start server
@@ -98,16 +98,16 @@ const server = app.listen(env.API_PORT, () => {
 
 // Graceful shutdown
 async function shutdown() {
-  console.log("\nShutting down gracefully...");
+  console.log('\nShutting down gracefully...');
   server.close(async () => {
     await disconnectPrisma();
-    console.log("Server closed");
+    console.log('Server closed');
     process.exit(0);
   });
 }
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 export { app, appRouter };
-export type { AppRouter } from "./trpc/router.js";
+export type { AppRouter } from './trpc/router.js';

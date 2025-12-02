@@ -8,8 +8,8 @@
  * and visual indication of already-added prompts.
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { trpc } from '@/lib/trpc';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface PromptPickerModalProps {
   /** Collection ID to add prompts to */
@@ -47,23 +47,18 @@ export function PromptPickerModal({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch prompts
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = trpc.distill.listPrompts.useInfiniteQuery(
-    {
-      limit: 20,
-      search: searchQuery || undefined,
-    },
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
-      enabled: isOpen,
-      staleTime: 5 * 60 * 1000,
-    }
-  );
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    trpc.distill.listPrompts.useInfiniteQuery(
+      {
+        limit: 20,
+        search: searchQuery || undefined,
+      },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        enabled: isOpen,
+        staleTime: 5 * 60 * 1000,
+      }
+    );
 
   // Add prompt mutation
   const addPromptMutation = trpc.collection.addPrompt.useMutation();
@@ -102,19 +97,22 @@ export function PromptPickerModal({
   }, [isOpen, isAdding, onClose]);
 
   // Toggle prompt selection
-  const toggleSelection = useCallback((promptId: string) => {
-    if (existingSet.has(promptId)) return; // Can't select already-added prompts
+  const toggleSelection = useCallback(
+    (promptId: string) => {
+      if (existingSet.has(promptId)) return; // Can't select already-added prompts
 
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(promptId)) {
-        next.delete(promptId);
-      } else {
-        next.add(promptId);
-      }
-      return next;
-    });
-  }, [existingSet]);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(promptId)) {
+          next.delete(promptId);
+        } else {
+          next.add(promptId);
+        }
+        return next;
+      });
+    },
+    [existingSet]
+  );
 
   // Handle adding selected prompts
   const handleAddSelected = useCallback(async () => {
@@ -168,10 +166,7 @@ export function PromptPickerModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2
-            id="prompt-picker-title"
-            className="text-xl font-semibold text-foreground"
-          >
+          <h2 id="prompt-picker-title" className="text-xl font-semibold text-foreground">
             Add Prompts to Collection
           </h2>
           <button
@@ -236,7 +231,10 @@ export function PromptPickerModal({
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg border border-border">
+                <div
+                  key={i}
+                  className="animate-pulse flex items-center gap-3 p-3 rounded-lg border border-border"
+                >
                   <div className="h-5 w-5 bg-neutral-200 rounded" />
                   <div className="flex-1">
                     <div className="h-4 bg-neutral-200 rounded w-3/4 mb-2" />
@@ -269,8 +267,8 @@ export function PromptPickerModal({
                       isExisting
                         ? 'border-border bg-secondary opacity-60 cursor-not-allowed'
                         : isSelected
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-border hover:border-input hover:bg-secondary'
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-border hover:border-input hover:bg-secondary'
                     }`}
                   >
                     {/* Checkbox */}
@@ -279,8 +277,8 @@ export function PromptPickerModal({
                         isExisting
                           ? 'border-input bg-neutral-200'
                           : isSelected
-                          ? 'border-primary-500 bg-primary-500'
-                          : 'border-input'
+                            ? 'border-primary-500 bg-primary-500'
+                            : 'border-input'
                       }`}
                     >
                       {(isSelected || isExisting) && (
@@ -303,7 +301,9 @@ export function PromptPickerModal({
 
                     {/* Prompt Info */}
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${isExisting ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      <p
+                        className={`font-medium truncate ${isExisting ? 'text-muted-foreground' : 'text-foreground'}`}
+                      >
                         {prompt.title}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -354,11 +354,7 @@ export function PromptPickerModal({
 
         {/* Footer */}
         <div className="border-t border-border p-4 bg-secondary flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            disabled={isAdding}
-            className="btn-outline px-4 py-2"
-          >
+          <button onClick={onClose} disabled={isAdding} className="btn-outline px-4 py-2">
             Cancel
           </button>
           <button

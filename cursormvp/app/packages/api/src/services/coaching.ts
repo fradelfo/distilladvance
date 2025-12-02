@@ -5,35 +5,35 @@
  * using Claude API with exponential backoff retry logic.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
-import { env } from "../lib/env.js";
+import Anthropic from '@anthropic-ai/sdk';
+import { env } from '../lib/env.js';
 import {
-  COACH_SYSTEM_PROMPT,
   COACH_FOCUSED_PROMPTS,
+  COACH_SYSTEM_PROMPT,
   estimateCoachCost,
-} from "../prompts/coach-system.js";
+} from '../prompts/coach-system.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export type CoachingArea =
-  | "clarity"
-  | "structure"
-  | "variables"
-  | "specificity"
-  | "output_format"
-  | "comprehensive";
+  | 'clarity'
+  | 'structure'
+  | 'variables'
+  | 'specificity'
+  | 'output_format'
+  | 'comprehensive';
 
 export interface CoachingSuggestion {
   id: string;
-  area: Exclude<CoachingArea, "comprehensive">;
+  area: Exclude<CoachingArea, 'comprehensive'>;
   title: string;
   issue: string;
   current: string;
   suggested: string;
   reasoning: string;
-  impact: "high" | "medium" | "low";
+  impact: 'high' | 'medium' | 'low';
 }
 
 export interface CoachingAnalysis {
@@ -54,7 +54,7 @@ export interface CoachingResult {
     totalTokens: number;
     estimatedCost: number;
     model: string;
-    provider: "anthropic";
+    provider: 'anthropic';
   };
   durationMs: number;
 }
@@ -123,27 +123,23 @@ async function withRetry<T>(
     }
   }
 
-  throw lastError ?? new Error("Unknown error in retry loop");
+  throw lastError ?? new Error('Unknown error in retry loop');
 }
 
 function isRetryableError(error: Error): boolean {
   const message = error.message.toLowerCase();
 
-  if (message.includes("rate_limit") || message.includes("429")) return true;
+  if (message.includes('rate_limit') || message.includes('429')) return true;
   if (
-    message.includes("500") ||
-    message.includes("502") ||
-    message.includes("503") ||
-    message.includes("504")
+    message.includes('500') ||
+    message.includes('502') ||
+    message.includes('503') ||
+    message.includes('504')
   )
     return true;
-  if (
-    message.includes("network") ||
-    message.includes("timeout") ||
-    message.includes("econnreset")
-  )
+  if (message.includes('network') || message.includes('timeout') || message.includes('econnreset'))
     return true;
-  if (message.includes("overloaded")) return true;
+  if (message.includes('overloaded')) return true;
 
   return false;
 }
@@ -157,7 +153,7 @@ let anthropicClient: Anthropic | null = null;
 function getAnthropicClient(): Anthropic {
   if (!anthropicClient) {
     if (!env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
     anthropicClient = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
@@ -181,7 +177,7 @@ function formatPromptForCoaching(prompt: PromptForCoaching): string {
   }
 
   if (prompt.tags && prompt.tags.length > 0) {
-    formatted += `**Tags:** ${prompt.tags.join(", ")}\n`;
+    formatted += `**Tags:** ${prompt.tags.join(', ')}\n`;
   }
 
   formatted += `
@@ -200,7 +196,7 @@ ${prompt.template}
 |------|-------------|---------|----------|
 `;
     for (const v of prompt.variables) {
-      formatted += `| {{${v.name}}} | ${v.description || "-"} | ${v.example || "-"} | ${v.required ? "Yes" : "No"} |\n`;
+      formatted += `| {{${v.name}}} | ${v.description || '-'} | ${v.example || '-'} | ${v.required ? 'Yes' : 'No'} |\n`;
     }
   }
 
@@ -224,10 +220,10 @@ function parseCoachingResponse(response: string): CoachingAnalysis {
     const parsed = JSON.parse(jsonStr);
 
     // Validate required fields
-    if (typeof parsed.overallScore !== "number") {
+    if (typeof parsed.overallScore !== 'number') {
       throw new Error("Invalid or missing 'overallScore' field");
     }
-    if (!parsed.summary || typeof parsed.summary !== "string") {
+    if (!parsed.summary || typeof parsed.summary !== 'string') {
       throw new Error("Invalid or missing 'summary' field");
     }
     if (!Array.isArray(parsed.strengths)) {
@@ -244,13 +240,13 @@ function parseCoachingResponse(response: string): CoachingAnalysis {
     const suggestions: CoachingSuggestion[] = parsed.suggestions.map(
       (s: Record<string, unknown>, index: number) => ({
         id: String(s.id || `suggestion-${index}`),
-        area: validateArea(String(s.area || "clarity")),
-        title: String(s.title || ""),
-        issue: String(s.issue || ""),
-        current: String(s.current || ""),
-        suggested: String(s.suggested || ""),
-        reasoning: String(s.reasoning || ""),
-        impact: validateImpact(String(s.impact || "medium")),
+        area: validateArea(String(s.area || 'clarity')),
+        title: String(s.title || ''),
+        issue: String(s.issue || ''),
+        current: String(s.current || ''),
+        suggested: String(s.suggested || ''),
+        reasoning: String(s.reasoning || ''),
+        impact: validateImpact(String(s.impact || 'medium')),
       })
     );
 
@@ -264,42 +260,30 @@ function parseCoachingResponse(response: string): CoachingAnalysis {
   } catch (parseError) {
     throw new Error(
       `Failed to parse coaching response: ${
-        parseError instanceof Error ? parseError.message : "Invalid JSON"
+        parseError instanceof Error ? parseError.message : 'Invalid JSON'
       }`
     );
   }
 }
 
-function validateArea(
-  area: string
-): Exclude<CoachingArea, "comprehensive"> {
-  const validAreas = [
-    "clarity",
-    "structure",
-    "variables",
-    "specificity",
-    "output_format",
-  ];
-  return validAreas.includes(area)
-    ? (area as Exclude<CoachingArea, "comprehensive">)
-    : "clarity";
+function validateArea(area: string): Exclude<CoachingArea, 'comprehensive'> {
+  const validAreas = ['clarity', 'structure', 'variables', 'specificity', 'output_format'];
+  return validAreas.includes(area) ? (area as Exclude<CoachingArea, 'comprehensive'>) : 'clarity';
 }
 
-function validateImpact(impact: string): "high" | "medium" | "low" {
-  const validImpacts = ["high", "medium", "low"];
-  return validImpacts.includes(impact)
-    ? (impact as "high" | "medium" | "low")
-    : "medium";
+function validateImpact(impact: string): 'high' | 'medium' | 'low' {
+  const validImpacts = ['high', 'medium', 'low'];
+  return validImpacts.includes(impact) ? (impact as 'high' | 'medium' | 'low') : 'medium';
 }
 
 // ============================================================================
 // Main Coaching Function
 // ============================================================================
 
-const DEFAULT_OPTIONS: Required<Omit<CoachingOptions, "focusArea">> & {
+const DEFAULT_OPTIONS: Required<Omit<CoachingOptions, 'focusArea'>> & {
   focusArea?: CoachingArea;
 } = {
-  focusArea: "comprehensive",
+  focusArea: 'comprehensive',
   maxRetries: 3,
   initialDelayMs: 1000,
   maxDelayMs: 30000,
@@ -318,14 +302,14 @@ export async function generateCoachingSuggestions(
   if (!prompt.template || prompt.template.trim().length === 0) {
     return {
       success: false,
-      error: "No template content provided for coaching",
+      error: 'No template content provided for coaching',
       usage: {
         inputTokens: 0,
         outputTokens: 0,
         totalTokens: 0,
         estimatedCost: 0,
-        model: "",
-        provider: "anthropic",
+        model: '',
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
@@ -336,7 +320,7 @@ export async function generateCoachingSuggestions(
 
   // Build system prompt with optional focus area
   let systemPrompt = COACH_SYSTEM_PROMPT;
-  if (opts.focusArea && opts.focusArea !== "comprehensive") {
+  if (opts.focusArea && opts.focusArea !== 'comprehensive') {
     const focusInstructions = COACH_FOCUSED_PROMPTS[opts.focusArea];
     if (focusInstructions) {
       systemPrompt += `\n\n## Focus Area\n\n${focusInstructions}`;
@@ -355,7 +339,7 @@ export async function generateCoachingSuggestions(
           system: systemPrompt,
           messages: [
             {
-              role: "user",
+              role: 'user',
               content: `Analyze this prompt template and provide improvement suggestions:\n\n${formattedPrompt}`,
             },
           ],
@@ -374,9 +358,9 @@ export async function generateCoachingSuggestions(
     );
 
     // Extract response text
-    const textContent = response.content.find((c) => c.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      throw new Error("No text content in response");
+    const textContent = response.content.find((c) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
     }
 
     const responseText = textContent.text;
@@ -403,13 +387,12 @@ export async function generateCoachingSuggestions(
         totalTokens,
         estimatedCost: cost,
         model,
-        provider: "anthropic",
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     console.error(`[Coaching] Failed: ${errorMessage}`);
 
@@ -422,7 +405,7 @@ export async function generateCoachingSuggestions(
         totalTokens: 0,
         estimatedCost: 0,
         model,
-        provider: "anthropic",
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
@@ -459,7 +442,7 @@ export function createCoachingUsageLogEntry(
     completionTokens: result.usage.outputTokens,
     totalTokens: result.usage.totalTokens,
     cost: result.usage.estimatedCost,
-    operation: focusArea === "comprehensive" ? "coach_full" : "coach_focused",
+    operation: focusArea === 'comprehensive' ? 'coach_full' : 'coach_focused',
     metadata: {
       success: result.success,
       durationMs: result.durationMs,

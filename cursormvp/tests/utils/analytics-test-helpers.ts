@@ -138,16 +138,11 @@ export class MockPostHogClient {
     return this.events.some((e) => e.event === eventType);
   }
 
-  hasEventWithProperties(
-    eventType: string,
-    properties: Record<string, unknown>
-  ): boolean {
+  hasEventWithProperties(eventType: string, properties: Record<string, unknown>): boolean {
     return this.events.some(
       (e) =>
         e.event === eventType &&
-        Object.entries(properties).every(
-          ([key, value]) => e.properties?.[key] === value
-        )
+        Object.entries(properties).every(([key, value]) => e.properties?.[key] === value)
     );
   }
 
@@ -187,27 +182,25 @@ export class MockPostHogJSClient {
     }
   );
 
-  identify = vi.fn().mockImplementation(
-    (distinctId: string, properties?: Record<string, unknown>) => {
+  identify = vi
+    .fn()
+    .mockImplementation((distinctId: string, properties?: Record<string, unknown>) => {
       if (!this.isInitialized) return;
       this.currentUser = distinctId;
       if (properties) {
         this.userProperties = { ...this.userProperties, ...properties };
       }
-    }
-  );
+    });
 
-  capture = vi.fn().mockImplementation(
-    (event: string, properties?: Record<string, unknown>) => {
-      if (!this.isInitialized) return;
-      this.events.push({
-        distinctId: this.currentUser || 'anonymous',
-        event,
-        properties,
-        timestamp: new Date(),
-      });
-    }
-  );
+  capture = vi.fn().mockImplementation((event: string, properties?: Record<string, unknown>) => {
+    if (!this.isInitialized) return;
+    this.events.push({
+      distinctId: this.currentUser || 'anonymous',
+      event,
+      properties,
+      timestamp: new Date(),
+    });
+  });
 
   reset = vi.fn().mockImplementation(() => {
     this.currentUser = null;
@@ -220,18 +213,14 @@ export class MockPostHogJSClient {
     }),
   };
 
-  isFeatureEnabled = vi
-    .fn()
-    .mockImplementation((flagKey: string): boolean | undefined => {
-      const value = this.featureFlags[flagKey];
-      return typeof value === 'boolean' ? value : undefined;
-    });
+  isFeatureEnabled = vi.fn().mockImplementation((flagKey: string): boolean | undefined => {
+    const value = this.featureFlags[flagKey];
+    return typeof value === 'boolean' ? value : undefined;
+  });
 
-  getFeatureFlag = vi
-    .fn()
-    .mockImplementation((flagKey: string): string | boolean | undefined => {
-      return this.featureFlags[flagKey];
-    });
+  getFeatureFlag = vi.fn().mockImplementation((flagKey: string): string | boolean | undefined => {
+    return this.featureFlags[flagKey];
+  });
 
   startSessionRecording = vi.fn();
   stopSessionRecording = vi.fn();
@@ -289,11 +278,7 @@ export function createAnalyticsTracker() {
   const users: Map<string, Record<string, unknown>> = new Map();
 
   return {
-    trackEvent(
-      distinctId: string,
-      event: string,
-      properties?: Record<string, unknown>
-    ) {
+    trackEvent(distinctId: string, event: string, properties?: Record<string, unknown>) {
       events.push({
         distinctId,
         event,

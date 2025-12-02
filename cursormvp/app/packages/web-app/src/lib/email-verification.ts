@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { resend, EMAIL_FROM } from '@/lib/resend';
 
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
-const WEB_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const WEB_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002';
 
 /**
  * Generate a secure verification token

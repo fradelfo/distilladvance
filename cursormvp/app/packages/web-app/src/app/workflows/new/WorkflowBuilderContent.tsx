@@ -77,6 +77,7 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
   const [description, setDescription] = useState('');
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [isAddingStep, setIsAddingStep] = useState(false);
+  const [isLoadingStep, setIsLoadingStep] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,8 +109,8 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
   }, [workflowData]);
 
   // Fetch prompts for selection
-  const { data: promptsData, isLoading: isLoadingPrompts } = trpc.distill.listPrompts.useQuery(
-    { limit: 100 },
+  const { data: promptsData, isLoading: isLoadingPrompts, error: promptsError } = trpc.distill.listPrompts.useQuery(
+    { limit: 50 },
     { staleTime: 5 * 60 * 1000 }
   );
 
@@ -169,13 +170,28 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
   // Add a new step
   const handleAddStep = useCallback(
     async (promptId: string) => {
+      console.log('[Workflow] Adding step with promptId:', promptId);
       const promptMeta = promptsData?.prompts.find((p) => p.id === promptId);
-      if (!promptMeta) return;
+      if (!promptMeta) {
+        console.error('[Workflow] Prompt not found in list:', promptId);
+        setError('Prompt not found');
+        return;
+      }
+
+      setIsLoadingStep(true);
+      setError(null);
 
       try {
         // Fetch full prompt details including content
+        console.log('[Workflow] Fetching prompt details...');
         const fullPrompt = await fetchPromptDetails.fetch({ id: promptId });
-        if (!fullPrompt?.prompt) return;
+        console.log('[Workflow] Full prompt response:', fullPrompt);
+
+        if (!fullPrompt?.prompt) {
+          console.error('[Workflow] No prompt in response');
+          setError('Failed to load prompt details');
+          return;
+        }
 
         const newStep: WorkflowStep = {
           id: `temp-${Date.now()}`, // Temporary ID until saved
@@ -187,10 +203,14 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
           variables: extractVariables(fullPrompt.prompt.content),
         };
 
+        console.log('[Workflow] Adding new step:', newStep);
         setSteps([...steps, newStep]);
         setIsAddingStep(false);
       } catch (err) {
-        console.error('Failed to fetch prompt details:', err);
+        console.error('[Workflow] Failed to fetch prompt details:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load prompt');
+      } finally {
+        setIsLoadingStep(false);
       }
     },
     [promptsData, steps, fetchPromptDetails]
@@ -343,7 +363,7 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/workflows">
@@ -412,9 +432,24 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
                   Select a prompt to add as a new step in your workflow.
                 </DialogDescription>
               </DialogHeader>
+              {isLoadingStep && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
+                  Loading prompt...
+                </div>
+              )}
+              {promptsError && (
+                <p className="text-sm text-destructive py-2">
+                  Failed to load prompts: {promptsError.message}
+                </p>
+              )}
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {isLoadingPrompts ? (
                   <Skeleton className="h-20 w-full" />
+                ) : promptsError ? (
+                  <p className="text-sm text-destructive py-4 text-center">
+                    Failed to load prompts. Please try again.
+                  </p>
                 ) : availablePrompts.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-4 text-center">
                     No available prompts. Create some prompts first.
@@ -424,7 +459,8 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
                     <button
                       key={prompt.id}
                       onClick={() => handleAddStep(prompt.id)}
-                      className="w-full p-3 text-left rounded-lg border hover:bg-accent transition-colors"
+                      disabled={isLoadingStep}
+                      className="w-full p-3 text-left rounded-lg border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="font-medium">{prompt.title}</div>
                       <div className="text-sm text-muted-foreground">

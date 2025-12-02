@@ -7,7 +7,7 @@
 import { stripe, STRIPE_PRICES, PLANS, type PlanType } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002';
 
 /**
  * Get or create a Stripe customer for a user

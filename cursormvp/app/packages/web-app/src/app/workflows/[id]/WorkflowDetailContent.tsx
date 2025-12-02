@@ -190,7 +190,7 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
@@ -223,7 +223,7 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">

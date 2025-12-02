@@ -630,4 +630,198 @@ export const workflowRouter = router({
 
       return { success: true };
     }),
+
+  // ============================================================================
+  // Execution Endpoints
+  // ============================================================================
+
+  /**
+   * Execute a workflow with initial inputs.
+   */
+  execute: authedProcedure
+    .input(
+      z.object({
+        workflowId: z.string(),
+        initialInput: z.record(z.any()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.userId;
+
+      // Verify access to workflow
+      await checkWorkflowAccess(ctx.prisma, input.workflowId, userId);
+
+      // Import execution service dynamically to avoid circular deps
+      const { startExecution, runExecution } = await import(
+        "../../services/workflow-execution.js"
+      );
+
+      // Start execution
+      const executionId = await startExecution(
+        { prisma: ctx.prisma, userId },
+        input.workflowId,
+        input.initialInput
+      );
+
+      // Run execution (this could be moved to a background job for long workflows)
+      const status = await runExecution(
+        { prisma: ctx.prisma, userId },
+        executionId
+      );
+
+      return {
+        success: true,
+        execution: status,
+      };
+    }),
+
+  /**
+   * Cancel a running execution.
+   */
+  cancelExecution: authedProcedure
+    .input(z.object({ executionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.userId;
+
+      const { cancelExecution } = await import(
+        "../../services/workflow-execution.js"
+      );
+
+      await cancelExecution({ prisma: ctx.prisma, userId }, input.executionId);
+
+      return { success: true };
+    }),
+
+  /**
+   * Get execution status and details.
+   */
+  getExecution: authedProcedure
+    .input(z.object({ executionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.userId;
+
+      // Get execution and verify access
+      const execution = await ctx.prisma.workflowExecution.findUnique({
+        where: { id: input.executionId },
+        include: {
+          workflow: {
+            select: { userId: true, workspaceId: true },
+          },
+          steps: {
+            orderBy: { stepOrder: "asc" },
+            include: {
+              step: {
+                include: {
+                  prompt: {
+                    select: { id: true, title: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!execution) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Execution not found",
+        });
+      }
+
+      // Check access - user must own execution, own workflow, or be workspace member
+      const isExecutionOwner = execution.userId === userId;
+      const isWorkflowOwner = execution.workflow.userId === userId;
+      let isWorkspaceMember = false;
+
+      if (execution.workflow.workspaceId) {
+        const membership = await ctx.prisma.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: {
+              workspaceId: execution.workflow.workspaceId,
+              userId,
+            },
+          },
+        });
+        isWorkspaceMember = !!membership;
+      }
+
+      if (!isExecutionOwner && !isWorkflowOwner && !isWorkspaceMember) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this execution",
+        });
+      }
+
+      return {
+        success: true,
+        execution: {
+          id: execution.id,
+          workflowId: execution.workflowId,
+          status: execution.status,
+          initialInput: execution.initialInput as Record<string, unknown>,
+          finalOutput: execution.finalOutput as Record<string, unknown> | null,
+          totalTokens: execution.totalTokens,
+          totalCost: execution.totalCost,
+          errorMessage: execution.errorMessage,
+          startedAt: execution.startedAt.toISOString(),
+          completedAt: execution.completedAt?.toISOString() ?? null,
+          steps: execution.steps.map((s) => ({
+            id: s.id,
+            order: s.stepOrder,
+            status: s.status,
+            promptTitle: s.step.prompt.title,
+            input: s.input as Record<string, unknown> | null,
+            output: s.output,
+            tokens: s.tokens,
+            cost: s.cost,
+            durationMs: s.durationMs,
+            errorMessage: s.errorMessage,
+            startedAt: s.startedAt?.toISOString() ?? null,
+            completedAt: s.completedAt?.toISOString() ?? null,
+          })),
+        },
+      };
+    }),
+
+  /**
+   * List executions for a workflow.
+   */
+  listExecutions: authedProcedure
+    .input(
+      z.object({
+        workflowId: z.string(),
+        limit: z.number().min(1).max(50).default(10),
+        cursor: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.userId;
+
+      // Verify access to workflow
+      await checkWorkflowAccess(ctx.prisma, input.workflowId, userId);
+
+      const { listExecutions } = await import(
+        "../../services/workflow-execution.js"
+      );
+
+      const result = await listExecutions(
+        { prisma: ctx.prisma, userId },
+        input.workflowId,
+        { limit: input.limit, cursor: input.cursor }
+      );
+
+      return {
+        success: true,
+        executions: result.executions.map((e) => ({
+          id: e.id,
+          status: e.status,
+          totalTokens: e.totalTokens,
+          totalCost: e.totalCost,
+          startedAt: e.startedAt.toISOString(),
+          completedAt: e.completedAt?.toISOString() ?? null,
+        })),
+        nextCursor: result.nextCursor,
+      };
+    }),
 });

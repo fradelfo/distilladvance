@@ -51,6 +51,7 @@
     "@playwright/test": "^1.48.0",
     "@types/bun": "^1.1.0",
     "@types/chrome": "^0.1.31",
+    "@types/compression": "^1.8.1",
     "@vitest/coverage-v8": "^2.1.0",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
@@ -71,5 +72,9 @@
   },
   "keywords": ["browser-extension", "ai", "llm", "chat-distillation", "claude", "openai"],
   "author": "Your Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "compression": "^1.8.1",
+    "web-vitals": "^5.1.0"
+  }
 }

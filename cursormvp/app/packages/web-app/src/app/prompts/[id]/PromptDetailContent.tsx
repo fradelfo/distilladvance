@@ -8,12 +8,29 @@
  */
 
 import { TagChip } from '@/components/TagFilter';
-import { CoachPanel } from '@/components/prompts/CoachPanel';
 import { trpc } from '@/lib/trpc';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+// Lazy load CoachPanel - only loads when viewing a prompt
+const CoachPanel = dynamic(
+  () => import('@/components/prompts/CoachPanel').then((mod) => ({ default: mod.CoachPanel })),
+  {
+    loading: () => (
+      <div className="card p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-secondary rounded w-1/3" />
+          <div className="h-4 bg-secondary rounded w-2/3" />
+          <div className="h-10 bg-secondary rounded" />
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface PromptDetailContentProps {
   promptId: string;

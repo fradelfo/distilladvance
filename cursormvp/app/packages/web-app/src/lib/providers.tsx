@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ThemeProvider } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { WebVitals } from '@/components/WebVitals';
 import { identifyUser, initAnalytics, resetUser } from './analytics';
 import { createTRPCClient, trpc } from './trpc';
 
@@ -53,8 +54,21 @@ export function Providers({ children }: ProvidersProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
+            // Data stays fresh for 5 minutes before becoming stale
+            staleTime: 5 * 60 * 1000,
+            // Keep unused data in cache for 30 minutes before garbage collection
+            gcTime: 30 * 60 * 1000,
+            // Don't refetch on window focus (user triggered only)
             refetchOnWindowFocus: false,
+            // Don't refetch when component remounts if data is fresh
+            refetchOnMount: false,
+            // Retry failed requests 2 times with exponential backoff
+            retry: 2,
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+          },
+          mutations: {
+            // Retry mutations once on network errors
+            retry: 1,
           },
         },
       })
@@ -69,6 +83,7 @@ export function Providers({ children }: ProvidersProps) {
           <QueryClientProvider client={queryClient}>
             <TooltipProvider>
               <AnalyticsProvider>{children}</AnalyticsProvider>
+              <WebVitals />
               <Toaster />
             </TooltipProvider>
           </QueryClientProvider>

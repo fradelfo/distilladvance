@@ -1,4 +1,5 @@
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import compression from 'compression';
 import cors from 'cors';
 import express, { type Request, type Response } from 'express';
 import { env } from './lib/env.js';
@@ -9,6 +10,8 @@ import { appRouter } from './trpc/router.js';
 const app = express();
 
 // Middleware
+// Enable gzip/brotli compression for all responses
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(
   cors({

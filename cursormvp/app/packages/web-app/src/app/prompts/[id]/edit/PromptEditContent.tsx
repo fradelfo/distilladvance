@@ -16,11 +16,28 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { Check, Loader2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
-import { CoachPanel } from '@/components/prompts/CoachPanel';
+
+// Lazy load CoachPanel - only loads when editing a prompt
+const CoachPanel = dynamic(
+  () => import('@/components/prompts/CoachPanel').then((mod) => ({ default: mod.CoachPanel })),
+  {
+    loading: () => (
+      <div className="card p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-secondary rounded w-1/3" />
+          <div className="h-4 bg-secondary rounded w-2/3" />
+          <div className="h-10 bg-secondary rounded" />
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface PromptEditContentProps {
   promptId: string;

@@ -284,6 +284,39 @@ export function stopSessionRecording(): void {
 }
 
 // ============================================================================
+// Web Vitals (Core Performance Metrics)
+// ============================================================================
+
+/**
+ * Track Web Vitals metrics.
+ * Call this from app/layout.tsx or a client component.
+ */
+export function trackWebVitals(metric: {
+  id: string;
+  name: string;
+  value: number;
+  rating?: 'good' | 'needs-improvement' | 'poor';
+}): void {
+  // Log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)}ms (${metric.rating || 'unknown'})`);
+  }
+
+  // Track to PostHog
+  trackEvent('web_vitals', {
+    metric_id: metric.id,
+    metric_name: metric.name,
+    metric_value: metric.value,
+    metric_rating: metric.rating,
+    // Include useful context
+    path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    connection_type: typeof navigator !== 'undefined'
+      ? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
+      : undefined,
+  });
+}
+
+// ============================================================================
 // Cleanup
 // ============================================================================
 

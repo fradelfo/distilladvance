@@ -7,16 +7,29 @@
  * including search, filtering, sorting, and displaying prompts.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { PromptCard, PromptCardSkeleton } from '@/components/PromptCard';
 import { PromptSearch } from '@/components/PromptSearch';
 import { TagFilter } from '@/components/TagFilter';
 import { SortSelect, type SortOption } from '@/components/SortSelect';
 import { EmptyState } from '@/components/EmptyState';
-import { SemanticSearch } from '@/components/prompts';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
 import { trpc } from '@/lib/trpc';
+
+// Lazy load SemanticSearch - only loaded when user switches to semantic mode
+const SemanticSearch = dynamic(
+  () => import('@/components/prompts').then((mod) => ({ default: mod.SemanticSearch })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 // View mode for the grid
 type ViewMode = 'grid' | 'list';

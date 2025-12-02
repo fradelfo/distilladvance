@@ -96,27 +96,10 @@ const MAX_WIDTH = 320;          // Maximum expanded width
 const DEFAULT_WIDTH = 240;      // Default expanded width
 const AUTO_CLOSE_THRESHOLD = 50; // Below this width during drag, auto-snap to closed
 
-// Helper to get initial width from localStorage (runs on client only)
-function getInitialWidth(): number {
-  if (typeof window === 'undefined') return DEFAULT_WIDTH;
-
-  const storedWidth = localStorage.getItem('sidebar-width');
-  if (storedWidth) {
-    const parsed = Number(storedWidth);
-    if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
-      return parsed;
-    }
-  }
-  // Legacy fallback for existing users
-  const legacyCollapsed = localStorage.getItem('sidebar-collapsed');
-  if (legacyCollapsed === 'true') {
-    return MIN_WIDTH;
-  }
-  return DEFAULT_WIDTH;
-}
-
 export function AppSidebar({ user, currentPage }: AppSidebarProps) {
-  const [width, setWidth] = useState(getInitialWidth);
+  // Initialize with default to avoid SSR hydration mismatch
+  // (localStorage is only available on client)
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Refs for resize operation
@@ -124,6 +107,23 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
   const startX = useRef(0);
   const startWidth = useRef(0);
   const sidebarRef = useRef<HTMLElement>(null);
+
+  // Sync width from localStorage after mount (client-only)
+  useEffect(() => {
+    const storedWidth = localStorage.getItem('sidebar-width');
+    if (storedWidth) {
+      const parsed = Number(storedWidth);
+      if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
+        setWidth(parsed);
+        return;
+      }
+    }
+    // Legacy fallback for existing users
+    const legacyCollapsed = localStorage.getItem('sidebar-collapsed');
+    if (legacyCollapsed === 'true') {
+      setWidth(MIN_WIDTH);
+    }
+  }, []);
 
   // Derived state - icon-only mode at minimum width
   const isCollapsed = width <= MIN_WIDTH;

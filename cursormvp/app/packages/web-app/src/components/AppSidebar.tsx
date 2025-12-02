@@ -23,6 +23,7 @@ import {
   X,
   ChevronsLeft,
   ChevronsRight,
+  GitBranch,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,7 @@ interface AppSidebarProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'billing' | 'settings';
+  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workflows' | 'workspaces' | 'billing' | 'settings';
 }
 
 const navItems = [
@@ -68,6 +69,12 @@ const navItems = [
     label: 'Collections',
     key: 'collections',
     icon: FolderClosed,
+  },
+  {
+    href: '/workflows',
+    label: 'Workflows',
+    key: 'workflows',
+    icon: GitBranch,
   },
   {
     href: '/workspaces',

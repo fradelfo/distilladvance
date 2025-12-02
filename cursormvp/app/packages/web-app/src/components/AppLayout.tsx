@@ -7,7 +7,7 @@ interface AppLayoutProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'billing' | 'settings';
+  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workflows' | 'workspaces' | 'billing' | 'settings';
   children: React.ReactNode;
 }
 

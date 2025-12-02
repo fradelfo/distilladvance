@@ -25,13 +25,22 @@ export default async function AnalyticsPage() {
               <span className="text-xl font-semibold text-foreground">Distill</span>
             </a>
             <nav className="hidden md:flex md:gap-4">
-              <a href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              <a
+                href="/dashboard"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
                 Dashboard
               </a>
-              <a href="/prompts" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              <a
+                href="/prompts"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
                 Library
               </a>
-              <a href="/workspaces" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              <a
+                href="/workspaces"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
                 Workspaces
               </a>
               <a href="/analytics" className="text-sm font-medium text-primary-600">

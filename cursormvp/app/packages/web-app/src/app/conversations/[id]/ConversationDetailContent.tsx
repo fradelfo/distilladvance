@@ -7,10 +7,10 @@
  * linked prompts, and actions like distill and delete.
  */
 
-import { useState } from 'react';
+import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { trpc } from '@/lib/trpc';
+import { useState } from 'react';
 
 // Source icons and names
 const sourceIcons: Record<string, string> = {
@@ -156,7 +156,11 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
   }
 
   const rawContent = conversation.rawContent as Message[] | null;
-  const prompts = (conversation.prompts || []) as Array<{ id: string; title: string; createdAt: string }>;
+  const prompts = (conversation.prompts || []) as Array<{
+    id: string;
+    title: string;
+    createdAt: string;
+  }>;
 
   return (
     <div className="space-y-6">
@@ -187,10 +191,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h1
-              className="text-2xl font-bold text-foreground truncate"
-              title={conversation.title}
-            >
+            <h1 className="text-2xl font-bold text-foreground truncate" title={conversation.title}>
               {conversation.title}
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -238,7 +239,9 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       <div className="card p-4">
         <div className="flex flex-wrap gap-4">
           <div>
-            <span className="text-xs font-medium uppercase text-muted-foreground">Privacy Mode</span>
+            <span className="text-xs font-medium uppercase text-muted-foreground">
+              Privacy Mode
+            </span>
             <p className="mt-1">
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -253,7 +256,9 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
           </div>
           {conversation.sourceUrl && (
             <div>
-              <span className="text-xs font-medium uppercase text-muted-foreground">Source URL</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">
+                Source URL
+              </span>
               <p className="mt-1">
                 <a
                   href={conversation.sourceUrl}
@@ -267,7 +272,9 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
             </div>
           )}
           <div>
-            <span className="text-xs font-medium uppercase text-muted-foreground">Linked Prompts</span>
+            <span className="text-xs font-medium uppercase text-muted-foreground">
+              Linked Prompts
+            </span>
             <p className="mt-1 text-sm">{prompts.length}</p>
           </div>
         </div>
@@ -284,9 +291,7 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
             {rawContent.map((message, index) => (
               <div
                 key={index}
-                className={`p-4 ${
-                  message.role === 'assistant' ? 'bg-secondary' : 'bg-background'
-                }`}
+                className={`p-4 ${message.role === 'assistant' ? 'bg-secondary' : 'bg-background'}`}
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -316,7 +321,8 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
           <div className="text-4xl mb-3">🔒</div>
           <h3 className="font-medium text-foreground mb-1">Content Not Stored</h3>
           <p className="text-sm text-muted-foreground">
-            This conversation was saved in &quot;Prompt Only&quot; mode. The full message content was not stored for privacy.
+            This conversation was saved in &quot;Prompt Only&quot; mode. The full message content
+            was not stored for privacy.
           </p>
           {conversation.privacyMode !== 'FULL' && (
             <p className="text-sm text-muted-foreground mt-2">
@@ -353,11 +359,10 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="card w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Delete Conversation?
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Conversation?</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This will permanently delete this conversation. Any linked prompts will remain but will no longer be associated with this conversation.
+              This will permanently delete this conversation. Any linked prompts will remain but
+              will no longer be associated with this conversation.
             </p>
             <div className="flex justify-end gap-2">
               <button

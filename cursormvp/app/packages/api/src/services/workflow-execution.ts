@@ -5,11 +5,11 @@
  * sequential step execution, variable mapping, and LLM integration.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
-import { Prisma } from "@prisma/client";
-import type { PrismaClient, WorkflowExecutionStatus, StepExecutionStatus } from "@prisma/client";
-import { env } from "../lib/env.js";
-import { estimateCost } from "../prompts/distill-system.js";
+import Anthropic from '@anthropic-ai/sdk';
+import { Prisma } from '@prisma/client';
+import type { PrismaClient, StepExecutionStatus, WorkflowExecutionStatus } from '@prisma/client';
+import { env } from '../lib/env.js';
+import { estimateCost } from '../prompts/distill-system.js';
 
 // ============================================================================
 // Types
@@ -63,7 +63,7 @@ const VARIABLE_PATTERN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
  * Extracts unique variable names from a template string.
  */
 export function extractVariables(content: string): string[] {
-  if (!content || typeof content !== "string") {
+  if (!content || typeof content !== 'string') {
     return [];
   }
 
@@ -87,12 +87,9 @@ export function extractVariables(content: string): string[] {
 /**
  * Fills variables in a template string with provided values.
  */
-export function fillVariables(
-  content: string,
-  values: Record<string, string>
-): string {
-  if (!content || typeof content !== "string") {
-    return content ?? "";
+export function fillVariables(content: string, values: Record<string, string>): string {
+  if (!content || typeof content !== 'string') {
+    return content ?? '';
   }
 
   VARIABLE_PATTERN.lastIndex = 0;
@@ -125,17 +122,17 @@ export function resolveVariables(
   }
 
   for (const [varName, source] of Object.entries(inputMapping)) {
-    if (source.startsWith("initial.")) {
+    if (source.startsWith('initial.')) {
       const initialVar = source.slice(8); // Remove "initial."
       const value = initialInput[initialVar];
       if (value !== undefined && value !== null) {
         resolved[varName] = String(value);
       }
-    } else if (source.startsWith("step.")) {
+    } else if (source.startsWith('step.')) {
       // Format: "step.N.output"
       const match = source.match(/^step\.(\d+)\.output$/);
       if (match) {
-        const stepOrder = parseInt(match[1], 10);
+        const stepOrder = Number.parseInt(match[1], 10);
         const output = stepOutputs.get(stepOrder);
         if (output !== undefined) {
           resolved[varName] = output;
@@ -156,7 +153,7 @@ let anthropicClient: Anthropic | null = null;
 function getAnthropicClient(): Anthropic {
   if (!anthropicClient) {
     if (!env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
     anthropicClient = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
@@ -183,17 +180,17 @@ export async function startExecution(
     where: { id: workflowId },
     include: {
       steps: {
-        orderBy: { order: "asc" },
+        orderBy: { order: 'asc' },
       },
     },
   });
 
   if (!workflow) {
-    throw new Error("Workflow not found");
+    throw new Error('Workflow not found');
   }
 
   if (workflow.steps.length < 2) {
-    throw new Error("Workflow must have at least 2 steps");
+    throw new Error('Workflow must have at least 2 steps');
   }
 
   // Create execution with all step executions
@@ -201,13 +198,13 @@ export async function startExecution(
     data: {
       workflowId,
       userId: ctx.userId,
-      status: "PENDING",
+      status: 'PENDING',
       initialInput: initialInput as any,
       steps: {
         create: workflow.steps.map((step) => ({
           stepId: step.id,
           stepOrder: step.order,
-          status: "PENDING" as StepExecutionStatus,
+          status: 'PENDING' as StepExecutionStatus,
         })),
       },
     },
@@ -242,7 +239,7 @@ async function executeStep(
     await ctx.prisma.workflowStepExecution.update({
       where: { id: stepExecution.id },
       data: {
-        status: "RUNNING",
+        status: 'RUNNING',
         startedAt: new Date(),
       },
     });
@@ -256,7 +253,7 @@ async function executeStep(
     // Check for unfilled variables
     const unfilledVars = extractVariables(filledPrompt);
     if (unfilledVars.length > 0) {
-      throw new Error(`Unfilled variables: ${unfilledVars.join(", ")}`);
+      throw new Error(`Unfilled variables: ${unfilledVars.join(', ')}`);
     }
 
     // Call Anthropic
@@ -269,16 +266,16 @@ async function executeStep(
       temperature: env.AI_TEMPERATURE,
       messages: [
         {
-          role: "user",
+          role: 'user',
           content: filledPrompt,
         },
       ],
     });
 
     // Extract response text
-    const textContent = response.content.find((c) => c.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      throw new Error("No text content in response");
+    const textContent = response.content.find((c) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
     }
 
     const output = textContent.text;
@@ -292,7 +289,7 @@ async function executeStep(
     await ctx.prisma.workflowStepExecution.update({
       where: { id: stepExecution.id },
       data: {
-        status: "COMPLETED",
+        status: 'COMPLETED',
         input: resolvedVars as any,
         output,
         tokens: totalTokens,
@@ -310,14 +307,14 @@ async function executeStep(
       durationMs,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const durationMs = Date.now() - startTime;
 
     // Update step execution with failure
     await ctx.prisma.workflowStepExecution.update({
       where: { id: stepExecution.id },
       data: {
-        status: "FAILED",
+        status: 'FAILED',
         errorMessage,
         durationMs,
         completedAt: new Date(),
@@ -354,28 +351,28 @@ export async function runExecution(
                 select: { id: true, content: true, title: true },
               },
             },
-            orderBy: { order: "asc" },
+            orderBy: { order: 'asc' },
           },
         },
       },
       steps: {
-        orderBy: { stepOrder: "asc" },
+        orderBy: { stepOrder: 'asc' },
       },
     },
   });
 
   if (!execution) {
-    throw new Error("Execution not found");
+    throw new Error('Execution not found');
   }
 
-  if (execution.status !== "PENDING") {
+  if (execution.status !== 'PENDING') {
     throw new Error(`Execution is already ${execution.status.toLowerCase()}`);
   }
 
   // Update execution status to RUNNING
   await ctx.prisma.workflowExecution.update({
     where: { id: executionId },
-    data: { status: "RUNNING" },
+    data: { status: 'RUNNING' },
   });
 
   const initialInput = execution.initialInput as Record<string, unknown>;
@@ -388,9 +385,7 @@ export async function runExecution(
 
   // Execute steps sequentially
   for (const stepExecution of execution.steps) {
-    const workflowStep = execution.workflow.steps.find(
-      (s) => s.id === stepExecution.stepId
-    );
+    const workflowStep = execution.workflow.steps.find((s) => s.id === stepExecution.stepId);
 
     if (!workflowStep) {
       failed = true;
@@ -412,7 +407,7 @@ export async function runExecution(
 
     if (!result.success) {
       failed = true;
-      errorMessage = result.error || "Step execution failed";
+      errorMessage = result.error || 'Step execution failed';
       break;
     }
 
@@ -424,7 +419,7 @@ export async function runExecution(
   }
 
   // Update execution with final status
-  const finalStatus: WorkflowExecutionStatus = failed ? "FAILED" : "COMPLETED";
+  const finalStatus: WorkflowExecutionStatus = failed ? 'FAILED' : 'COMPLETED';
 
   await ctx.prisma.workflowExecution.update({
     where: { id: executionId },
@@ -443,12 +438,12 @@ export async function runExecution(
     data: {
       userId: ctx.userId,
       model: env.ANTHROPIC_MODEL_DEFAULT,
-      provider: "anthropic",
+      provider: 'anthropic',
       promptTokens: Math.floor(totalTokens * 0.7), // Approximate split
       completionTokens: Math.floor(totalTokens * 0.3),
       totalTokens,
       cost: totalCost,
-      operation: "workflow_execution",
+      operation: 'workflow_execution',
       metadata: {
         executionId,
         workflowId: execution.workflowId,
@@ -472,18 +467,16 @@ export async function getExecutionStatus(
     where: { id: executionId },
     include: {
       steps: {
-        orderBy: { stepOrder: "asc" },
+        orderBy: { stepOrder: 'asc' },
       },
     },
   });
 
   if (!execution) {
-    throw new Error("Execution not found");
+    throw new Error('Execution not found');
   }
 
-  const completedSteps = execution.steps.filter(
-    (s) => s.status === "COMPLETED"
-  ).length;
+  const completedSteps = execution.steps.filter((s) => s.status === 'COMPLETED').length;
 
   return {
     id: execution.id,
@@ -506,24 +499,21 @@ export async function getExecutionStatus(
 /**
  * Cancels a running execution.
  */
-export async function cancelExecution(
-  ctx: ExecutionContext,
-  executionId: string
-): Promise<void> {
+export async function cancelExecution(ctx: ExecutionContext, executionId: string): Promise<void> {
   const execution = await ctx.prisma.workflowExecution.findUnique({
     where: { id: executionId },
     select: { status: true, userId: true },
   });
 
   if (!execution) {
-    throw new Error("Execution not found");
+    throw new Error('Execution not found');
   }
 
   if (execution.userId !== ctx.userId) {
     throw new Error("You don't have permission to cancel this execution");
   }
 
-  if (execution.status !== "PENDING" && execution.status !== "RUNNING") {
+  if (execution.status !== 'PENDING' && execution.status !== 'RUNNING') {
     throw new Error(`Cannot cancel execution with status: ${execution.status}`);
   }
 
@@ -531,7 +521,7 @@ export async function cancelExecution(
   await ctx.prisma.workflowExecution.update({
     where: { id: executionId },
     data: {
-      status: "CANCELLED",
+      status: 'CANCELLED',
       completedAt: new Date(),
     },
   });
@@ -540,10 +530,10 @@ export async function cancelExecution(
   await ctx.prisma.workflowStepExecution.updateMany({
     where: {
       executionId,
-      status: "PENDING",
+      status: 'PENDING',
     },
     data: {
-      status: "SKIPPED",
+      status: 'SKIPPED',
     },
   });
 }
@@ -575,7 +565,7 @@ export async function listExecutions(
 
   const executions = await ctx.prisma.workflowExecution.findMany({
     where: whereClause,
-    orderBy: { startedAt: "desc" },
+    orderBy: { startedAt: 'desc' },
     take: limit + 1,
     select: {
       id: true,

@@ -44,9 +44,7 @@ export default auth((req) => {
   // Redirect unauthenticated users to login (except for public routes)
   if (!isPublicRoute && !isLoggedIn) {
     const callbackUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(
-      new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl)
-    );
+    return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl));
   }
 
   return NextResponse.next();

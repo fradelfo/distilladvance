@@ -3,35 +3,35 @@
  * Provides Chrome API mocks, content script testing helpers, and extension environment simulation
  */
 
-import { vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // Chrome API mock implementations
 const chromeApiMocks = {
   runtime: {
     id: 'test-extension-id',
     sendMessage: vi.fn().mockImplementation((message, callback) => {
-      if (callback) callback({ success: true })
-      return Promise.resolve({ success: true })
+      if (callback) callback({ success: true });
+      return Promise.resolve({ success: true });
     }),
     onMessage: {
       addListener: vi.fn(),
       removeListener: vi.fn(),
-      hasListener: vi.fn().mockReturnValue(false)
+      hasListener: vi.fn().mockReturnValue(false),
     },
     getURL: vi.fn().mockImplementation((path) => `chrome-extension://test-id/${path}`),
     getManifest: vi.fn().mockReturnValue({
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      permissions: ['activeTab', 'storage']
+      permissions: ['activeTab', 'storage'],
     }),
     connect: vi.fn().mockReturnValue({
       postMessage: vi.fn(),
       disconnect: vi.fn(),
       onMessage: { addListener: vi.fn() },
-      onDisconnect: { addListener: vi.fn() }
+      onDisconnect: { addListener: vi.fn() },
     }),
-    lastError: null
+    lastError: null,
   },
 
   storage: {
@@ -41,52 +41,52 @@ const chromeApiMocks = {
           userPreferences: {
             theme: 'light',
             aiModel: 'gpt-4',
-            privacyLevel: 'standard'
+            privacyLevel: 'standard',
           },
           conversations: [],
           extensionSettings: {
             enabled: true,
-            autoDistill: false
-          }
-        }
+            autoDistill: false,
+          },
+        };
 
         if (typeof keys === 'string') {
-          return Promise.resolve({ [keys]: mockData[keys] })
+          return Promise.resolve({ [keys]: mockData[keys] });
         }
 
         if (Array.isArray(keys)) {
-          const result: Record<string, any> = {}
-          keys.forEach(key => {
-            result[key] = mockData[key]
-          })
-          return Promise.resolve(result)
+          const result: Record<string, any> = {};
+          keys.forEach((key) => {
+            result[key] = mockData[key];
+          });
+          return Promise.resolve(result);
         }
 
         if (keys && typeof keys === 'object') {
-          const result: Record<string, any> = {}
-          Object.keys(keys).forEach(key => {
-            result[key] = mockData[key] ?? keys[key]
-          })
-          return Promise.resolve(result)
+          const result: Record<string, any> = {};
+          Object.keys(keys).forEach((key) => {
+            result[key] = mockData[key] ?? keys[key];
+          });
+          return Promise.resolve(result);
         }
 
-        return Promise.resolve(mockData)
+        return Promise.resolve(mockData);
       }),
       set: vi.fn().mockResolvedValue(undefined),
       remove: vi.fn().mockResolvedValue(undefined),
       clear: vi.fn().mockResolvedValue(undefined),
-      getBytesInUse: vi.fn().mockResolvedValue(1024)
+      getBytesInUse: vi.fn().mockResolvedValue(1024),
     },
     sync: {
       get: vi.fn().mockResolvedValue({}),
       set: vi.fn().mockResolvedValue(undefined),
       remove: vi.fn().mockResolvedValue(undefined),
-      clear: vi.fn().mockResolvedValue(undefined)
+      clear: vi.fn().mockResolvedValue(undefined),
     },
     onChanged: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    },
   },
 
   tabs: {
@@ -96,17 +96,17 @@ const chromeApiMocks = {
         url: 'https://chat.openai.com',
         title: 'ChatGPT',
         active: true,
-        windowId: 1
-      }
+        windowId: 1,
+      },
     ]),
     get: vi.fn().mockResolvedValue({
       id: 1,
       url: 'https://chat.openai.com',
-      title: 'ChatGPT'
+      title: 'ChatGPT',
     }),
     create: vi.fn().mockResolvedValue({
       id: 2,
-      url: 'about:blank'
+      url: 'about:blank',
     }),
     update: vi.fn().mockResolvedValue({}),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -114,22 +114,20 @@ const chromeApiMocks = {
     executeScript: vi.fn().mockResolvedValue([{}]),
     onActivated: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
+      removeListener: vi.fn(),
     },
     onUpdated: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    },
   },
 
   scripting: {
-    executeScript: vi.fn().mockResolvedValue([
-      { result: 'script executed successfully' }
-    ]),
+    executeScript: vi.fn().mockResolvedValue([{ result: 'script executed successfully' }]),
     insertCSS: vi.fn().mockResolvedValue(undefined),
     removeCSS: vi.fn().mockResolvedValue(undefined),
     registerContentScripts: vi.fn().mockResolvedValue(undefined),
-    unregisterContentScripts: vi.fn().mockResolvedValue(undefined)
+    unregisterContentScripts: vi.fn().mockResolvedValue(undefined),
   },
 
   action: {
@@ -144,8 +142,8 @@ const chromeApiMocks = {
     getTitle: vi.fn().mockResolvedValue('Extension Title'),
     onClicked: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    },
   },
 
   permissions: {
@@ -154,30 +152,30 @@ const chromeApiMocks = {
     remove: vi.fn().mockResolvedValue(true),
     getAll: vi.fn().mockResolvedValue({
       permissions: ['activeTab', 'storage'],
-      origins: []
+      origins: [],
     }),
     onAdded: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
+      removeListener: vi.fn(),
     },
     onRemoved: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    },
   },
 
   contextMenus: {
     create: vi.fn().mockImplementation((properties, callback) => {
-      if (callback) callback()
-      return 'menu-id'
+      if (callback) callback();
+      return 'menu-id';
     }),
     update: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
     removeAll: vi.fn().mockResolvedValue(undefined),
     onClicked: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    },
   },
 
   alarms: {
@@ -188,25 +186,25 @@ const chromeApiMocks = {
     getAll: vi.fn().mockResolvedValue([]),
     onAlarm: {
       addListener: vi.fn(),
-      removeListener: vi.fn()
-    }
-  }
-}
+      removeListener: vi.fn(),
+    },
+  },
+};
 
 // Global Chrome API setup
 function setupChromeApis() {
   // @ts-ignore - Global chrome object for testing
-  global.chrome = chromeApiMocks
+  global.chrome = chromeApiMocks;
 
   // Also setup as browser for Firefox compatibility testing
   // @ts-ignore - Global browser object for testing
-  global.browser = chromeApiMocks
+  global.browser = chromeApiMocks;
 
   // Setup window.chrome for content scripts
   Object.defineProperty(window, 'chrome', {
     value: chromeApiMocks,
-    writable: true
-  })
+    writable: true,
+  });
 }
 
 // Content script testing utilities
@@ -219,93 +217,93 @@ export const contentScriptUtils = {
       openai: {
         chatInput: 'textarea[placeholder*="message"]',
         messageContainer: '[data-testid="conversation-turn"]',
-        submitButton: '[data-testid="send-button"]'
+        submitButton: '[data-testid="send-button"]',
       },
       anthropic: {
         chatInput: 'div[contenteditable="true"]',
         messageContainer: '.message',
-        submitButton: 'button[type="submit"]'
+        submitButton: 'button[type="submit"]',
       },
       google: {
         chatInput: 'textarea',
         messageContainer: '.conversation-container .message',
-        submitButton: '.send-button'
-      }
-    }
+        submitButton: '.send-button',
+      },
+    };
 
-    const selectors = mockSelectors[platform]
+    const selectors = mockSelectors[platform];
 
     // Create mock DOM elements
-    const chatInput = document.createElement('textarea')
-    chatInput.setAttribute('data-testid', 'prompt-textarea')
-    chatInput.placeholder = 'Send a message'
-    document.body.appendChild(chatInput)
+    const chatInput = document.createElement('textarea');
+    chatInput.setAttribute('data-testid', 'prompt-textarea');
+    chatInput.placeholder = 'Send a message';
+    document.body.appendChild(chatInput);
 
-    const messageContainer = document.createElement('div')
-    messageContainer.setAttribute('data-testid', 'conversation-turn')
-    messageContainer.className = 'message'
-    document.body.appendChild(messageContainer)
+    const messageContainer = document.createElement('div');
+    messageContainer.setAttribute('data-testid', 'conversation-turn');
+    messageContainer.className = 'message';
+    document.body.appendChild(messageContainer);
 
-    const submitButton = document.createElement('button')
-    submitButton.setAttribute('data-testid', 'send-button')
-    submitButton.type = 'submit'
-    document.body.appendChild(submitButton)
+    const submitButton = document.createElement('button');
+    submitButton.setAttribute('data-testid', 'send-button');
+    submitButton.type = 'submit';
+    document.body.appendChild(submitButton);
 
     return {
       chatInput,
       messageContainer,
       submitButton,
       cleanup: () => {
-        chatInput.remove()
-        messageContainer.remove()
-        submitButton.remove()
-      }
-    }
+        chatInput.remove();
+        messageContainer.remove();
+        submitButton.remove();
+      },
+    };
   },
 
   /**
    * Simulate content script injection
    */
   simulateContentScriptInjection: async (script: string) => {
-    const scriptElement = document.createElement('script')
-    scriptElement.textContent = script
-    document.head.appendChild(scriptElement)
+    const scriptElement = document.createElement('script');
+    scriptElement.textContent = script;
+    document.head.appendChild(scriptElement);
 
     // Wait for script to execute
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     return {
-      cleanup: () => scriptElement.remove()
-    }
+      cleanup: () => scriptElement.remove(),
+    };
   },
 
   /**
    * Mock message passing between content script and background
    */
   mockMessagePassing: () => {
-    const messageHandlers = new Map<string, Function>()
+    const messageHandlers = new Map<string, Function>();
 
     chromeApiMocks.runtime.sendMessage = vi.fn().mockImplementation((message) => {
-      const handler = messageHandlers.get(message.type)
+      const handler = messageHandlers.get(message.type);
       if (handler) {
-        return Promise.resolve(handler(message))
+        return Promise.resolve(handler(message));
       }
-      return Promise.resolve({ success: false, error: 'No handler' })
-    })
+      return Promise.resolve({ success: false, error: 'No handler' });
+    });
 
     return {
       addHandler: (messageType: string, handler: Function) => {
-        messageHandlers.set(messageType, handler)
+        messageHandlers.set(messageType, handler);
       },
       removeHandler: (messageType: string) => {
-        messageHandlers.delete(messageType)
+        messageHandlers.delete(messageType);
       },
       clearHandlers: () => {
-        messageHandlers.clear()
-      }
-    }
-  }
-}
+        messageHandlers.clear();
+      },
+    };
+  },
+};
 
 // Background script testing utilities
 export const backgroundScriptUtils = {
@@ -321,63 +319,63 @@ export const backgroundScriptUtils = {
         waiting: null,
         installing: null,
         active: {
-          postMessage: vi.fn()
-        }
-      }
-    }
+          postMessage: vi.fn(),
+        },
+      },
+    };
 
     // Mock importScripts for service worker
     // @ts-ignore
-    global.importScripts = vi.fn()
+    global.importScripts = vi.fn();
   },
 
   /**
    * Simulate extension installation/startup
    */
   simulateExtensionInstall: () => {
-    const installReason = 'install'
+    const installReason = 'install';
     chromeApiMocks.runtime.onInstalled = {
       addListener: vi.fn().mockImplementation((callback) => {
-        callback({ reason: installReason })
+        callback({ reason: installReason });
       }),
-      removeListener: vi.fn()
-    }
+      removeListener: vi.fn(),
+    };
 
-    return { installReason }
+    return { installReason };
   },
 
   /**
    * Mock alarm functionality
    */
   mockAlarms: () => {
-    const activeAlarms = new Map<string, any>()
+    const activeAlarms = new Map<string, any>();
 
     chromeApiMocks.alarms.create = vi.fn().mockImplementation((name, alarmInfo) => {
       activeAlarms.set(name, {
         name,
         scheduledTime: Date.now() + (alarmInfo.delayInMinutes || 0) * 60000,
-        periodInMinutes: alarmInfo.periodInMinutes
-      })
-    })
+        periodInMinutes: alarmInfo.periodInMinutes,
+      });
+    });
 
     chromeApiMocks.alarms.get = vi.fn().mockImplementation((name) => {
-      return Promise.resolve(activeAlarms.get(name) || null)
-    })
+      return Promise.resolve(activeAlarms.get(name) || null);
+    });
 
     chromeApiMocks.alarms.getAll = vi.fn().mockImplementation(() => {
-      return Promise.resolve(Array.from(activeAlarms.values()))
-    })
+      return Promise.resolve(Array.from(activeAlarms.values()));
+    });
 
     return {
       triggerAlarm: (name: string) => {
-        const alarm = activeAlarms.get(name)
+        const alarm = activeAlarms.get(name);
         if (alarm && chromeApiMocks.alarms.onAlarm.addListener.mock.calls[0]) {
-          chromeApiMocks.alarms.onAlarm.addListener.mock.calls[0][0](alarm)
+          chromeApiMocks.alarms.onAlarm.addListener.mock.calls[0][0](alarm);
         }
-      }
-    }
-  }
-}
+      },
+    };
+  },
+};
 
 // Popup testing utilities
 export const popupUtils = {
@@ -386,20 +384,20 @@ export const popupUtils = {
    */
   mockPopupEnvironment: () => {
     // Set popup dimensions
-    Object.defineProperty(window, 'innerWidth', { value: 400 })
-    Object.defineProperty(window, 'innerHeight', { value: 600 })
+    Object.defineProperty(window, 'innerWidth', { value: 400 });
+    Object.defineProperty(window, 'innerHeight', { value: 600 });
 
     // Mock popup-specific APIs
-    window.close = vi.fn()
+    window.close = vi.fn();
 
     return {
       closePopup: () => window.close(),
       resizePopup: (width: number, height: number) => {
-        Object.defineProperty(window, 'innerWidth', { value: width })
-        Object.defineProperty(window, 'innerHeight', { value: height })
-        window.dispatchEvent(new Event('resize'))
-      }
-    }
+        Object.defineProperty(window, 'innerWidth', { value: width });
+        Object.defineProperty(window, 'innerHeight', { value: height });
+        window.dispatchEvent(new Event('resize'));
+      },
+    };
   },
 
   /**
@@ -407,48 +405,48 @@ export const popupUtils = {
    */
   mockReactPopup: () => {
     // Mock React's createRoot for popup rendering
-    const mockRender = vi.fn()
+    const mockRender = vi.fn();
     vi.mock('react-dom/client', () => ({
       createRoot: vi.fn(() => ({
         render: mockRender,
-        unmount: vi.fn()
-      }))
-    }))
+        unmount: vi.fn(),
+      })),
+    }));
 
-    return { mockRender }
-  }
-}
+    return { mockRender };
+  },
+};
 
 // Extension testing lifecycle hooks
 beforeEach(() => {
-  setupChromeApis()
+  setupChromeApis();
 
   // Reset all mocks
-  Object.values(chromeApiMocks).forEach(apiSection => {
+  Object.values(chromeApiMocks).forEach((apiSection) => {
     if (typeof apiSection === 'object') {
-      Object.values(apiSection).forEach(method => {
+      Object.values(apiSection).forEach((method) => {
         if (typeof method === 'function' && method.mockReset) {
-          method.mockReset()
+          method.mockReset();
         }
-      })
+      });
     }
-  })
-})
+  });
+});
 
 afterEach(() => {
   // Cleanup globals
   // @ts-ignore
-  delete global.chrome
+  delete global.chrome;
   // @ts-ignore
-  delete global.browser
-  delete window.chrome
+  delete global.browser;
+  delete window.chrome;
 
-  vi.clearAllMocks()
-})
+  vi.clearAllMocks();
+});
 
 // Export setup function for manual usage
 export function setupBrowserExtensionTesting() {
-  setupChromeApis()
+  setupChromeApis();
 }
 
 // Performance testing utilities
@@ -457,14 +455,14 @@ export const performanceUtils = {
    * Measure extension script load time
    */
   measureLoadTime: async (scriptPath: string) => {
-    const startTime = performance.now()
+    const startTime = performance.now();
 
     try {
-      await import(scriptPath)
-      const endTime = performance.now()
-      return endTime - startTime
+      await import(scriptPath);
+      const endTime = performance.now();
+      return endTime - startTime;
     } catch (error) {
-      throw new Error(`Failed to load script: ${error}`)
+      throw new Error(`Failed to load script: ${error}`);
     }
   },
 
@@ -477,12 +475,12 @@ export const performanceUtils = {
       return {
         usedJSHeapSize: performance.memory.usedJSHeapSize,
         totalJSHeapSize: performance.memory.totalJSHeapSize,
-        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-      }
+        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+      };
     }
-    return null
-  }
-}
+    return null;
+  },
+};
 
 // Security testing utilities
 export const securityUtils = {
@@ -491,22 +489,22 @@ export const securityUtils = {
    */
   testCSPCompliance: (scriptContent: string) => {
     // Check for eval usage
-    const hasEval = /\beval\s*\(/.test(scriptContent)
+    const hasEval = /\beval\s*\(/.test(scriptContent);
 
     // Check for inline script creation
-    const hasInlineScript = /new\s+Function\s*\(/.test(scriptContent)
+    const hasInlineScript = /new\s+Function\s*\(/.test(scriptContent);
 
     // Check for innerHTML usage
-    const hasInnerHTML = /\.innerHTML\s*=/.test(scriptContent)
+    const hasInnerHTML = /\.innerHTML\s*=/.test(scriptContent);
 
     return {
       compliant: !hasEval && !hasInlineScript && !hasInnerHTML,
       violations: {
         eval: hasEval,
         inlineScript: hasInlineScript,
-        innerHTML: hasInnerHTML
-      }
-    }
+        innerHTML: hasInnerHTML,
+      },
+    };
   },
 
   /**
@@ -514,23 +512,28 @@ export const securityUtils = {
    */
   testPermissionUsage: (manifestPermissions: string[]) => {
     const dangerousPermissions = [
-      'tabs', 'history', 'bookmarks', 'browsingData',
-      'cookies', 'webRequest', 'webRequestBlocking'
-    ]
+      'tabs',
+      'history',
+      'bookmarks',
+      'browsingData',
+      'cookies',
+      'webRequest',
+      'webRequestBlocking',
+    ];
 
-    const violations = manifestPermissions.filter(
-      permission => dangerousPermissions.includes(permission)
-    )
+    const violations = manifestPermissions.filter((permission) =>
+      dangerousPermissions.includes(permission)
+    );
 
     return {
       safe: violations.length === 0,
       violations,
       recommendations: violations.map(
-        permission => `Consider if ${permission} permission is necessary`
-      )
-    }
-  }
-}
+        (permission) => `Consider if ${permission} permission is necessary`
+      ),
+    };
+  },
+};
 
 // Export all utilities
 export default {
@@ -539,5 +542,5 @@ export default {
   popupUtils,
   performanceUtils,
   securityUtils,
-  setupBrowserExtensionTesting
-}
+  setupBrowserExtensionTesting,
+};

@@ -8,32 +8,28 @@
  * Uses shadcn/ui Avatar, Tooltip, and Lucide icons.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
-import { signOut } from 'next-auth/react';
-import {
-  Home,
-  BookOpen,
-  MessageSquare,
-  FolderClosed,
-  Users,
-  CreditCard,
-  LogOut,
-  Menu,
-  X,
-  ChevronsLeft,
-  ChevronsRight,
-  GitBranch,
-} from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import {
+  BookOpen,
+  ChevronsLeft,
+  ChevronsRight,
+  CreditCard,
+  FolderClosed,
+  GitBranch,
+  Home,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Users,
+  X,
+} from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import Link from 'next/link';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AppSidebarProps {
   user: {
@@ -42,7 +38,15 @@ interface AppSidebarProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'home' | 'prompts' | 'conversations' | 'collections' | 'workflows' | 'workspaces' | 'billing' | 'settings';
+  currentPage?:
+    | 'home'
+    | 'prompts'
+    | 'conversations'
+    | 'collections'
+    | 'workflows'
+    | 'workspaces'
+    | 'billing'
+    | 'settings';
 }
 
 const navItems = [
@@ -91,9 +95,9 @@ const navItems = [
 ];
 
 // Resize constraints
-const MIN_WIDTH = 64;           // Icon-only mode (matches w-16)
-const MAX_WIDTH = 320;          // Maximum expanded width
-const DEFAULT_WIDTH = 240;      // Default expanded width
+const MIN_WIDTH = 64; // Icon-only mode (matches w-16)
+const MAX_WIDTH = 320; // Maximum expanded width
+const DEFAULT_WIDTH = 240; // Default expanded width
 const AUTO_CLOSE_THRESHOLD = 50; // Below this width during drag, auto-snap to closed
 
 export function AppSidebar({ user, currentPage }: AppSidebarProps) {
@@ -136,21 +140,24 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
   }, [isCollapsed]);
 
   // Resize handlers
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isResizing.current = true;
-    startX.current = e.clientX;
-    startWidth.current = width;
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      isResizing.current = true;
+      startX.current = e.clientX;
+      startWidth.current = width;
 
-    // Disable transitions during resize for smooth performance
-    if (sidebarRef.current) {
-      sidebarRef.current.style.transition = 'none';
-    }
+      // Disable transitions during resize for smooth performance
+      if (sidebarRef.current) {
+        sidebarRef.current.style.transition = 'none';
+      }
 
-    // Set cursor globally and prevent text selection
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, [width]);
+      // Set cursor globally and prevent text selection
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [width]
+  );
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current || !sidebarRef.current) return;
@@ -178,8 +185,10 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
       sidebarRef.current.style.transition = '';
 
       // Check if user dragged below auto-close threshold
-      const rawWidth = Number(sidebarRef.current.dataset.rawWidth) || sidebarRef.current.offsetWidth;
-      const finalWidth = rawWidth < AUTO_CLOSE_THRESHOLD ? MIN_WIDTH : Math.max(MIN_WIDTH, rawWidth);
+      const rawWidth =
+        Number(sidebarRef.current.dataset.rawWidth) || sidebarRef.current.offsetWidth;
+      const finalWidth =
+        rawWidth < AUTO_CLOSE_THRESHOLD ? MIN_WIDTH : Math.max(MIN_WIDTH, rawWidth);
 
       // Clean up data attribute
       delete sidebarRef.current.dataset.rawWidth;
@@ -245,16 +254,20 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
         style={{ width: `${width}px` }}
       >
         {/* Header */}
-        <div className={cn(
-          'flex h-16 items-center border-b border-border px-4 overflow-hidden',
-          isCollapsed ? 'justify-center' : 'justify-between'
-        )}>
+        <div
+          className={cn(
+            'flex h-16 items-center border-b border-border px-4 overflow-hidden',
+            isCollapsed ? 'justify-center' : 'justify-between'
+          )}
+        >
           <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden min-w-0">
             <span className="text-2xl flex-shrink-0">💧</span>
-            <span className={cn(
-              'text-xl font-semibold text-foreground truncate transition-all duration-200',
-              isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-            )}>
+            <span
+              className={cn(
+                'text-xl font-semibold text-foreground truncate transition-all duration-200',
+                isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+              )}
+            >
               Distill
             </span>
           </Link>
@@ -265,10 +278,7 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                 size="icon"
                 onClick={toggleSidebar}
                 aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                className={cn(
-                  'hidden md:flex',
-                  isCollapsed && 'absolute right-2'
-                )}
+                className={cn('hidden md:flex', isCollapsed && 'absolute right-2')}
               >
                 {isCollapsed ? (
                   <ChevronsRight className="h-5 w-5" />
@@ -280,9 +290,7 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                 </span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              {isCollapsed ? 'Expand' : 'Collapse'}
-            </TooltipContent>
+            <TooltipContent side="right">{isCollapsed ? 'Expand' : 'Collapse'}</TooltipContent>
           </Tooltip>
           {/* Mobile close button */}
           <Button
@@ -316,14 +324,20 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                     isCollapsed && 'justify-center px-2 gap-0'
                   )}
                 >
-                  <Icon className={cn(
-                    'h-5 w-5 flex-shrink-0',
-                    isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
-                  )} />
-                  <span className={cn(
-                    'truncate transition-all duration-200',
-                    isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-                  )}>
+                  <Icon
+                    className={cn(
+                      'h-5 w-5 flex-shrink-0',
+                      isActive
+                        ? 'text-primary'
+                        : 'text-muted-foreground group-hover:text-foreground'
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'truncate transition-all duration-200',
+                      isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+                    )}
+                  >
                     {item.label}
                   </span>
                 </Link>
@@ -333,12 +347,8 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
                 return (
                   <li key={item.key}>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        {linkContent}
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {item.label}
-                      </TooltipContent>
+                      <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
                     </Tooltip>
                   </li>
                 );
@@ -359,23 +369,25 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
           />
 
           {/* User info */}
-          <div className={cn(
-            'flex items-center gap-3 rounded-lg p-2 overflow-hidden',
-            isCollapsed && 'justify-center gap-0'
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-3 rounded-lg p-2 overflow-hidden',
+              isCollapsed && 'justify-center gap-0'
+            )}
+          >
             <Avatar className="h-9 w-9 flex-shrink-0">
               <AvatarImage src={user.image || undefined} alt={user.name || 'User'} />
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
-            <div className={cn(
-              'min-w-0 flex-1 transition-all duration-200',
-              isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
-            )}>
-              <p className="truncate text-sm font-medium text-foreground">
-                {user.name || 'User'}
-              </p>
+            <div
+              className={cn(
+                'min-w-0 flex-1 transition-all duration-200',
+                isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+              )}
+            >
+              <p className="truncate text-sm font-medium text-foreground">{user.name || 'User'}</p>
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
@@ -390,10 +402,12 @@ export function AppSidebar({ user, currentPage }: AppSidebarProps) {
             )}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className={cn(
-              'ml-2 truncate transition-all duration-200',
-              isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100'
-            )}>
+            <span
+              className={cn(
+                'ml-2 truncate transition-all duration-200',
+                isCollapsed ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100'
+              )}
+            >
               Sign out
             </span>
           </Button>

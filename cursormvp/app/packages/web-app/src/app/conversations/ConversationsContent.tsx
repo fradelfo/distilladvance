@@ -7,10 +7,10 @@
  * including filtering by source and privacy mode.
  */
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import { EmptyState } from '@/components/EmptyState';
 import { trpc } from '@/lib/trpc';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
 // Source icons for different AI platforms
 const sourceIcons: Record<string, string> = {
@@ -57,25 +57,19 @@ export function ConversationsContent() {
   const [privacyFilter, setPrivacyFilter] = useState<string>('all');
 
   // Fetch conversations with tRPC
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = trpc.conversation.list.useInfiniteQuery(
-    {
-      limit: 20,
-      source: sourceFilter !== 'all' ? sourceFilter : undefined,
-      privacyMode: privacyFilter !== 'all' ? (privacyFilter as 'PROMPT_ONLY' | 'FULL') : undefined,
-    },
-    {
-      getNextPageParam: (lastPage: ListConversationsPage) => lastPage.nextCursor,
-      staleTime: 5 * 60 * 1000,
-    }
-  );
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    trpc.conversation.list.useInfiniteQuery(
+      {
+        limit: 20,
+        source: sourceFilter !== 'all' ? sourceFilter : undefined,
+        privacyMode:
+          privacyFilter !== 'all' ? (privacyFilter as 'PROMPT_ONLY' | 'FULL') : undefined,
+      },
+      {
+        getNextPageParam: (lastPage: ListConversationsPage) => lastPage.nextCursor,
+        staleTime: 5 * 60 * 1000,
+      }
+    );
 
   // Flatten paginated results
   const conversations = useMemo((): ConversationListItem[] => {
@@ -113,15 +107,18 @@ export function ConversationsContent() {
   };
 
   // Empty state for no conversations
-  if (!isLoading && conversations.length === 0 && sourceFilter === 'all' && privacyFilter === 'all') {
+  if (
+    !isLoading &&
+    conversations.length === 0 &&
+    sourceFilter === 'all' &&
+    privacyFilter === 'all'
+  ) {
     return (
       <div>
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Conversations</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your captured AI conversations
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Your captured AI conversations</p>
           </div>
         </div>
 
@@ -200,10 +197,7 @@ export function ConversationsContent() {
           <p className="text-sm text-error-600">
             Failed to load conversations: {error?.message || 'Unknown error'}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 btn-outline px-4 py-2"
-          >
+          <button onClick={() => window.location.reload()} className="mt-4 btn-outline px-4 py-2">
             Retry
           </button>
         </div>
@@ -213,10 +207,7 @@ export function ConversationsContent() {
       {isLoading && (
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="card animate-pulse p-4"
-            >
+            <div key={i} className="card animate-pulse p-4">
               <div className="flex items-start gap-4">
                 <div className="h-10 w-10 rounded-lg bg-neutral-200" />
                 <div className="flex-1 space-y-2">
@@ -272,9 +263,7 @@ export function ConversationsContent() {
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-medium text-foreground">
-                      {conversation.title}
-                    </h3>
+                    <h3 className="truncate font-medium text-foreground">{conversation.title}</h3>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <span>{sourceNames[conversation.source] || conversation.source}</span>
                       <span>·</span>
@@ -282,7 +271,10 @@ export function ConversationsContent() {
                       {conversation._count.prompts > 0 && (
                         <>
                           <span>·</span>
-                          <span>{conversation._count.prompts} prompt{conversation._count.prompts !== 1 ? 's' : ''}</span>
+                          <span>
+                            {conversation._count.prompts} prompt
+                            {conversation._count.prompts !== 1 ? 's' : ''}
+                          </span>
                         </>
                       )}
                     </div>

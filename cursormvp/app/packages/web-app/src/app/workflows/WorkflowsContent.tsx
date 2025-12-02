@@ -7,17 +7,17 @@
  * search, filtering, and navigation to create/edit workflows.
  */
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { Plus, Workflow, Play, Clock, Coins } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { trpc } from '@/lib/trpc';
+import { Clock, Play, Plus, Workflow } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
 interface WorkflowItem {
   id: string;
@@ -58,14 +58,10 @@ function WorkflowCard({ workflow }: { workflow: WorkflowItem }) {
               <Workflow className="h-5 w-5 text-muted-foreground" />
               <CardTitle className="text-lg">{workflow.name}</CardTitle>
             </div>
-            {workflow.isPublic && (
-              <Badge variant="secondary">Public</Badge>
-            )}
+            {workflow.isPublic && <Badge variant="secondary">Public</Badge>}
           </div>
           {workflow.description && (
-            <CardDescription className="line-clamp-2">
-              {workflow.description}
-            </CardDescription>
+            <CardDescription className="line-clamp-2">{workflow.description}</CardDescription>
           )}
         </CardHeader>
         <CardContent>
@@ -118,9 +114,7 @@ export function WorkflowsContent() {
     if (!searchQuery.trim()) return workflows;
     const query = searchQuery.toLowerCase();
     return workflows.filter(
-      (w) =>
-        w.name.toLowerCase().includes(query) ||
-        w.description?.toLowerCase().includes(query)
+      (w) => w.name.toLowerCase().includes(query) || w.description?.toLowerCase().includes(query)
     );
   }, [workflows, searchQuery]);
 

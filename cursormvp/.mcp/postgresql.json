@@ -219,9 +219,7 @@
           "notification_settings": "JSONB DEFAULT '{}'",
           "updated_at": "TIMESTAMP DEFAULT NOW()"
         },
-        "indexes": [
-          "CREATE UNIQUE INDEX idx_user_preferences_user_id ON user_preferences(user_id)"
-        ]
+        "indexes": ["CREATE UNIQUE INDEX idx_user_preferences_user_id ON user_preferences(user_id)"]
       },
 
       "ai_usage_logs": {
@@ -378,21 +376,13 @@
       },
       "column_level_security": {
         "enabled": true,
-        "restricted_columns": [
-          "users.email",
-          "users.encrypted_data"
-        ]
+        "restricted_columns": ["users.email", "users.encrypted_data"]
       }
     },
 
     "audit_logging": {
       "enabled": true,
-      "logged_operations": [
-        "INSERT",
-        "UPDATE",
-        "DELETE",
-        "SELECT on sensitive tables"
-      ],
+      "logged_operations": ["INSERT", "UPDATE", "DELETE", "SELECT on sensitive tables"],
       "log_destination": "audit_logs",
       "retention": "7 years"
     }

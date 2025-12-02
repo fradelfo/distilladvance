@@ -4,30 +4,30 @@
  * Handles AI conversation distillation and prompt saving.
  */
 
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { authedProcedure, router } from "../index.js";
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import {
-  distillConversation,
-  createUsageLogEntry,
   type ConversationMessage,
-} from "../../services/distillation.js";
+  createUsageLogEntry,
+  distillConversation,
+} from '../../services/distillation.js';
+import { authedProcedure, router } from '../index.js';
 
 // ============================================================================
 // Validation Schemas
 // ============================================================================
 
 const messageSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  content: z.string().min(1, "Message content cannot be empty"),
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1, 'Message content cannot be empty'),
   timestamp: z.string().optional(),
 });
 
 const distillInputSchema = z.object({
   messages: z
     .array(messageSchema)
-    .min(1, "At least one message is required")
-    .max(100, "Maximum 100 messages allowed"),
+    .min(1, 'At least one message is required')
+    .max(100, 'Maximum 100 messages allowed'),
   source: z.string().optional(), // e.g., "chatgpt", "claude"
   sourceUrl: z.string().url().optional(),
   conversationId: z.string().optional(), // If already saved
@@ -36,7 +36,7 @@ const distillInputSchema = z.object({
 const savePromptInputSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
-  template: z.string().min(1, "Template cannot be empty"),
+  template: z.string().min(1, 'Template cannot be empty'),
   variables: z.array(
     z.object({
       name: z.string(),
@@ -80,239 +80,230 @@ export const distillRouter = router({
    * Takes an array of messages and returns a structured prompt
    * with title, description, template, variables, and tags.
    */
-  distill: authedProcedure
-    .input(distillInputSchema)
-    .mutation(async ({ ctx, input }) => {
-      // Get user ID from context (when auth is implemented)
-      const userId = (ctx as { userId?: string }).userId;
+  distill: authedProcedure.input(distillInputSchema).mutation(async ({ ctx, input }) => {
+    // Get user ID from context (when auth is implemented)
+    const userId = (ctx as { userId?: string }).userId;
 
-      // Convert input messages to service format
-      const messages: ConversationMessage[] = input.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp,
-      }));
+    // Convert input messages to service format
+    const messages: ConversationMessage[] = input.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+      timestamp: m.timestamp,
+    }));
 
-      // Perform distillation
-      const result = await distillConversation(messages);
+    // Perform distillation
+    const result = await distillConversation(messages);
 
-      // Log usage to database
-      if (userId) {
-        try {
-          const usageEntry = createUsageLogEntry(result, userId);
-          await ctx.prisma.aiUsageLog.create({
-            data: {
-              userId: usageEntry.userId,
-              model: usageEntry.model,
-              provider: usageEntry.provider,
-              promptTokens: usageEntry.promptTokens,
-              completionTokens: usageEntry.completionTokens,
-              totalTokens: usageEntry.totalTokens,
-              cost: usageEntry.cost,
-              operation: usageEntry.operation,
-              metadata: usageEntry.metadata as object,
-            },
-          });
-        } catch (logError) {
-          // Log error but don't fail the request
-          console.error("[Distill] Failed to log usage:", logError);
-        }
-      }
-
-      if (!result.success || !result.prompt) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Failed to distill conversation",
+    // Log usage to database
+    if (userId) {
+      try {
+        const usageEntry = createUsageLogEntry(result, userId);
+        await ctx.prisma.aiUsageLog.create({
+          data: {
+            userId: usageEntry.userId,
+            model: usageEntry.model,
+            provider: usageEntry.provider,
+            promptTokens: usageEntry.promptTokens,
+            completionTokens: usageEntry.completionTokens,
+            totalTokens: usageEntry.totalTokens,
+            cost: usageEntry.cost,
+            operation: usageEntry.operation,
+            metadata: usageEntry.metadata as object,
+          },
         });
+      } catch (logError) {
+        // Log error but don't fail the request
+        console.error('[Distill] Failed to log usage:', logError);
       }
+    }
 
-      return {
-        success: true,
-        prompt: result.prompt,
-        usage: {
-          inputTokens: result.usage.inputTokens,
-          outputTokens: result.usage.outputTokens,
-          totalTokens: result.usage.totalTokens,
-          estimatedCost: result.usage.estimatedCost,
-          durationMs: result.durationMs,
-        },
-        // Include source info for potential conversation saving
-        source: input.source,
-        sourceUrl: input.sourceUrl,
-      };
-    }),
+    if (!result.success || !result.prompt) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: result.error || 'Failed to distill conversation',
+      });
+    }
+
+    return {
+      success: true,
+      prompt: result.prompt,
+      usage: {
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+        totalTokens: result.usage.totalTokens,
+        estimatedCost: result.usage.estimatedCost,
+        durationMs: result.durationMs,
+      },
+      // Include source info for potential conversation saving
+      source: input.source,
+      sourceUrl: input.sourceUrl,
+    };
+  }),
 
   /**
    * Save a distilled prompt to the database.
    */
-  savePrompt: authedProcedure
-    .input(savePromptInputSchema)
-    .mutation(async ({ ctx, input }) => {
-      // Get user ID from context
-      const userId = (ctx as { userId?: string }).userId;
+  savePrompt: authedProcedure.input(savePromptInputSchema).mutation(async ({ ctx, input }) => {
+    // Get user ID from context
+    const userId = (ctx as { userId?: string }).userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to save prompts",
-        });
-      }
-
-      // Build metadata with variables
-      const metadata = {
-        variables: input.variables,
-        version: 1,
-      };
-
-      // Create the prompt
-      const prompt = await ctx.prisma.prompt.create({
-        data: {
-          userId,
-          conversationId: input.conversationId || null,
-          title: input.title,
-          content: input.template,
-          distilledFrom: null, // Could store original conversation excerpt
-          model: "claude-distilled",
-          tags: input.tags || [],
-          isPublic: input.isPublic,
-          metadata,
-        },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          tags: true,
-          isPublic: true,
-          createdAt: true,
-          metadata: true,
-        },
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to save prompts',
       });
+    }
 
-      return {
-        success: true,
-        prompt: {
-          ...prompt,
-          description: input.description,
-          variables: input.variables,
-        },
-      };
-    }),
+    // Build metadata with variables
+    const metadata = {
+      variables: input.variables,
+      version: 1,
+    };
+
+    // Create the prompt
+    const prompt = await ctx.prisma.prompt.create({
+      data: {
+        userId,
+        conversationId: input.conversationId || null,
+        title: input.title,
+        content: input.template,
+        distilledFrom: null, // Could store original conversation excerpt
+        model: 'claude-distilled',
+        tags: input.tags || [],
+        isPublic: input.isPublic,
+        metadata,
+      },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        tags: true,
+        isPublic: true,
+        createdAt: true,
+        metadata: true,
+      },
+    });
+
+    return {
+      success: true,
+      prompt: {
+        ...prompt,
+        description: input.description,
+        variables: input.variables,
+      },
+    };
+  }),
 
   /**
    * Update an existing prompt.
    */
-  updatePrompt: authedProcedure
-    .input(updatePromptInputSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = (ctx as { userId?: string }).userId;
+  updatePrompt: authedProcedure.input(updatePromptInputSchema).mutation(async ({ ctx, input }) => {
+    const userId = (ctx as { userId?: string }).userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to update prompts",
-        });
-      }
-
-      // Verify ownership
-      const existing = await ctx.prisma.prompt.findUnique({
-        where: { id: input.id },
-        select: { userId: true, metadata: true },
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to update prompts',
       });
+    }
 
-      if (!existing) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
-        });
-      }
+    // Verify ownership
+    const existing = await ctx.prisma.prompt.findUnique({
+      where: { id: input.id },
+      select: { userId: true, metadata: true },
+    });
 
-      if (existing.userId !== userId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this prompt",
-        });
-      }
-
-      // Build update data
-      const updateData: Record<string, unknown> = {};
-
-      if (input.title !== undefined) updateData.title = input.title;
-      if (input.template !== undefined) updateData.content = input.template;
-      if (input.tags !== undefined) updateData.tags = input.tags;
-      if (input.isPublic !== undefined) updateData.isPublic = input.isPublic;
-
-      // Update metadata with new variables if provided
-      if (input.variables !== undefined || input.description !== undefined) {
-        const currentMetadata =
-          (existing.metadata as Record<string, unknown>) || {};
-        updateData.metadata = {
-          ...currentMetadata,
-          ...(input.variables && { variables: input.variables }),
-          ...(input.description && { description: input.description }),
-          version: ((currentMetadata.version as number) || 0) + 1,
-        };
-      }
-
-      const updated = await ctx.prisma.prompt.update({
-        where: { id: input.id },
-        data: updateData,
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          tags: true,
-          isPublic: true,
-          updatedAt: true,
-          metadata: true,
-        },
+    if (!existing) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Prompt not found',
       });
+    }
 
-      return {
-        success: true,
-        prompt: updated,
+    if (existing.userId !== userId) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to update this prompt',
+      });
+    }
+
+    // Build update data
+    const updateData: Record<string, unknown> = {};
+
+    if (input.title !== undefined) updateData.title = input.title;
+    if (input.template !== undefined) updateData.content = input.template;
+    if (input.tags !== undefined) updateData.tags = input.tags;
+    if (input.isPublic !== undefined) updateData.isPublic = input.isPublic;
+
+    // Update metadata with new variables if provided
+    if (input.variables !== undefined || input.description !== undefined) {
+      const currentMetadata = (existing.metadata as Record<string, unknown>) || {};
+      updateData.metadata = {
+        ...currentMetadata,
+        ...(input.variables && { variables: input.variables }),
+        ...(input.description && { description: input.description }),
+        version: ((currentMetadata.version as number) || 0) + 1,
       };
-    }),
+    }
+
+    const updated = await ctx.prisma.prompt.update({
+      where: { id: input.id },
+      data: updateData,
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        tags: true,
+        isPublic: true,
+        updatedAt: true,
+        metadata: true,
+      },
+    });
+
+    return {
+      success: true,
+      prompt: updated,
+    };
+  }),
 
   /**
    * Get a prompt by ID.
    */
-  getPrompt: authedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const userId = (ctx as { userId?: string }).userId;
+  getPrompt: authedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const userId = (ctx as { userId?: string }).userId;
 
-      const prompt = await ctx.prisma.prompt.findUnique({
-        where: { id: input.id },
-        include: {
-          user: {
-            select: { id: true, name: true },
-          },
-          conversation: {
-            select: { id: true, title: true, source: true },
-          },
+    const prompt = await ctx.prisma.prompt.findUnique({
+      where: { id: input.id },
+      include: {
+        user: {
+          select: { id: true, name: true },
         },
+        conversation: {
+          select: { id: true, title: true, source: true },
+        },
+      },
+    });
+
+    if (!prompt) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Prompt not found',
       });
+    }
 
-      if (!prompt) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
-        });
-      }
+    // Check access - user owns it or it's public
+    if (prompt.userId !== userId && !prompt.isPublic) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have access to this prompt',
+      });
+    }
 
-      // Check access - user owns it or it's public
-      if (prompt.userId !== userId && !prompt.isPublic) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have access to this prompt",
-        });
-      }
-
-      return {
-        success: true,
-        prompt,
-      };
-    }),
+    return {
+      success: true,
+      prompt,
+    };
+  }),
 
   /**
    * List user's prompts with pagination.
@@ -331,8 +322,8 @@ export const distillRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to list prompts",
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to list prompts',
         });
       }
 
@@ -347,14 +338,14 @@ export const distillRouter = router({
 
       // Search in title
       if (input.search) {
-        where.title = { contains: input.search, mode: "insensitive" };
+        where.title = { contains: input.search, mode: 'insensitive' };
       }
 
       const prompts = await ctx.prisma.prompt.findMany({
         where,
         take: input.limit + 1, // Get one extra to check for more
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           title: true,
@@ -388,8 +379,8 @@ export const distillRouter = router({
 
     if (!userId) {
       throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "You must be logged in to view stats",
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view stats',
       });
     }
 
@@ -398,7 +389,7 @@ export const distillRouter = router({
         where: { userId },
       }),
       ctx.prisma.prompt.groupBy({
-        by: ["isPublic"],
+        by: ['isPublic'],
         where: { userId },
         _count: { isPublic: true },
       }),
@@ -424,8 +415,8 @@ export const distillRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to delete prompts",
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to delete prompts',
         });
       }
 
@@ -436,15 +427,15 @@ export const distillRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
       if (prompt.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to delete this prompt",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to delete this prompt',
         });
       }
 
@@ -470,8 +461,8 @@ export const distillRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
@@ -496,8 +487,8 @@ export const distillRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
@@ -532,8 +523,8 @@ export const distillRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to distill conversations",
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to distill conversations',
         });
       }
 
@@ -553,23 +544,23 @@ export const distillRouter = router({
 
       if (!conversation) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Conversation not found",
+          code: 'NOT_FOUND',
+          message: 'Conversation not found',
         });
       }
 
       // Verify ownership
       if (conversation.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have access to this conversation",
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this conversation',
         });
       }
 
       // Check privacy mode
-      if (conversation.privacyMode !== "FULL") {
+      if (conversation.privacyMode !== 'FULL') {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: 'BAD_REQUEST',
           message:
             "Cannot distill this conversation. Only conversations saved in 'Full' privacy mode can be distilled.",
         });
@@ -578,8 +569,8 @@ export const distillRouter = router({
       // Check for raw content
       if (!conversation.rawContent) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Conversation has no content to distill",
+          code: 'BAD_REQUEST',
+          message: 'Conversation has no content to distill',
         });
       }
 
@@ -591,14 +582,14 @@ export const distillRouter = router({
 
       if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Conversation has no valid messages to distill",
+          code: 'BAD_REQUEST',
+          message: 'Conversation has no valid messages to distill',
         });
       }
 
       // Convert to ConversationMessage format
       const messages: ConversationMessage[] = rawMessages.map((m) => ({
-        role: m.role as "user" | "assistant",
+        role: m.role as 'user' | 'assistant',
         content: m.content,
       }));
 
@@ -622,13 +613,13 @@ export const distillRouter = router({
           },
         });
       } catch (logError) {
-        console.error("[Distill] Failed to log usage:", logError);
+        console.error('[Distill] Failed to log usage:', logError);
       }
 
       if (!result.success || !result.prompt) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error || "Failed to distill conversation",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: result.error || 'Failed to distill conversation',
         });
       }
 
@@ -648,7 +639,7 @@ export const distillRouter = router({
           title: result.prompt.title,
           content: result.prompt.template,
           distilledFrom: null,
-          model: "claude-distilled",
+          model: 'claude-distilled',
           tags: result.prompt.tags || [],
           isPublic: false,
           metadata: {

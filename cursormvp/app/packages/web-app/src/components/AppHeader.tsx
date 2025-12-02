@@ -8,7 +8,13 @@ interface AppHeaderProps {
     name: string;
     image: string | null;
   };
-  currentPage?: 'dashboard' | 'prompts' | 'conversations' | 'collections' | 'workspaces' | 'settings';
+  currentPage?:
+    | 'dashboard'
+    | 'prompts'
+    | 'conversations'
+    | 'collections'
+    | 'workspaces'
+    | 'settings';
 }
 
 export function AppHeader({ user, currentPage }: AppHeaderProps) {
@@ -49,17 +55,11 @@ export function AppHeader({ user, currentPage }: AppHeaderProps) {
           {/* User Menu */}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-foreground">
-                {user.name || 'User'}
-              </p>
+              <p className="text-sm font-medium text-foreground">{user.name || 'User'}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
             {user.image ? (
-              <img
-                src={user.image}
-                alt={user.name || 'User'}
-                className="h-8 w-8 rounded-full"
-              />
+              <img src={user.image} alt={user.name || 'User'} className="h-8 w-8 rounded-full" />
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-600">
                 {(user.name || user.email || 'U')[0].toUpperCase()}

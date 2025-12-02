@@ -7,11 +7,11 @@
  * Uses shadcn/ui Input and Lucide icons.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Search, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface PromptSearchProps {
   /** Callback when search value changes (debounced) */

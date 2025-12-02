@@ -7,10 +7,6 @@
  * with edit and delete capabilities.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import {
   CollectionForm,
   CollectionPromptList,
@@ -18,14 +14,16 @@ import {
   PromptPickerModal,
 } from '@/components/collections';
 import { trpc } from '@/lib/trpc';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface CollectionDetailContentProps {
   collectionId: string;
 }
 
-export function CollectionDetailContent({
-  collectionId,
-}: CollectionDetailContentProps) {
+export function CollectionDetailContent({ collectionId }: CollectionDetailContentProps) {
   const router = useRouter();
 
   // Modal state
@@ -35,13 +33,12 @@ export function CollectionDetailContent({
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch collection details
-  const { data, isLoading, isError, error, refetch } =
-    trpc.collection.byId.useQuery(
-      { id: collectionId },
-      {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-      }
-    );
+  const { data, isLoading, isError, error, refetch } = trpc.collection.byId.useQuery(
+    { id: collectionId },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
+  );
 
   // Mutations
   const updateMutation = trpc.collection.update.useMutation({
@@ -181,13 +178,8 @@ export function CollectionDetailContent({
         </Link>
 
         <div className="card p-6 text-center">
-          <p className="text-sm text-error-600">
-            {error?.message || 'Failed to load collection'}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 btn-outline px-4 py-2"
-          >
+          <p className="text-sm text-error-600">{error?.message || 'Failed to load collection'}</p>
+          <button onClick={() => refetch()} className="mt-4 btn-outline px-4 py-2">
             Retry
           </button>
         </div>
@@ -240,12 +232,7 @@ export function CollectionDetailContent({
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Back to Collections
       </Link>
@@ -273,9 +260,7 @@ export function CollectionDetailContent({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  {collection.name}
-                </h1>
+                <h1 className="text-xl font-bold text-foreground">{collection.name}</h1>
                 <div className="flex items-center gap-2 mt-1">
                   {collection.isPublic && (
                     <span className="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-600">
@@ -290,9 +275,7 @@ export function CollectionDetailContent({
               </div>
             </div>
             {collection.description && (
-              <p className="text-sm text-muted-foreground mt-3">
-                {collection.description}
-              </p>
+              <p className="text-sm text-muted-foreground mt-3">{collection.description}</p>
             )}
           </div>
 
@@ -350,9 +333,7 @@ export function CollectionDetailContent({
 
       {/* Prompts Section */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">
-          Prompts in this collection
-        </h2>
+        <h2 className="text-lg font-semibold text-foreground">Prompts in this collection</h2>
         {collection.isOwner && (
           <button
             onClick={handleBrowseLibrary}
@@ -400,16 +381,11 @@ export function CollectionDetailContent({
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <Modal
-          title="Delete Collection"
-          onClose={() => setIsDeleteModalOpen(false)}
-        >
+        <Modal title="Delete Collection" onClose={() => setIsDeleteModalOpen(false)}>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete{' '}
-              <span className="font-medium">{collection.name}</span>? This
-              action cannot be undone. The prompts in this collection will not
-              be deleted.
+              Are you sure you want to delete <span className="font-medium">{collection.name}</span>
+              ? This action cannot be undone. The prompts in this collection will not be deleted.
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -473,10 +449,7 @@ function Modal({ title, children, onClose }: ModalProps) {
       <div className="relative z-10 w-full max-w-md mx-4 card p-6 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2
-            id="modal-title"
-            className="text-lg font-semibold text-foreground"
-          >
+          <h2 id="modal-title" className="text-lg font-semibold text-foreground">
             {title}
           </h2>
           <button

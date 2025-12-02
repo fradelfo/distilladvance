@@ -15,13 +15,7 @@ export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
   // Import password as key material
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    data,
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
+  const keyMaterial = await crypto.subtle.importKey('raw', data, 'PBKDF2', false, ['deriveBits']);
 
   // Derive key using PBKDF2
   const derivedBits = await crypto.subtle.deriveBits(
@@ -49,10 +43,7 @@ export async function hashPassword(password: string): Promise<string> {
  * Verify a password against a stored hash.
  * Performs constant-time comparison to prevent timing attacks.
  */
-export async function verifyPassword(
-  password: string,
-  storedHash: string
-): Promise<boolean> {
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
 
@@ -62,13 +53,7 @@ export async function verifyPassword(
   const storedHashBytes = combined.subarray(16);
 
   // Import password as key material
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    data,
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
+  const keyMaterial = await crypto.subtle.importKey('raw', data, 'PBKDF2', false, ['deriveBits']);
 
   // Derive key using same parameters
   const derivedBits = await crypto.subtle.deriveBits(

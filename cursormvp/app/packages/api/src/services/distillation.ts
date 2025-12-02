@@ -5,19 +5,16 @@
  * using Claude API with exponential backoff retry logic.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
-import { env } from "../lib/env.js";
-import {
-  DISTILL_SYSTEM_PROMPT,
-  estimateCost,
-} from "../prompts/distill-system.js";
+import Anthropic from '@anthropic-ai/sdk';
+import { env } from '../lib/env.js';
+import { DISTILL_SYSTEM_PROMPT, estimateCost } from '../prompts/distill-system.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface ConversationMessage {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
 }
@@ -48,7 +45,7 @@ export interface DistillationResult {
     totalTokens: number;
     estimatedCost: number;
     model: string;
-    provider: "anthropic" | "openai";
+    provider: 'anthropic' | 'openai';
   };
   durationMs: number;
 }
@@ -107,38 +104,38 @@ async function withRetry<T>(
     }
   }
 
-  throw lastError ?? new Error("Unknown error in retry loop");
+  throw lastError ?? new Error('Unknown error in retry loop');
 }
 
 function isRetryableError(error: Error): boolean {
   const message = error.message.toLowerCase();
 
   // Rate limit errors
-  if (message.includes("rate_limit") || message.includes("429")) {
+  if (message.includes('rate_limit') || message.includes('429')) {
     return true;
   }
 
   // Temporary server errors
   if (
-    message.includes("500") ||
-    message.includes("502") ||
-    message.includes("503") ||
-    message.includes("504")
+    message.includes('500') ||
+    message.includes('502') ||
+    message.includes('503') ||
+    message.includes('504')
   ) {
     return true;
   }
 
   // Network errors
   if (
-    message.includes("network") ||
-    message.includes("timeout") ||
-    message.includes("econnreset")
+    message.includes('network') ||
+    message.includes('timeout') ||
+    message.includes('econnreset')
   ) {
     return true;
   }
 
   // Overloaded
-  if (message.includes("overloaded")) {
+  if (message.includes('overloaded')) {
     return true;
   }
 
@@ -154,7 +151,7 @@ let anthropicClient: Anthropic | null = null;
 function getAnthropicClient(): Anthropic {
   if (!anthropicClient) {
     if (!env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
     anthropicClient = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
@@ -170,10 +167,10 @@ function getAnthropicClient(): Anthropic {
 function formatConversation(messages: ConversationMessage[]): string {
   return messages
     .map((msg) => {
-      const role = msg.role === "user" ? "User" : "Assistant";
+      const role = msg.role === 'user' ? 'User' : 'Assistant';
       return `${role}: ${msg.content}`;
     })
-    .join("\n\n");
+    .join('\n\n');
 }
 
 // ============================================================================
@@ -194,13 +191,13 @@ function parseDistilledPrompt(response: string): DistilledPrompt {
     const parsed = JSON.parse(jsonStr);
 
     // Validate required fields
-    if (!parsed.title || typeof parsed.title !== "string") {
+    if (!parsed.title || typeof parsed.title !== 'string') {
       throw new Error("Invalid or missing 'title' field");
     }
-    if (!parsed.description || typeof parsed.description !== "string") {
+    if (!parsed.description || typeof parsed.description !== 'string') {
       throw new Error("Invalid or missing 'description' field");
     }
-    if (!parsed.template || typeof parsed.template !== "string") {
+    if (!parsed.template || typeof parsed.template !== 'string') {
       throw new Error("Invalid or missing 'template' field");
     }
     if (!Array.isArray(parsed.variables)) {
@@ -209,16 +206,16 @@ function parseDistilledPrompt(response: string): DistilledPrompt {
     if (!Array.isArray(parsed.tags)) {
       throw new Error("Invalid or missing 'tags' field");
     }
-    if (!parsed.category || typeof parsed.category !== "string") {
+    if (!parsed.category || typeof parsed.category !== 'string') {
       throw new Error("Invalid or missing 'category' field");
     }
 
     // Validate and normalize variables
     const variables: DistilledPromptVariable[] = parsed.variables.map(
       (v: Record<string, unknown>) => ({
-        name: String(v.name || ""),
-        description: String(v.description || ""),
-        example: String(v.example || ""),
+        name: String(v.name || ''),
+        description: String(v.description || ''),
+        example: String(v.example || ''),
         required: Boolean(v.required ?? true),
       })
     );
@@ -234,7 +231,7 @@ function parseDistilledPrompt(response: string): DistilledPrompt {
   } catch (parseError) {
     throw new Error(
       `Failed to parse distillation response: ${
-        parseError instanceof Error ? parseError.message : "Invalid JSON"
+        parseError instanceof Error ? parseError.message : 'Invalid JSON'
       }`
     );
   }
@@ -263,35 +260,33 @@ export async function distillConversation(
   if (!messages || messages.length === 0) {
     return {
       success: false,
-      error: "No messages provided for distillation",
+      error: 'No messages provided for distillation',
       usage: {
         inputTokens: 0,
         outputTokens: 0,
         totalTokens: 0,
         estimatedCost: 0,
-        model: "",
-        provider: "anthropic",
+        model: '',
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
   }
 
   // Filter out empty messages
-  const validMessages = messages.filter(
-    (m) => m.content && m.content.trim().length > 0
-  );
+  const validMessages = messages.filter((m) => m.content && m.content.trim().length > 0);
 
   if (validMessages.length === 0) {
     return {
       success: false,
-      error: "All messages are empty",
+      error: 'All messages are empty',
       usage: {
         inputTokens: 0,
         outputTokens: 0,
         totalTokens: 0,
         estimatedCost: 0,
-        model: "",
-        provider: "anthropic",
+        model: '',
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
@@ -312,7 +307,7 @@ export async function distillConversation(
           system: DISTILL_SYSTEM_PROMPT,
           messages: [
             {
-              role: "user",
+              role: 'user',
               content: `Analyze this conversation and extract a reusable prompt template:\n\n${formattedConversation}`,
             },
           ],
@@ -331,9 +326,9 @@ export async function distillConversation(
     );
 
     // Extract response text
-    const textContent = response.content.find((c) => c.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      throw new Error("No text content in response");
+    const textContent = response.content.find((c) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
     }
 
     const responseText = textContent.text;
@@ -361,13 +356,12 @@ export async function distillConversation(
         totalTokens,
         estimatedCost: cost,
         model,
-        provider: "anthropic",
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     console.error(`[Distillation] Failed: ${errorMessage}`);
 
@@ -380,7 +374,7 @@ export async function distillConversation(
         totalTokens: 0,
         estimatedCost: 0,
         model,
-        provider: "anthropic",
+        provider: 'anthropic',
       },
       durationMs: Date.now() - startTime,
     };
@@ -403,10 +397,7 @@ export interface UsageLogEntry {
   metadata?: Record<string, unknown>;
 }
 
-export function createUsageLogEntry(
-  result: DistillationResult,
-  userId?: string
-): UsageLogEntry {
+export function createUsageLogEntry(result: DistillationResult, userId?: string): UsageLogEntry {
   return {
     userId,
     model: result.usage.model,
@@ -415,7 +406,7 @@ export function createUsageLogEntry(
     completionTokens: result.usage.outputTokens,
     totalTokens: result.usage.totalTokens,
     cost: result.usage.estimatedCost,
-    operation: "distill",
+    operation: 'distill',
     metadata: {
       success: result.success,
       durationMs: result.durationMs,

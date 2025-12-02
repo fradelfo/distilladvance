@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../index.js";
+import { publicProcedure, router } from '../index.js';
 
 /**
  * Health check router for monitoring and debugging.
@@ -9,7 +9,7 @@ export const healthRouter = router({
    */
   check: publicProcedure.query(() => {
     return {
-      status: "ok",
+      status: 'ok',
       timestamp: new Date().toISOString(),
     };
   }),
@@ -22,13 +22,13 @@ export const healthRouter = router({
       // Simple query to verify database connection
       await ctx.prisma.$queryRaw`SELECT 1`;
       return {
-        status: "connected",
+        status: 'connected',
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
       return {
-        status: "disconnected",
-        error: error instanceof Error ? error.message : "Unknown error",
+        status: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       };
     }

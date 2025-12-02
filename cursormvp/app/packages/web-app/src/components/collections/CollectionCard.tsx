@@ -7,13 +7,13 @@
  * Uses shadcn/ui Card component and Lucide icons.
  */
 
-import Link from 'next/link';
-import { Folder, Pencil, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeDate } from '@/lib/date';
+import { Folder, Pencil, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 interface CollectionCardProps {
   /** Collection ID */
@@ -71,9 +71,7 @@ export function CollectionCard({
               <div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
                 <Folder className="h-4 w-4 text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-foreground line-clamp-1">
-                {name}
-              </h3>
+              <h3 className="text-base font-semibold text-foreground line-clamp-1">{name}</h3>
             </div>
             {isPublic && (
               <Badge variant="success" className="flex-shrink-0">
@@ -86,9 +84,7 @@ export function CollectionCard({
         <CardContent className="flex-grow pb-3">
           {/* Description */}
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{description}</p>
           )}
 
           {/* Prompt count badge */}

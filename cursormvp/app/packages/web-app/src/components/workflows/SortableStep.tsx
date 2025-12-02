@@ -6,12 +6,9 @@
  * A draggable workflow step card with input mapping configuration.
  */
 
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Select,
   SelectContent,
@@ -19,11 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ChevronDown, ChevronUp, GripVertical, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface WorkflowStep {
   id: string;
@@ -52,14 +48,9 @@ export function SortableStep({
 }: SortableStepProps) {
   const [isExpanded, setIsExpanded] = useState(step.variables.length > 0);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: step.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: step.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -68,11 +59,7 @@ export function SortableStep({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="border rounded-lg bg-card"
-    >
+    <div ref={setNodeRef} style={style} className="border rounded-lg bg-card">
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <div className="flex items-center gap-2 p-3">
           {/* Drag Handle */}
@@ -152,9 +139,7 @@ export function SortableStep({
                         ))}
                         {/* Also allow mapping to initial input with same name */}
                         {!availableSources.some((s) => s.value === `initial.${varName}`) && (
-                          <SelectItem value={`initial.${varName}`}>
-                            Initial: {varName}
-                          </SelectItem>
+                          <SelectItem value={`initial.${varName}`}>Initial: {varName}</SelectItem>
                         )}
                       </SelectContent>
                     </Select>

@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
+import { AppLayout } from '@/components/AppLayout';
 import { redirect } from 'next/navigation';
 import { WorkflowDetailContent } from './WorkflowDetailContent';
-import { AppLayout } from '@/components/AppLayout';
 
 export const metadata = {
   title: 'Workflow',

@@ -7,45 +7,6 @@
  * and shows execution history.
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  Play,
-  Edit,
-  Trash2,
-  Clock,
-  Coins,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  History,
-  Copy,
-  Check,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Square,
-  Timer,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,29 +18,57 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  trackWorkflowDeleted,
+  trackWorkflowExecutionCancelled,
+  trackWorkflowExecutionCompleted,
+  trackWorkflowExecutionFailed,
+  trackWorkflowExecutionStarted,
+} from '@/lib/analytics';
 import { trpc } from '@/lib/trpc';
 import { extractVariables } from '@/lib/variables';
 import {
-  trackWorkflowDeleted,
-  trackWorkflowExecutionStarted,
-  trackWorkflowExecutionCompleted,
-  trackWorkflowExecutionFailed,
-  trackWorkflowExecutionCancelled,
-} from '@/lib/analytics';
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Coins,
+  Copy,
+  Edit,
+  History,
+  Loader2,
+  Play,
+  RefreshCw,
+  Square,
+  Timer,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // Helper to format duration
 function formatDuration(ms: number | null | undefined): string {
@@ -127,17 +116,9 @@ function StatusBadge({ status }: { status: string }) {
         </Badge>
       );
     case 'CANCELLED':
-      return (
-        <Badge variant="secondary">
-          Cancelled
-        </Badge>
-      );
+      return <Badge variant="secondary">Cancelled</Badge>;
     default:
-      return (
-        <Badge variant="outline">
-          {status}
-        </Badge>
-      );
+      return <Badge variant="outline">{status}</Badge>;
   }
 }
 
@@ -162,33 +143,25 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
     isError,
     error,
     refetch,
-  } = trpc.workflow.getById.useQuery(
-    { id: workflowId },
-    { staleTime: 30 * 1000 }
-  );
+  } = trpc.workflow.getById.useQuery({ id: workflowId }, { staleTime: 30 * 1000 });
 
   // Fetch execution history
   const {
     data: executionsData,
     isLoading: isLoadingExecutions,
     refetch: refetchExecutions,
-  } = trpc.workflow.listExecutions.useQuery(
-    { workflowId, limit: 10 },
-    { staleTime: 10 * 1000 }
-  );
+  } = trpc.workflow.listExecutions.useQuery({ workflowId, limit: 10 }, { staleTime: 10 * 1000 });
 
   // Fetch active execution status (polling when running)
-  const {
-    data: activeExecutionData,
-    refetch: refetchActiveExecution,
-  } = trpc.workflow.getExecution.useQuery(
-    { executionId: activeExecutionId! },
-    {
-      enabled: !!activeExecutionId,
-      refetchInterval: isRunning ? 1000 : false, // Poll every second while running
-      staleTime: 0,
-    }
-  );
+  const { data: activeExecutionData, refetch: refetchActiveExecution } =
+    trpc.workflow.getExecution.useQuery(
+      { executionId: activeExecutionId! },
+      {
+        enabled: !!activeExecutionId,
+        refetchInterval: isRunning ? 1000 : false, // Poll every second while running
+        staleTime: 0,
+      }
+    );
 
   // Mutations
   const executeWorkflow = trpc.workflow.execute.useMutation();
@@ -209,9 +182,10 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
 
         // Track analytics for completion/failure
         if (status === 'COMPLETED') {
-          const durationMs = exec.completedAt && exec.startedAt
-            ? new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime()
-            : 0;
+          const durationMs =
+            exec.completedAt && exec.startedAt
+              ? new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime()
+              : 0;
           trackWorkflowExecutionCompleted(
             activeExecutionId,
             exec.steps?.length || 0,
@@ -287,9 +261,9 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
       await cancelExecution.mutateAsync({ executionId: activeExecutionId });
 
       // Track analytics
-      const completedSteps = activeExecutionData?.execution?.steps?.filter(
-        (s: any) => s.status === 'COMPLETED'
-      ).length || 0;
+      const completedSteps =
+        activeExecutionData?.execution?.steps?.filter((s: any) => s.status === 'COMPLETED')
+          .length || 0;
       trackWorkflowExecutionCancelled(activeExecutionId, completedSteps);
     } catch (err) {
       console.error('Failed to cancel execution:', err);
@@ -465,9 +439,7 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                 </p>
               )}
 
-              {runError && (
-                <p className="text-sm text-destructive">{runError}</p>
-              )}
+              {runError && <p className="text-sm text-destructive">{runError}</p>}
 
               <DialogFooter>
                 <Button
@@ -498,7 +470,17 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
 
       {/* Active Execution Progress */}
       {activeExecutionId && activeExecutionData?.execution && (
-        <Card className={isRunning ? 'border-blue-500' : activeExecutionData.execution.status === 'COMPLETED' ? 'border-green-500' : activeExecutionData.execution.status === 'FAILED' ? 'border-destructive' : 'border-muted'}>
+        <Card
+          className={
+            isRunning
+              ? 'border-blue-500'
+              : activeExecutionData.execution.status === 'COMPLETED'
+                ? 'border-green-500'
+                : activeExecutionData.execution.status === 'FAILED'
+                  ? 'border-destructive'
+                  : 'border-muted'
+          }
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -531,14 +513,33 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
               <div className="mt-3">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                   <span>
-                    Step {activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length} of {activeExecutionData.execution.steps.length}
+                    Step{' '}
+                    {
+                      activeExecutionData.execution.steps.filter(
+                        (s: any) => s.status === 'COMPLETED'
+                      ).length
+                    }{' '}
+                    of {activeExecutionData.execution.steps.length}
                   </span>
                   <span>
-                    {Math.round((activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length / activeExecutionData.execution.steps.length) * 100)}%
+                    {Math.round(
+                      (activeExecutionData.execution.steps.filter(
+                        (s: any) => s.status === 'COMPLETED'
+                      ).length /
+                        activeExecutionData.execution.steps.length) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
                 <Progress
-                  value={(activeExecutionData.execution.steps.filter((s: any) => s.status === 'COMPLETED').length / activeExecutionData.execution.steps.length) * 100}
+                  value={
+                    (activeExecutionData.execution.steps.filter(
+                      (s: any) => s.status === 'COMPLETED'
+                    ).length /
+                      activeExecutionData.execution.steps.length) *
+                    100
+                  }
                   className="h-2"
                 />
               </div>
@@ -550,10 +551,15 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                 <div key={step.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="w-6 h-6 flex items-center justify-center p-0">
+                      <Badge
+                        variant="secondary"
+                        className="w-6 h-6 flex items-center justify-center p-0"
+                      >
                         {index + 1}
                       </Badge>
-                      <span className="font-medium">{step.step?.prompt?.title || `Step ${index + 1}`}</span>
+                      <span className="font-medium">
+                        {step.step?.prompt?.title || `Step ${index + 1}`}
+                      </span>
                       <StatusBadge status={step.status} />
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -563,12 +569,8 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                           {formatDuration(step.durationMs)}
                         </span>
                       )}
-                      {step.tokens > 0 && (
-                        <span>{step.tokens.toLocaleString()} tokens</span>
-                      )}
-                      {step.cost > 0 && (
-                        <span>{formatCost(step.cost)}</span>
-                      )}
+                      {step.tokens > 0 && <span>{step.tokens.toLocaleString()} tokens</span>}
+                      {step.cost > 0 && <span>{formatCost(step.cost)}</span>}
                     </div>
                   </div>
                   {step.output && (
@@ -613,7 +615,9 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                 <div className="flex gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Coins className="h-4 w-4" />
-                    <span>{activeExecutionData.execution.totalTokens?.toLocaleString() || 0} tokens</span>
+                    <span>
+                      {activeExecutionData.execution.totalTokens?.toLocaleString() || 0} tokens
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span>{formatCost(activeExecutionData.execution.totalCost)}</span>
@@ -659,9 +663,7 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                 </pre>
                 {step.inputMapping && Object.keys(step.inputMapping).length > 0 && (
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">
-                      Input Mapping:
-                    </p>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Input Mapping:</p>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(step.inputMapping).map(([varName, source]) => (
                         <Badge key={varName} variant="outline" className="font-mono text-xs">
@@ -710,7 +712,10 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                               {exec.completedAt && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Timer className="h-3 w-3" />
-                                  {formatDuration(new Date(exec.completedAt).getTime() - new Date(exec.startedAt).getTime())}
+                                  {formatDuration(
+                                    new Date(exec.completedAt).getTime() -
+                                      new Date(exec.startedAt).getTime()
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -737,7 +742,10 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                             <div key={step.id} className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="secondary" className="w-6 h-6 flex items-center justify-center p-0">
+                                  <Badge
+                                    variant="secondary"
+                                    className="w-6 h-6 flex items-center justify-center p-0"
+                                  >
                                     {index + 1}
                                   </Badge>
                                   <span className="font-medium text-sm">

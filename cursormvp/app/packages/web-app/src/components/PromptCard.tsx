@@ -7,14 +7,14 @@
  * Uses shadcn/ui Card component and Lucide icons.
  */
 
-import Link from 'next/link';
-import { PlayCircle, Copy, Pencil } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TagChip } from './TagFilter';
 import { formatRelativeDate } from '@/lib/date';
+import { Copy, Pencil, PlayCircle } from 'lucide-react';
+import Link from 'next/link';
+import { TagChip } from './TagFilter';
 
 interface PromptCardProps {
   /** Prompt ID */
@@ -76,9 +76,7 @@ export function PromptCard({
       <Card className="h-full flex flex-col hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="text-base font-semibold text-foreground line-clamp-1">
-              {title}
-            </h3>
+            <h3 className="text-base font-semibold text-foreground line-clamp-1">{title}</h3>
             {isPublic && (
               <Badge variant="success" className="flex-shrink-0">
                 Public
@@ -90,9 +88,7 @@ export function PromptCard({
         <CardContent className="flex-grow pb-3">
           {/* Description */}
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{description}</p>
           )}
 
           {/* Tags */}

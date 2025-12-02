@@ -8,10 +8,10 @@
  * Uses shadcn/ui Badge component.
  */
 
-import { X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 interface TagFilterProps {
   /** Available tags to display */
@@ -78,15 +78,10 @@ export function TagFilter({
           >
             <Badge
               variant={isSelected ? 'default' : 'secondary'}
-              className={cn(
-                'cursor-pointer transition-colors',
-                isSelected && 'pr-1.5'
-              )}
+              className={cn('cursor-pointer transition-colors', isSelected && 'pr-1.5')}
             >
               {tag}
-              {isSelected && (
-                <X className="ml-1 h-3 w-3" aria-hidden="true" />
-              )}
+              {isSelected && <X className="ml-1 h-3 w-3" aria-hidden="true" />}
             </Badge>
           </button>
         );
@@ -110,10 +105,7 @@ export function TagChip({ tag, size = 'sm', className = '' }: TagChipProps) {
   return (
     <Badge
       variant="secondary"
-      className={cn(
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
-        className
-      )}
+      className={cn(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm', className)}
     >
       {tag}
     </Badge>

@@ -1,7 +1,7 @@
-import { TRPCError } from "@trpc/server";
-import { Prisma } from "@prisma/client";
-import { z } from "zod";
-import { authedProcedure, router } from "../index.js";
+import { Prisma } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { authedProcedure, router } from '../index.js';
 
 /**
  * Helper to check if user has access to a workflow.
@@ -28,8 +28,8 @@ async function checkWorkflowAccess(
 
   if (!workflow) {
     throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Workflow not found",
+      code: 'NOT_FOUND',
+      message: 'Workflow not found',
     });
   }
 
@@ -37,12 +37,12 @@ async function checkWorkflowAccess(
   const workspaceMembership = workflow.workspace?.members[0];
   const isMember = !!workspaceMembership;
   const isWorkspaceAdmin =
-    workspaceMembership?.role === "OWNER" || workspaceMembership?.role === "ADMIN";
+    workspaceMembership?.role === 'OWNER' || workspaceMembership?.role === 'ADMIN';
 
   // Access: owner OR workspace member (if workflow is in workspace)
   if (!isOwner && !isMember && !workflow.isPublic) {
     throw new TRPCError({
-      code: "FORBIDDEN",
+      code: 'FORBIDDEN',
       message: "You don't have access to this workflow",
     });
   }
@@ -85,7 +85,7 @@ export const workflowRouter = router({
 
         if (!membership) {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have access to this workspace",
           });
         }
@@ -134,7 +134,7 @@ export const workflowRouter = router({
 
       if (!canEdit) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to update this workflow",
         });
       }
@@ -162,95 +162,87 @@ export const workflowRouter = router({
   /**
    * Delete a workflow.
    */
-  delete: authedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  delete: authedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      const { canEdit } = await checkWorkflowAccess(ctx.prisma, input.id, userId);
+    const { canEdit } = await checkWorkflowAccess(ctx.prisma, input.id, userId);
 
-      if (!canEdit) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have permission to delete this workflow",
-        });
-      }
-
-      await ctx.prisma.workflow.delete({
-        where: { id: input.id },
+    if (!canEdit) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: "You don't have permission to delete this workflow",
       });
+    }
 
-      return { success: true };
-    }),
+    await ctx.prisma.workflow.delete({
+      where: { id: input.id },
+    });
+
+    return { success: true };
+  }),
 
   /**
    * Get workflow by ID with its steps.
    */
-  getById: authedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getById: authedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      const { workflow, canEdit } = await checkWorkflowAccess(
-        ctx.prisma,
-        input.id,
-        userId
-      );
+    const { workflow, canEdit } = await checkWorkflowAccess(ctx.prisma, input.id, userId);
 
-      // Fetch workflow with steps and prompt details
-      const fullWorkflow = await ctx.prisma.workflow.findUnique({
-        where: { id: input.id },
-        include: {
-          user: {
-            select: { id: true, name: true, email: true, image: true },
-          },
-          workspace: {
-            select: { id: true, name: true, slug: true },
-          },
-          steps: {
-            include: {
-              prompt: {
-                select: {
-                  id: true,
-                  title: true,
-                  content: true,
-                  tags: true,
-                },
+    // Fetch workflow with steps and prompt details
+    const fullWorkflow = await ctx.prisma.workflow.findUnique({
+      where: { id: input.id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, image: true },
+        },
+        workspace: {
+          select: { id: true, name: true, slug: true },
+        },
+        steps: {
+          include: {
+            prompt: {
+              select: {
+                id: true,
+                title: true,
+                content: true,
+                tags: true,
               },
             },
-            orderBy: { order: "asc" },
           },
-          _count: {
-            select: { executions: true },
-          },
+          orderBy: { order: 'asc' },
         },
-      });
+        _count: {
+          select: { executions: true },
+        },
+      },
+    });
 
-      return {
-        success: true,
-        workflow: {
-          id: fullWorkflow!.id,
-          name: fullWorkflow!.name,
-          description: fullWorkflow!.description,
-          isPublic: fullWorkflow!.isPublic,
-          workspaceId: fullWorkflow!.workspaceId,
-          createdAt: fullWorkflow!.createdAt.toISOString(),
-          updatedAt: fullWorkflow!.updatedAt.toISOString(),
-          user: fullWorkflow!.user,
-          workspace: fullWorkflow!.workspace,
-          isOwner: fullWorkflow!.userId === userId,
-          canEdit,
-          executionCount: fullWorkflow!._count.executions,
-          steps: fullWorkflow!.steps.map((step) => ({
-            id: step.id,
-            order: step.order,
-            inputMapping: step.inputMapping as Record<string, string> | null,
-            createdAt: step.createdAt.toISOString(),
-            prompt: step.prompt,
-          })),
-        },
-      };
-    }),
+    return {
+      success: true,
+      workflow: {
+        id: fullWorkflow!.id,
+        name: fullWorkflow!.name,
+        description: fullWorkflow!.description,
+        isPublic: fullWorkflow!.isPublic,
+        workspaceId: fullWorkflow!.workspaceId,
+        createdAt: fullWorkflow!.createdAt.toISOString(),
+        updatedAt: fullWorkflow!.updatedAt.toISOString(),
+        user: fullWorkflow!.user,
+        workspace: fullWorkflow!.workspace,
+        isOwner: fullWorkflow!.userId === userId,
+        canEdit,
+        executionCount: fullWorkflow!._count.executions,
+        steps: fullWorkflow!.steps.map((step) => ({
+          id: step.id,
+          order: step.order,
+          inputMapping: step.inputMapping as Record<string, string> | null,
+          createdAt: step.createdAt.toISOString(),
+          prompt: step.prompt,
+        })),
+      },
+    };
+  }),
 
   /**
    * List workflows for the current user.
@@ -307,7 +299,7 @@ export const workflowRouter = router({
             select: { steps: true, executions: true },
           },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { updatedAt: 'desc' },
         take: limit + 1, // Fetch one extra to determine if there are more
       });
 
@@ -357,7 +349,7 @@ export const workflowRouter = router({
 
       if (!canEdit) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this workflow",
         });
       }
@@ -370,8 +362,8 @@ export const workflowRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
@@ -388,13 +380,13 @@ export const workflowRouter = router({
           });
           if (!membership) {
             throw new TRPCError({
-              code: "FORBIDDEN",
+              code: 'FORBIDDEN',
               message: "You don't have access to this prompt",
             });
           }
         } else {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have access to this prompt",
           });
         }
@@ -405,7 +397,7 @@ export const workflowRouter = router({
       if (order === undefined) {
         const lastStep = await ctx.prisma.workflowStep.findFirst({
           where: { workflowId: input.workflowId },
-          orderBy: { order: "desc" },
+          orderBy: { order: 'desc' },
         });
         order = lastStep ? lastStep.order + 1 : 0;
       } else {
@@ -473,8 +465,8 @@ export const workflowRouter = router({
 
       if (!step) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Step not found",
+          code: 'NOT_FOUND',
+          message: 'Step not found',
         });
       }
 
@@ -482,7 +474,7 @@ export const workflowRouter = router({
 
       if (!canEdit) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this workflow",
         });
       }
@@ -490,9 +482,8 @@ export const workflowRouter = router({
       // Handle nullable JSON properly for Prisma
       const updateData: Prisma.WorkflowStepUpdateInput = {};
       if (input.inputMapping !== undefined) {
-        updateData.inputMapping = input.inputMapping === null
-          ? Prisma.JsonNull
-          : input.inputMapping;
+        updateData.inputMapping =
+          input.inputMapping === null ? Prisma.JsonNull : input.inputMapping;
       }
 
       const updatedStep = await ctx.prisma.workflowStep.update({
@@ -538,8 +529,8 @@ export const workflowRouter = router({
 
       if (!step) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Step not found",
+          code: 'NOT_FOUND',
+          message: 'Step not found',
         });
       }
 
@@ -547,7 +538,7 @@ export const workflowRouter = router({
 
       if (!canEdit) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this workflow",
         });
       }
@@ -588,7 +579,7 @@ export const workflowRouter = router({
 
       if (!canEdit) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this workflow",
         });
       }
@@ -603,7 +594,7 @@ export const workflowRouter = router({
       for (const id of input.stepIds) {
         if (!existingIds.has(id)) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
+            code: 'BAD_REQUEST',
             message: `Step ${id} does not belong to this workflow`,
           });
         }
@@ -652,9 +643,7 @@ export const workflowRouter = router({
       await checkWorkflowAccess(ctx.prisma, input.workflowId, userId);
 
       // Import execution service dynamically to avoid circular deps
-      const { startExecution, runExecution } = await import(
-        "../../services/workflow-execution.js"
-      );
+      const { startExecution, runExecution } = await import('../../services/workflow-execution.js');
 
       // Start execution
       const executionId = await startExecution(
@@ -664,10 +653,7 @@ export const workflowRouter = router({
       );
 
       // Run execution (this could be moved to a background job for long workflows)
-      const status = await runExecution(
-        { prisma: ctx.prisma, userId },
-        executionId
-      );
+      const status = await runExecution({ prisma: ctx.prisma, userId }, executionId);
 
       return {
         success: true,
@@ -683,9 +669,7 @@ export const workflowRouter = router({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.userId;
 
-      const { cancelExecution } = await import(
-        "../../services/workflow-execution.js"
-      );
+      const { cancelExecution } = await import('../../services/workflow-execution.js');
 
       await cancelExecution({ prisma: ctx.prisma, userId }, input.executionId);
 
@@ -708,7 +692,7 @@ export const workflowRouter = router({
             select: { userId: true, workspaceId: true },
           },
           steps: {
-            orderBy: { stepOrder: "asc" },
+            orderBy: { stepOrder: 'asc' },
             include: {
               step: {
                 include: {
@@ -724,8 +708,8 @@ export const workflowRouter = router({
 
       if (!execution) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Execution not found",
+          code: 'NOT_FOUND',
+          message: 'Execution not found',
         });
       }
 
@@ -748,7 +732,7 @@ export const workflowRouter = router({
 
       if (!isExecutionOwner && !isWorkflowOwner && !isWorkspaceMember) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have access to this execution",
         });
       }
@@ -801,15 +785,12 @@ export const workflowRouter = router({
       // Verify access to workflow
       await checkWorkflowAccess(ctx.prisma, input.workflowId, userId);
 
-      const { listExecutions } = await import(
-        "../../services/workflow-execution.js"
-      );
+      const { listExecutions } = await import('../../services/workflow-execution.js');
 
-      const result = await listExecutions(
-        { prisma: ctx.prisma, userId },
-        input.workflowId,
-        { limit: input.limit, cursor: input.cursor }
-      );
+      const result = await listExecutions({ prisma: ctx.prisma, userId }, input.workflowId, {
+        limit: input.limit,
+        cursor: input.cursor,
+      });
 
       return {
         success: true,

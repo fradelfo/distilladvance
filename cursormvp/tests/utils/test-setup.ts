@@ -3,64 +3,64 @@
  * Configures test environment, mocks, and utilities
  */
 
-import { vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
-import { cleanup } from '@testing-library/react'
-import { setupServer } from 'msw/node'
-import { handlers } from './api-mocks'
-import '@testing-library/jest-dom'
+import { cleanup } from '@testing-library/react';
+import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { handlers } from './api-mocks';
+import '@testing-library/jest-dom';
 
 // MSW server for API mocking
-export const server = setupServer(...handlers)
+export const server = setupServer(...handlers);
 
 // Global test configuration
 beforeAll(async () => {
   // Start MSW server
   server.listen({
-    onUnhandledRequest: 'error'
-  })
+    onUnhandledRequest: 'error',
+  });
 
   // Setup global mocks
-  setupGlobalMocks()
+  setupGlobalMocks();
 
   // Initialize test database
-  await setupTestDatabase()
+  await setupTestDatabase();
 
   // Setup AI service mocks
-  setupAIMocks()
-})
+  setupAIMocks();
+});
 
 afterAll(async () => {
   // Close MSW server
-  server.close()
+  server.close();
 
   // Cleanup test database
-  await cleanupTestDatabase()
+  await cleanupTestDatabase();
 
   // Clear all mocks
-  vi.clearAllMocks()
-})
+  vi.clearAllMocks();
+});
 
 beforeEach(() => {
   // Reset MSW handlers
-  server.resetHandlers()
+  server.resetHandlers();
 
   // Clear all timers
-  vi.clearAllTimers()
+  vi.clearAllTimers();
 
   // Reset modules
-  vi.resetModules()
-})
+  vi.resetModules();
+});
 
 afterEach(() => {
   // Cleanup React Testing Library
-  cleanup()
+  cleanup();
 
   // Clear all mocks
-  vi.clearAllMocks()
+  vi.clearAllMocks();
 
   // Restore all mocks
-  vi.restoreAllMocks()
-})
+  vi.restoreAllMocks();
+});
 
 /**
  * Setup global mocks for common APIs and services
@@ -69,7 +69,7 @@ function setupGlobalMocks() {
   // Mock window.matchMedia
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: vi.fn().mockImplementation(query => ({
+    value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
       onchange: null,
@@ -77,60 +77,60 @@ function setupGlobalMocks() {
       removeListener: vi.fn(), // deprecated
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn()
-    }))
-  })
+      dispatchEvent: vi.fn(),
+    })),
+  });
 
   // Mock IntersectionObserver
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     disconnect: vi.fn(),
     observe: vi.fn(),
-    unobserve: vi.fn()
-  }))
+    unobserve: vi.fn(),
+  }));
 
   // Mock ResizeObserver
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     disconnect: vi.fn(),
     observe: vi.fn(),
-    unobserve: vi.fn()
-  }))
+    unobserve: vi.fn(),
+  }));
 
   // Mock localStorage
   const localStorageMock = (() => {
-    let store: Record<string, string> = {}
+    let store: Record<string, string> = {};
     return {
       getItem: vi.fn((key: string) => store[key] || null),
       setItem: vi.fn((key: string, value: string) => {
-        store[key] = value.toString()
+        store[key] = value.toString();
       }),
       removeItem: vi.fn((key: string) => {
-        delete store[key]
+        delete store[key];
       }),
       clear: vi.fn(() => {
-        store = {}
+        store = {};
       }),
       get length() {
-        return Object.keys(store).length
+        return Object.keys(store).length;
       },
-      key: vi.fn((index: number) => Object.keys(store)[index] || null)
-    }
-  })()
+      key: vi.fn((index: number) => Object.keys(store)[index] || null),
+    };
+  })();
 
   Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
-  })
+    value: localStorageMock,
+  });
 
   // Mock sessionStorage
   Object.defineProperty(window, 'sessionStorage', {
-    value: localStorageMock
-  })
+    value: localStorageMock,
+  });
 
   // Mock URL.createObjectURL
-  global.URL.createObjectURL = vi.fn(() => 'mock-object-url')
-  global.URL.revokeObjectURL = vi.fn()
+  global.URL.createObjectURL = vi.fn(() => 'mock-object-url');
+  global.URL.revokeObjectURL = vi.fn();
 
   // Mock fetch for tests that don't use MSW
-  global.fetch = vi.fn()
+  global.fetch = vi.fn();
 
   // Mock crypto.randomUUID
   Object.defineProperty(global, 'crypto', {
@@ -138,12 +138,12 @@ function setupGlobalMocks() {
       randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
       getRandomValues: vi.fn((arr: Uint8Array) => {
         for (let i = 0; i < arr.length; i++) {
-          arr[i] = Math.floor(Math.random() * 256)
+          arr[i] = Math.floor(Math.random() * 256);
         }
-        return arr
-      })
-    }
-  })
+        return arr;
+      }),
+    },
+  });
 
   // Mock console methods for cleaner test output
   global.console = {
@@ -154,13 +154,13 @@ function setupGlobalMocks() {
     // error: vi.fn(),
     // debug: vi.fn(),
     // info: vi.fn()
-  }
+  };
 
   // Mock environment variables
-  process.env.NODE_ENV = 'test'
-  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001'
-  process.env.OPENAI_API_KEY = 'test-openai-key'
-  process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
+  process.env.NODE_ENV = 'test';
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  process.env.OPENAI_API_KEY = 'test-openai-key';
+  process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
 }
 
 /**
@@ -168,26 +168,27 @@ function setupGlobalMocks() {
  */
 async function setupTestDatabase() {
   try {
-    const { PrismaClient } = await import('@prisma/client')
+    const { PrismaClient } = await import('@prisma/client');
 
     // Create test database client
     globalThis.__TEST_PRISMA__ = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/distill_test'
-        }
-      }
-    })
+          url:
+            process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/distill_test',
+        },
+      },
+    });
 
     // Run migrations
     await globalThis.__TEST_PRISMA__.$executeRaw`
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-    `
+    `;
 
     // Additional test-specific setup
-    console.log('Test database initialized')
+    console.log('Test database initialized');
   } catch (error) {
-    console.warn('Test database setup failed:', error)
+    console.warn('Test database setup failed:', error);
   }
 }
 
@@ -197,11 +198,11 @@ async function setupTestDatabase() {
 async function cleanupTestDatabase() {
   try {
     if (globalThis.__TEST_PRISMA__) {
-      await globalThis.__TEST_PRISMA__.$disconnect()
-      delete globalThis.__TEST_PRISMA__
+      await globalThis.__TEST_PRISMA__.$disconnect();
+      delete globalThis.__TEST_PRISMA__;
     }
   } catch (error) {
-    console.warn('Test database cleanup failed:', error)
+    console.warn('Test database cleanup failed:', error);
   }
 }
 
@@ -215,53 +216,61 @@ function setupAIMocks() {
       chat: {
         completions: {
           create: vi.fn().mockResolvedValue({
-            choices: [{
-              message: {
-                content: 'Mocked OpenAI response',
-                role: 'assistant'
+            choices: [
+              {
+                message: {
+                  content: 'Mocked OpenAI response',
+                  role: 'assistant',
+                },
+                finish_reason: 'stop',
               },
-              finish_reason: 'stop'
-            }],
+            ],
             usage: {
               prompt_tokens: 10,
               completion_tokens: 5,
-              total_tokens: 15
-            }
-          })
-        }
+              total_tokens: 15,
+            },
+          }),
+        },
       },
       embeddings: {
         create: vi.fn().mockResolvedValue({
-          data: [{
-            embedding: Array(1536).fill(0).map(() => Math.random())
-          }],
+          data: [
+            {
+              embedding: Array(1536)
+                .fill(0)
+                .map(() => Math.random()),
+            },
+          ],
           usage: {
             prompt_tokens: 10,
-            total_tokens: 10
-          }
-        })
-      }
-    }))
-  }))
+            total_tokens: 10,
+          },
+        }),
+      },
+    })),
+  }));
 
   // Mock Anthropic
   vi.mock('@anthropic-ai/sdk', () => ({
     default: vi.fn().mockImplementation(() => ({
       messages: {
         create: vi.fn().mockResolvedValue({
-          content: [{
-            type: 'text',
-            text: 'Mocked Anthropic response'
-          }],
+          content: [
+            {
+              type: 'text',
+              text: 'Mocked Anthropic response',
+            },
+          ],
           role: 'assistant',
           usage: {
             input_tokens: 10,
-            output_tokens: 5
-          }
-        })
-      }
-    }))
-  }))
+            output_tokens: 5,
+          },
+        }),
+      },
+    })),
+  }));
 
   // Mock vector database
   vi.mock('chromadb', () => ({
@@ -272,12 +281,12 @@ function setupAIMocks() {
         query: vi.fn().mockResolvedValue({
           documents: [['Mocked document']],
           metadatas: [[{ id: 'test-id' }]],
-          distances: [[0.1]]
+          distances: [[0.1]],
         }),
-        delete: vi.fn().mockResolvedValue({})
-      })
-    }))
-  }))
+        delete: vi.fn().mockResolvedValue({}),
+      }),
+    })),
+  }));
 }
 
 /**
@@ -285,10 +294,10 @@ function setupAIMocks() {
  */
 export const testUtils = {
   // Wait for next tick
-  waitForNextTick: () => new Promise(resolve => process.nextTick(resolve)),
+  waitForNextTick: () => new Promise((resolve) => process.nextTick(resolve)),
 
   // Wait for timeout
-  wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  wait: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
 
   // Create mock function with TypeScript support
   createMockFn: <T extends (...args: any[]) => any>(): MockedFunction<T> =>
@@ -301,7 +310,7 @@ export const testUtils = {
       email: 'test@example.com',
       name: 'Test User',
       createdAt: new Date(),
-      ...overrides
+      ...overrides,
     }),
 
     conversation: (overrides = {}) => ({
@@ -310,7 +319,7 @@ export const testUtils = {
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      ...overrides
+      ...overrides,
     }),
 
     aiResponse: (overrides = {}) => ({
@@ -318,8 +327,8 @@ export const testUtils = {
       content: 'Test AI response',
       role: 'assistant' as const,
       timestamp: new Date(),
-      ...overrides
-    })
+      ...overrides,
+    }),
   },
 
   // Database utilities
@@ -329,18 +338,18 @@ export const testUtils = {
       if (globalThis.__TEST_PRISMA__) {
         const tablenames = await globalThis.__TEST_PRISMA__.$queryRaw<
           Array<{ tablename: string }>
-        >`SELECT tablename FROM pg_tables WHERE schemaname='public'`
+        >`SELECT tablename FROM pg_tables WHERE schemaname='public'`;
 
         const tables = tablenames
           .map(({ tablename }) => tablename)
-          .filter(name => name !== '_prisma_migrations')
-          .map(name => `"public"."${name}"`)
-          .join(', ')
+          .filter((name) => name !== '_prisma_migrations')
+          .map((name) => `"public"."${name}"`)
+          .join(', ');
 
         try {
-          await globalThis.__TEST_PRISMA__.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`)
+          await globalThis.__TEST_PRISMA__.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
         } catch (error) {
-          console.log({ error })
+          console.log({ error });
         }
       }
     },
@@ -349,30 +358,30 @@ export const testUtils = {
     seed: async (data: any) => {
       if (globalThis.__TEST_PRISMA__) {
         // Implementation depends on your data model
-        return data
+        return data;
       }
-    }
-  }
-}
+    },
+  },
+};
 
 // Type definitions
 type MockedFunction<T extends (...args: any[]) => any> = T & {
   mock: {
-    calls: Parameters<T>[]
-    results: Array<{ type: 'return'; value: ReturnType<T> } | { type: 'throw'; value: any }>
-  }
-}
+    calls: Parameters<T>[];
+    results: Array<{ type: 'return'; value: ReturnType<T> } | { type: 'throw'; value: any }>;
+  };
+};
 
 // Global type extensions
 declare global {
-  var __TEST_PRISMA__: any
+  var __TEST_PRISMA__: any;
 
   namespace NodeJS {
     interface Global {
-      __TEST_PRISMA__: any
+      __TEST_PRISMA__: any;
     }
   }
 }
 
 // Export for use in individual test files
-export { vi, server }
+export { vi, server };

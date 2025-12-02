@@ -5,27 +5,26 @@
  * Handles event capture, user identification, and metrics aggregation.
  */
 
-import { PostHog } from "posthog-node";
-import { env } from "../lib/env.js";
 import type {
-  AnalyticsEventType,
+  ActivationFunnelMetrics,
   AnalyticsBaseProperties,
-  ConversationSource,
+  AnalyticsEventType,
+  ChatCapturedProperties,
+  CoachUsedProperties,
+  DashboardMetrics,
+  EngagementMetrics,
+  FeatureAdoptionMetrics,
+  MemberInvitedProperties,
+  PromptCreatedProperties,
+  PromptEditedProperties,
+  PromptRunProperties,
+  SearchPerformedProperties,
+  TeamHealthMetrics,
   UserSignedUpProperties,
   WorkspaceCreatedProperties,
-  ChatCapturedProperties,
-  PromptCreatedProperties,
-  PromptRunProperties,
-  PromptEditedProperties,
-  CoachUsedProperties,
-  MemberInvitedProperties,
-  SearchPerformedProperties,
-  ActivationFunnelMetrics,
-  EngagementMetrics,
-  TeamHealthMetrics,
-  FeatureAdoptionMetrics,
-  DashboardMetrics,
-} from "@distill/shared-types";
+} from '@distill/shared-types';
+import { PostHog } from 'posthog-node';
+import { env } from '../lib/env.js';
 
 // Re-export types for consumers of this service
 export type {
@@ -72,7 +71,7 @@ export async function trackEvent<T extends AnalyticsBaseProperties>(
   const client = getPostHogClient();
 
   if (!client) {
-    if (env.NODE_ENV === "development") {
+    if (env.NODE_ENV === 'development') {
       console.log(`[Analytics] ${eventName}:`, JSON.stringify(properties, null, 2));
     }
     return;
@@ -80,7 +79,7 @@ export async function trackEvent<T extends AnalyticsBaseProperties>(
 
   try {
     client.capture({
-      distinctId: properties.userId || "anonymous",
+      distinctId: properties.userId || 'anonymous',
       event: eventName,
       properties: {
         ...properties,
@@ -100,9 +99,9 @@ export async function trackEvent<T extends AnalyticsBaseProperties>(
  * Track user signup event.
  */
 export async function trackUserSignup(
-  properties: Omit<UserSignedUpProperties, "timestamp">
+  properties: Omit<UserSignedUpProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("user_signed_up", {
+  await trackEvent('user_signed_up', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -124,9 +123,9 @@ export async function trackUserSignup(
  * Track workspace creation event.
  */
 export async function trackWorkspaceCreated(
-  properties: Omit<WorkspaceCreatedProperties, "timestamp">
+  properties: Omit<WorkspaceCreatedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("workspace_created", {
+  await trackEvent('workspace_created', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -136,9 +135,9 @@ export async function trackWorkspaceCreated(
  * Track chat capture event.
  */
 export async function trackChatCaptured(
-  properties: Omit<ChatCapturedProperties, "timestamp">
+  properties: Omit<ChatCapturedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("chat_captured", {
+  await trackEvent('chat_captured', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -148,9 +147,9 @@ export async function trackChatCaptured(
  * Track prompt creation event.
  */
 export async function trackPromptCreated(
-  properties: Omit<PromptCreatedProperties, "timestamp">
+  properties: Omit<PromptCreatedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("prompt_created", {
+  await trackEvent('prompt_created', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -160,9 +159,9 @@ export async function trackPromptCreated(
  * Track prompt run event.
  */
 export async function trackPromptRun(
-  properties: Omit<PromptRunProperties, "timestamp">
+  properties: Omit<PromptRunProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("prompt_run", {
+  await trackEvent('prompt_run', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -172,9 +171,9 @@ export async function trackPromptRun(
  * Track prompt edit event.
  */
 export async function trackPromptEdited(
-  properties: Omit<PromptEditedProperties, "timestamp">
+  properties: Omit<PromptEditedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("prompt_edited", {
+  await trackEvent('prompt_edited', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -184,9 +183,9 @@ export async function trackPromptEdited(
  * Track coach usage event.
  */
 export async function trackCoachUsed(
-  properties: Omit<CoachUsedProperties, "timestamp">
+  properties: Omit<CoachUsedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("coach_used", {
+  await trackEvent('coach_used', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -196,9 +195,9 @@ export async function trackCoachUsed(
  * Track member invite event.
  */
 export async function trackMemberInvited(
-  properties: Omit<MemberInvitedProperties, "timestamp">
+  properties: Omit<MemberInvitedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("member_invited", {
+  await trackEvent('member_invited', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -208,9 +207,9 @@ export async function trackMemberInvited(
  * Track search event.
  */
 export async function trackSearchPerformed(
-  properties: Omit<SearchPerformedProperties, "timestamp">
+  properties: Omit<SearchPerformedProperties, 'timestamp'>
 ): Promise<void> {
-  await trackEvent("search_performed", {
+  await trackEvent('search_performed', {
     ...properties,
     timestamp: new Date().toISOString(),
   });
@@ -220,7 +219,7 @@ export async function trackSearchPerformed(
 // Metrics Aggregation
 // ============================================================================
 
-import { prisma } from "../lib/prisma.js";
+import { prisma } from '../lib/prisma.js';
 
 /**
  * Get activation funnel metrics.
@@ -273,14 +272,18 @@ export async function getActivationMetrics(
         GROUP BY "userId"
         HAVING COUNT(*) >= 3
       ) as activated_users
-    `.then((result) => Number(result[0]?.count || 0)).catch(() => 0)
+    `
+      .then((result) => Number(result[0]?.count || 0))
+      .catch(() => 0),
   ]);
 
   // Calculate conversion rates
   const signupToWorkspace = signups > 0 ? workspacesCreated / signups : 0;
   const workspaceToExtension = workspacesCreated > 0 ? usersWithExtension / workspacesCreated : 0;
-  const extensionToFirstCapture = usersWithExtension > 0 ? usersWithFirstCapture / usersWithExtension : 0;
-  const firstToThirdCapture = usersWithFirstCapture > 0 ? usersWithThreeCaptures / usersWithFirstCapture : 0;
+  const extensionToFirstCapture =
+    usersWithExtension > 0 ? usersWithFirstCapture / usersWithExtension : 0;
+  const firstToThirdCapture =
+    usersWithFirstCapture > 0 ? usersWithThreeCaptures / usersWithFirstCapture : 0;
   const overall = signups > 0 ? usersWithThreeCaptures / signups : 0;
 
   return {
@@ -315,10 +318,7 @@ export async function getEngagementMetrics(
     // Daily active users (users who created/edited prompts in last 24h)
     prisma.user.count({
       where: {
-        OR: [
-          { prompts: { some: { updatedAt: { gte: dayAgo } } } },
-          { updatedAt: { gte: dayAgo } },
-        ],
+        OR: [{ prompts: { some: { updatedAt: { gte: dayAgo } } } }, { updatedAt: { gte: dayAgo } }],
       },
     }),
     // Weekly active users
@@ -391,7 +391,7 @@ export async function getTeamHealthMetrics(
     }),
     // Average members per workspace
     prisma.workspaceMember.groupBy({
-      by: ["workspaceId"],
+      by: ['workspaceId'],
       _count: true,
     }),
     // Shared prompts (public prompts with usage)
@@ -405,9 +405,8 @@ export async function getTeamHealthMetrics(
   ]);
 
   const totalMembers = workspaceMembers.reduce((sum, ws) => sum + ws._count, 0);
-  const seatsPerWorkspace = workspaceMembers.length > 0
-    ? totalMembers / workspaceMembers.length
-    : 0;
+  const seatsPerWorkspace =
+    workspaceMembers.length > 0 ? totalMembers / workspaceMembers.length : 0;
 
   const totalPublicPrompts = await prisma.prompt.count({
     where: {
@@ -416,9 +415,7 @@ export async function getTeamHealthMetrics(
     },
   });
 
-  const sharedPromptsUsage = totalPublicPrompts > 0
-    ? sharedPrompts / totalPublicPrompts
-    : 0;
+  const sharedPromptsUsage = totalPublicPrompts > 0 ? sharedPrompts / totalPublicPrompts : 0;
 
   return {
     activeWorkspaces,
@@ -444,7 +441,7 @@ export async function getFeatureAdoptionMetrics(
     }),
     // Privacy mode distribution
     prisma.conversation.groupBy({
-      by: ["privacyMode"],
+      by: ['privacyMode'],
       where: {
         createdAt: { gte: startDate, lte: endDate },
       },
@@ -452,7 +449,7 @@ export async function getFeatureAdoptionMetrics(
     }),
     // Platform distribution
     prisma.conversation.groupBy({
-      by: ["source"],
+      by: ['source'],
       where: {
         createdAt: { gte: startDate, lte: endDate },
       },
@@ -467,9 +464,9 @@ export async function getFeatureAdoptionMetrics(
   };
 
   for (const item of promptsByPrivacy) {
-    if (item.privacyMode === "PROMPT_ONLY") {
+    if (item.privacyMode === 'PROMPT_ONLY') {
       privacyDistribution.promptOnly = item._count;
-    } else if (item.privacyMode === "FULL") {
+    } else if (item.privacyMode === 'FULL') {
       privacyDistribution.fullChat = item._count;
     }
   }
@@ -484,7 +481,7 @@ export async function getFeatureAdoptionMetrics(
   };
 
   for (const item of conversationsBySource) {
-    const source = item.source?.toLowerCase() || "other";
+    const source = item.source?.toLowerCase() || 'other';
     if (source in platformDistribution) {
       platformDistribution[source] = item._count;
     } else {

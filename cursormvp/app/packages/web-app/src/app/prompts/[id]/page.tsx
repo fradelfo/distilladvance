@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppLayout';
+import { redirect } from 'next/navigation';
 import { PromptDetailContent } from './PromptDetailContent';
 
 interface PromptDetailPageProps {
@@ -17,10 +17,7 @@ export const metadata = {
   description: 'View and manage your prompt template',
 };
 
-export default async function PromptDetailPage({
-  params,
-  searchParams,
-}: PromptDetailPageProps) {
+export default async function PromptDetailPage({ params, searchParams }: PromptDetailPageProps) {
   const session = await auth();
 
   if (!session?.user) {

@@ -1,6 +1,6 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { authedProcedure, publicProcedure, router } from "../index.js";
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { authedProcedure, publicProcedure, router } from '../index.js';
 
 /**
  * Collection router for managing prompt collections.
@@ -23,8 +23,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -54,7 +54,7 @@ export const collectionRouter = router({
             select: { id: true, name: true, email: true, image: true },
           },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { updatedAt: 'desc' },
       });
 
       return {
@@ -76,78 +76,76 @@ export const collectionRouter = router({
   /**
    * Get collection by ID with its prompts.
    */
-  byId: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const userId = (ctx as { userId?: string }).userId;
+  byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const userId = (ctx as { userId?: string }).userId;
 
-      const collection = await ctx.prisma.collection.findUnique({
-        where: { id: input.id },
-        include: {
-          user: {
-            select: { id: true, name: true, email: true, image: true },
-          },
-          prompts: {
-            include: {
-              prompt: {
-                select: {
-                  id: true,
-                  title: true,
-                  content: true,
-                  tags: true,
-                  isPublic: true,
-                  usageCount: true,
-                  createdAt: true,
-                  updatedAt: true,
-                },
+    const collection = await ctx.prisma.collection.findUnique({
+      where: { id: input.id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, image: true },
+        },
+        prompts: {
+          include: {
+            prompt: {
+              select: {
+                id: true,
+                title: true,
+                content: true,
+                tags: true,
+                isPublic: true,
+                usageCount: true,
+                createdAt: true,
+                updatedAt: true,
               },
             },
-            orderBy: { order: "asc" },
           },
+          orderBy: { order: 'asc' },
         },
+      },
+    });
+
+    if (!collection) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Collection not found',
       });
+    }
 
-      if (!collection) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
-        });
-      }
+    // Check access permissions
+    if (!collection.isPublic && collection.userId !== userId) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: "You don't have access to this collection",
+      });
+    }
 
-      // Check access permissions
-      if (!collection.isPublic && collection.userId !== userId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this collection",
-        });
-      }
-
-      return {
-        success: true,
-        collection: {
-          id: collection.id,
-          name: collection.name,
-          description: collection.description,
-          isPublic: collection.isPublic,
-          workspaceId: collection.workspaceId,
-          createdAt: collection.createdAt.toISOString(),
-          updatedAt: collection.updatedAt.toISOString(),
-          user: collection.user,
-          isOwner: collection.userId === userId,
-          prompts: collection.prompts.map((cp) => ({
-            id: cp.prompt.id,
-            title: cp.prompt.title,
-            content: cp.prompt.content,
-            tags: cp.prompt.tags,
-            isPublic: cp.prompt.isPublic,
-            usageCount: cp.prompt.usageCount,
-            createdAt: cp.prompt.createdAt.toISOString(),
-            updatedAt: cp.prompt.updatedAt.toISOString(),
-            order: cp.order,
-          })),
-        },
-      };
-    }),
+    return {
+      success: true,
+      collection: {
+        id: collection.id,
+        name: collection.name,
+        description: collection.description,
+        isPublic: collection.isPublic,
+        workspaceId: collection.workspaceId,
+        createdAt: collection.createdAt.toISOString(),
+        updatedAt: collection.updatedAt.toISOString(),
+        user: collection.user,
+        isOwner: collection.userId === userId,
+        prompts: collection.prompts.map((cp) => ({
+          id: cp.prompt.id,
+          title: cp.prompt.title,
+          content: cp.prompt.content,
+          tags: cp.prompt.tags,
+          isPublic: cp.prompt.isPublic,
+          usageCount: cp.prompt.usageCount,
+          createdAt: cp.prompt.createdAt.toISOString(),
+          updatedAt: cp.prompt.updatedAt.toISOString(),
+          order: cp.order,
+        })),
+      },
+    };
+  }),
 
   /**
    * Create a new collection.
@@ -166,8 +164,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -184,7 +182,7 @@ export const collectionRouter = router({
 
         if (!membership) {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have access to this workspace",
           });
         }
@@ -231,8 +229,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -244,14 +242,14 @@ export const collectionRouter = router({
 
       if (!existing) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
+          code: 'NOT_FOUND',
+          message: 'Collection not found',
         });
       }
 
       if (existing.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to update this collection",
         });
       }
@@ -279,44 +277,42 @@ export const collectionRouter = router({
   /**
    * Delete a collection.
    */
-  delete: authedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = (ctx as { userId?: string }).userId;
+  delete: authedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    const userId = (ctx as { userId?: string }).userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        });
-      }
-
-      // Verify ownership
-      const existing = await ctx.prisma.collection.findUnique({
-        where: { id: input.id },
-        select: { userId: true },
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required',
       });
+    }
 
-      if (!existing) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
-        });
-      }
+    // Verify ownership
+    const existing = await ctx.prisma.collection.findUnique({
+      where: { id: input.id },
+      select: { userId: true },
+    });
 
-      if (existing.userId !== userId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have permission to delete this collection",
-        });
-      }
-
-      await ctx.prisma.collection.delete({
-        where: { id: input.id },
+    if (!existing) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Collection not found',
       });
+    }
 
-      return { success: true };
-    }),
+    if (existing.userId !== userId) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: "You don't have permission to delete this collection",
+      });
+    }
+
+    await ctx.prisma.collection.delete({
+      where: { id: input.id },
+    });
+
+    return { success: true };
+  }),
 
   /**
    * Add a prompt to a collection.
@@ -334,8 +330,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -347,14 +343,14 @@ export const collectionRouter = router({
 
       if (!collection) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
+          code: 'NOT_FOUND',
+          message: 'Collection not found',
         });
       }
 
       if (collection.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this collection",
         });
       }
@@ -367,14 +363,14 @@ export const collectionRouter = router({
 
       if (!prompt) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt not found",
+          code: 'NOT_FOUND',
+          message: 'Prompt not found',
         });
       }
 
       if (!prompt.isPublic && prompt.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have access to this prompt",
         });
       }
@@ -391,8 +387,8 @@ export const collectionRouter = router({
 
       if (existing) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "Prompt is already in this collection",
+          code: 'CONFLICT',
+          message: 'Prompt is already in this collection',
         });
       }
 
@@ -401,7 +397,7 @@ export const collectionRouter = router({
       if (order === undefined) {
         const lastPrompt = await ctx.prisma.collectionPrompt.findFirst({
           where: { collectionId: input.collectionId },
-          orderBy: { order: "desc" },
+          orderBy: { order: 'desc' },
         });
         order = lastPrompt ? lastPrompt.order + 1 : 0;
       }
@@ -449,8 +445,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -462,14 +458,14 @@ export const collectionRouter = router({
 
       if (!collection) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
+          code: 'NOT_FOUND',
+          message: 'Collection not found',
         });
       }
 
       if (collection.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this collection",
         });
       }
@@ -486,8 +482,8 @@ export const collectionRouter = router({
 
       if (!existing) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Prompt is not in this collection",
+          code: 'NOT_FOUND',
+          message: 'Prompt is not in this collection',
         });
       }
 
@@ -518,8 +514,8 @@ export const collectionRouter = router({
 
       if (!userId) {
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
         });
       }
 
@@ -531,14 +527,14 @@ export const collectionRouter = router({
 
       if (!collection) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found",
+          code: 'NOT_FOUND',
+          message: 'Collection not found',
         });
       }
 
       if (collection.userId !== userId) {
         throw new TRPCError({
-          code: "FORBIDDEN",
+          code: 'FORBIDDEN',
           message: "You don't have permission to modify this collection",
         });
       }

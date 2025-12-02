@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy - Distill',
@@ -18,9 +18,9 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Introduction</h2>
               <p className="text-gray-600 mb-4">
-                Distill (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to protecting your privacy.
-                This Privacy Policy explains how we collect, use, and safeguard your information when you use
-                our browser extension and web application.
+                Distill (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to
+                protecting your privacy. This Privacy Policy explains how we collect, use, and
+                safeguard your information when you use our browser extension and web application.
               </p>
             </section>
 
@@ -29,29 +29,38 @@ export default function PrivacyPage() {
 
               <h3 className="text-lg font-medium text-gray-800 mb-2">Account Information</h3>
               <p className="text-gray-600 mb-4">
-                When you create an account, we collect your email address and display name.
-                If you sign in with Google, we receive your basic profile information from Google.
+                When you create an account, we collect your email address and display name. If you
+                sign in with Google, we receive your basic profile information from Google.
               </p>
 
               <h3 className="text-lg font-medium text-gray-800 mb-2">Conversation Data</h3>
               <p className="text-gray-600 mb-4">
-                When you use the Distill extension to capture a conversation, we process the conversation
-                content you choose to share. You control what data is captured through our privacy modes:
+                When you use the Distill extension to capture a conversation, we process the
+                conversation content you choose to share. You control what data is captured through
+                our privacy modes:
               </p>
               <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
-                <li><strong>Prompt-Only Mode:</strong> Only the distilled prompt template is stored. The original conversation is processed but not retained.</li>
-                <li><strong>Full Mode:</strong> The complete conversation is stored along with the distilled prompt for reference.</li>
+                <li>
+                  <strong>Prompt-Only Mode:</strong> Only the distilled prompt template is stored.
+                  The original conversation is processed but not retained.
+                </li>
+                <li>
+                  <strong>Full Mode:</strong> The complete conversation is stored along with the
+                  distilled prompt for reference.
+                </li>
               </ul>
 
               <h3 className="text-lg font-medium text-gray-800 mb-2">Usage Data</h3>
               <p className="text-gray-600 mb-4">
-                We collect anonymized usage statistics to improve our service, including feature usage
-                patterns and error reports. This data does not include conversation content.
+                We collect anonymized usage statistics to improve our service, including feature
+                usage patterns and error reports. This data does not include conversation content.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">How We Use Your Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                How We Use Your Information
+              </h2>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
                 <li>To provide and maintain our service</li>
                 <li>To process and distill your AI conversations into prompt templates</li>
@@ -63,7 +72,9 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Data Storage and Security</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Data Storage and Security
+              </h2>
               <p className="text-gray-600 mb-4">
                 Your data is stored securely using industry-standard encryption. We use:
               </p>
@@ -81,26 +92,45 @@ export default function PrivacyPage() {
                 We use the following third-party services to process your data:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li><strong>OpenAI / Anthropic:</strong> For AI-powered distillation and coaching features</li>
-                <li><strong>Google OAuth:</strong> For optional sign-in authentication</li>
-                <li><strong>Analytics providers:</strong> For anonymized usage statistics</li>
+                <li>
+                  <strong>OpenAI / Anthropic:</strong> For AI-powered distillation and coaching
+                  features
+                </li>
+                <li>
+                  <strong>Google OAuth:</strong> For optional sign-in authentication
+                </li>
+                <li>
+                  <strong>Analytics providers:</strong> For anonymized usage statistics
+                </li>
               </ul>
               <p className="text-gray-600 mt-4">
-                Conversation data sent to AI providers is processed according to their respective privacy policies
-                and is not used to train their models when using our API integrations.
+                Conversation data sent to AI providers is processed according to their respective
+                privacy policies and is not used to train their models when using our API
+                integrations.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Browser Extension Permissions</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Browser Extension Permissions
+              </h2>
               <p className="text-gray-600 mb-4">
                 Our browser extension requires the following permissions:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li><strong>storage:</strong> To save your preferences locally</li>
-                <li><strong>activeTab:</strong> To read conversation content when you click capture</li>
-                <li><strong>contextMenus:</strong> To provide right-click capture option</li>
-                <li><strong>Host permissions for AI sites:</strong> To access conversations on ChatGPT, Claude, Gemini, and Copilot</li>
+                <li>
+                  <strong>storage:</strong> To save your preferences locally
+                </li>
+                <li>
+                  <strong>activeTab:</strong> To read conversation content when you click capture
+                </li>
+                <li>
+                  <strong>contextMenus:</strong> To provide right-click capture option
+                </li>
+                <li>
+                  <strong>Host permissions for AI sites:</strong> To access conversations on
+                  ChatGPT, Claude, Gemini, and Copilot
+                </li>
               </ul>
               <p className="text-gray-600 mt-4">
                 The extension only reads page content when you explicitly trigger a capture action.
@@ -114,10 +144,21 @@ export default function PrivacyPage() {
                 We do not sell your personal information. We may share data in these circumstances:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li><strong>Workspace sharing:</strong> Prompts you choose to share are visible to workspace members</li>
-                <li><strong>Public prompts:</strong> Prompts marked as public may be visible to other users</li>
-                <li><strong>Legal requirements:</strong> If required by law or to protect our rights</li>
-                <li><strong>Service providers:</strong> With vendors who help operate our service, under confidentiality agreements</li>
+                <li>
+                  <strong>Workspace sharing:</strong> Prompts you choose to share are visible to
+                  workspace members
+                </li>
+                <li>
+                  <strong>Public prompts:</strong> Prompts marked as public may be visible to other
+                  users
+                </li>
+                <li>
+                  <strong>Legal requirements:</strong> If required by law or to protect our rights
+                </li>
+                <li>
+                  <strong>Service providers:</strong> With vendors who help operate our service,
+                  under confidentiality agreements
+                </li>
               </ul>
             </section>
 
@@ -159,8 +200,9 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Changes to This Policy</h2>
               <p className="text-gray-600">
-                We may update this Privacy Policy from time to time. We will notify you of any changes
-                by posting the new policy on this page and updating the &quot;Last updated&quot; date.
+                We may update this Privacy Policy from time to time. We will notify you of any
+                changes by posting the new policy on this page and updating the &quot;Last
+                updated&quot; date.
               </p>
             </section>
 
@@ -169,9 +211,7 @@ export default function PrivacyPage() {
               <p className="text-gray-600">
                 If you have questions about this Privacy Policy, please contact us at:
               </p>
-              <p className="text-gray-600 mt-2">
-                Email: privacy@distill.app
-              </p>
+              <p className="text-gray-600 mt-2">Email: privacy@distill.app</p>
             </section>
           </div>
         </div>

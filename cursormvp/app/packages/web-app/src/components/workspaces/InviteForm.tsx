@@ -29,12 +29,7 @@ const defaultValues: InviteFormData = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function InviteForm({
-  onSubmit,
-  onCancel,
-  isLoading = false,
-  error,
-}: InviteFormProps) {
+export function InviteForm({ onSubmit, onCancel, isLoading = false, error }: InviteFormProps) {
   const [formData, setFormData] = useState<InviteFormData>(defaultValues);
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;
@@ -65,9 +60,7 @@ export function InviteForm({
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -81,11 +74,7 @@ export function InviteForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Alert */}
       {error && (
-        <div
-          className="rounded-md bg-error-50 p-4"
-          role="alert"
-          aria-live="polite"
-        >
+        <div className="rounded-md bg-error-50 p-4" role="alert" aria-live="polite">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
@@ -110,10 +99,7 @@ export function InviteForm({
 
       {/* Email Field */}
       <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="email" className="block text-sm font-medium text-foreground">
           Email Address <span className="text-error-500">*</span>
         </label>
         <input
@@ -141,10 +127,7 @@ export function InviteForm({
 
       {/* Role Field */}
       <div>
-        <label
-          htmlFor="role"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="role" className="block text-sm font-medium text-foreground">
           Role <span className="text-error-500">*</span>
         </label>
         <select
@@ -165,8 +148,8 @@ export function InviteForm({
           <option value="ADMIN">Admin</option>
         </select>
         <p id="role-description" className="mt-1 text-xs text-muted-foreground">
-          Admins can manage workspace settings and invite others. Members can
-          view and use shared prompts.
+          Admins can manage workspace settings and invite others. Members can view and use shared
+          prompts.
         </p>
         {validationErrors.role && (
           <p className="mt-1 text-sm text-error-600">{validationErrors.role}</p>
@@ -183,11 +166,7 @@ export function InviteForm({
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="btn-primary px-4 py-2"
-        >
+        <button type="submit" disabled={isLoading} className="btn-primary px-4 py-2">
           {isLoading ? (
             <span className="flex items-center gap-2">
               <svg

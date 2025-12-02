@@ -5,8 +5,8 @@
  * Used alongside server-side tracking for comprehensive analytics.
  */
 
-import posthog from 'posthog-js';
 import type { AnalyticsEventType, ConversationSource } from '@distill/shared-types';
+import posthog from 'posthog-js';
 
 // ============================================================================
 // Configuration
@@ -261,10 +261,7 @@ export function trackWorkflowCreated(
 /**
  * Track workflow updated.
  */
-export function trackWorkflowUpdated(
-  workflowId: string,
-  changes: string[]
-): void {
+export function trackWorkflowUpdated(workflowId: string, changes: string[]): void {
   trackEvent('workflow_updated', {
     workflowId,
     changes,
@@ -360,10 +357,7 @@ export function trackWorkflowStepCompleted(
 /**
  * Track workflow shared to workspace.
  */
-export function trackWorkflowShared(
-  workflowId: string,
-  workspaceId: string
-): void {
+export function trackWorkflowShared(workflowId: string, workspaceId: string): void {
   trackEvent('workflow_shared', {
     workflowId,
     workspaceId,

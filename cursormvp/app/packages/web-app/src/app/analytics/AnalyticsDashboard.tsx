@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
+import { useState } from 'react';
 
 type DateRange = '7d' | '30d' | '90d';
 
@@ -37,10 +37,7 @@ export function AnalyticsDashboard() {
     return (
       <div className="card p-8 text-center">
         <p className="text-red-600">Failed to load analytics: {error.message}</p>
-        <button
-          onClick={() => dashboardQuery.refetch()}
-          className="mt-4 btn-primary px-4 py-2"
-        >
+        <button onClick={() => dashboardQuery.refetch()} className="mt-4 btn-primary px-4 py-2">
           Retry
         </button>
       </div>
@@ -140,14 +137,18 @@ export function AnalyticsDashboard() {
         <h2 className="text-lg font-semibold text-foreground mb-4">Feature Adoption</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">Privacy Mode Distribution</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">
+              Privacy Mode Distribution
+            </h3>
             <PrivacyModeChart
               promptOnly={metrics?.featureAdoption.privacyModeDistribution.promptOnly || 0}
               fullChat={metrics?.featureAdoption.privacyModeDistribution.fullChat || 0}
             />
           </div>
           <div className="card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">Platform Distribution</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">
+              Platform Distribution
+            </h3>
             <PlatformChart distribution={metrics?.featureAdoption.platformDistribution || {}} />
           </div>
         </div>
@@ -178,11 +179,7 @@ function MetricCard({
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
           {trend && (
-            <p
-              className={`mt-1 text-sm ${
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
+            <p className={`mt-1 text-sm ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
             </p>
           )}
@@ -216,10 +213,26 @@ function ActivationFunnel({
 }) {
   const steps = [
     { label: 'Signups', value: signups, conversion: null },
-    { label: 'Workspace Created', value: workspaces, conversion: conversionRates?.signupToWorkspace },
-    { label: 'Extension Installed', value: extensions, conversion: conversionRates?.workspaceToExtension },
-    { label: 'First Capture', value: firstCapture, conversion: conversionRates?.extensionToFirstCapture },
-    { label: 'Activated (3+ prompts)', value: thirdCapture, conversion: conversionRates?.firstToThirdCapture },
+    {
+      label: 'Workspace Created',
+      value: workspaces,
+      conversion: conversionRates?.signupToWorkspace,
+    },
+    {
+      label: 'Extension Installed',
+      value: extensions,
+      conversion: conversionRates?.workspaceToExtension,
+    },
+    {
+      label: 'First Capture',
+      value: firstCapture,
+      conversion: conversionRates?.extensionToFirstCapture,
+    },
+    {
+      label: 'Activated (3+ prompts)',
+      value: thirdCapture,
+      conversion: conversionRates?.firstToThirdCapture,
+    },
   ];
 
   const maxValue = Math.max(...steps.map((s) => s.value), 1);
@@ -237,9 +250,7 @@ function ActivationFunnel({
               />
             </div>
           </div>
-          <div className="w-16 text-right text-sm font-medium text-foreground">
-            {step.value}
-          </div>
+          <div className="w-16 text-right text-sm font-medium text-foreground">{step.value}</div>
           {step.conversion != null && (
             <div className="w-16 text-right text-xs text-muted-foreground">
               {((step.conversion ?? 0) * 100).toFixed(0)}%
@@ -277,12 +288,16 @@ function PrivacyModeChart({ promptOnly, fullChat }: { promptOnly: number; fullCh
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500" />
           <span className="text-muted-foreground">Prompt Only</span>
-          <span className="font-medium">{promptOnly} ({promptOnlyPercent.toFixed(0)}%)</span>
+          <span className="font-medium">
+            {promptOnly} ({promptOnlyPercent.toFixed(0)}%)
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-purple-500" />
           <span className="text-muted-foreground">Full Chat</span>
-          <span className="font-medium">{fullChat} ({(100 - promptOnlyPercent).toFixed(0)}%)</span>
+          <span className="font-medium">
+            {fullChat} ({(100 - promptOnlyPercent).toFixed(0)}%)
+          </span>
         </div>
       </div>
     </div>

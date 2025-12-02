@@ -7,12 +7,12 @@
  * Uses shadcn/ui Card component and Lucide icons.
  */
 
-import Link from 'next/link';
-import { Users, FileText } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatShortDate } from '@/lib/date';
+import { FileText, Users } from 'lucide-react';
+import Link from 'next/link';
 
 interface WorkspaceCardProps {
   id: string;
@@ -50,20 +50,14 @@ export function WorkspaceCard({
           <div className="flex items-start gap-3">
             {/* Workspace Icon/Image */}
             {image ? (
-              <img
-                src={image}
-                alt={name}
-                className="w-12 h-12 rounded-lg object-cover"
-              />
+              <img src={image} alt={name} className="w-12 h-12 rounded-lg object-cover" />
             ) : (
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-lg font-bold">
                 {name.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-foreground line-clamp-1">
-                {name}
-              </h3>
+              <h3 className="text-base font-semibold text-foreground line-clamp-1">{name}</h3>
               <p className="text-sm text-muted-foreground">/{slug}</p>
             </div>
             <Badge variant={roleVariant[role]} className="flex-shrink-0">
@@ -75,9 +69,7 @@ export function WorkspaceCard({
         <CardContent className="flex-grow pb-3">
           {/* Description */}
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
           )}
         </CardContent>
 
@@ -95,9 +87,7 @@ export function WorkspaceCard({
           </div>
 
           {/* Joined date */}
-          <p className="text-xs text-muted-foreground/70">
-            Joined {formatShortDate(joinedAt)}
-          </p>
+          <p className="text-xs text-muted-foreground/70">Joined {formatShortDate(joinedAt)}</p>
         </CardFooter>
       </Card>
     </Link>

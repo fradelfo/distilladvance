@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { auth } from '@/auth';
 import { createCheckoutSession } from '@/lib/billing';
 import { STRIPE_PRICES } from '@/lib/stripe';
+import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 const checkoutSchema = z.object({
   plan: z.enum(['PRO', 'TEAM']),
@@ -14,10 +14,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -56,10 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    return NextResponse.json(
-      { success: true, url: checkoutUrl },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, url: checkoutUrl }, { status: 200 });
   } catch (error) {
     console.error('[Checkout] Error:', error);
     return NextResponse.json(

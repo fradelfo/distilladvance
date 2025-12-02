@@ -3,7 +3,7 @@
  * Provides comprehensive testing tools for AI integration, prompt engineering, and model evaluation
  */
 
-import { vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 
 // AI Provider Mock Types
 interface MockAIResponse {
@@ -397,7 +397,7 @@ export const promptTestUtils = {
   /**
    * Analyze prompt token usage
    */
-  analyzeTokenUsage(prompt: string, model: string = 'gpt-4') {
+  analyzeTokenUsage(prompt: string, model = 'gpt-4') {
     // Rough token estimation (more accurate would require tiktoken)
     const estimatedTokens = Math.ceil(prompt.length / 4)
 

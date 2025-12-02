@@ -6,7 +6,7 @@
  * Form for creating and editing collections.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface CollectionFormData {
   name: string;
@@ -43,9 +43,7 @@ export function CollectionForm({
   onCancel,
   error,
 }: CollectionFormProps) {
-  const [formData, setFormData] = useState<CollectionFormData>(
-    initialValues || defaultValues
-  );
+  const [formData, setFormData] = useState<CollectionFormData>(initialValues || defaultValues);
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
     description?: string;
@@ -82,14 +80,11 @@ export function CollectionForm({
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
     // Clear validation error when user starts typing
     if (validationErrors[name as keyof typeof validationErrors]) {
@@ -101,11 +96,7 @@ export function CollectionForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <div
-          className="rounded-md bg-error-50 p-4"
-          role="alert"
-          aria-live="polite"
-        >
+        <div className="rounded-md bg-error-50 p-4" role="alert" aria-live="polite">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
@@ -130,10 +121,7 @@ export function CollectionForm({
 
       {/* Name Field */}
       <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="name" className="block text-sm font-medium text-foreground">
           Name <span className="text-error-500">*</span>
         </label>
         <input
@@ -158,17 +146,12 @@ export function CollectionForm({
             {validationErrors.name}
           </p>
         )}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {formData.name.length}/100 characters
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{formData.name.length}/100 characters</p>
       </div>
 
       {/* Description Field */}
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-foreground"
-        >
+        <label htmlFor="description" className="block text-sm font-medium text-foreground">
           Description
         </label>
         <textarea
@@ -185,9 +168,7 @@ export function CollectionForm({
           }`}
           placeholder="A brief description of this collection..."
           aria-invalid={!!validationErrors.description}
-          aria-describedby={
-            validationErrors.description ? 'description-error' : undefined
-          }
+          aria-describedby={validationErrors.description ? 'description-error' : undefined}
           maxLength={500}
         />
         {validationErrors.description && (
@@ -214,10 +195,7 @@ export function CollectionForm({
           />
         </div>
         <div className="ml-3">
-          <label
-            htmlFor="isPublic"
-            className="text-sm font-medium text-foreground"
-          >
+          <label htmlFor="isPublic" className="text-sm font-medium text-foreground">
             Make this collection public
           </label>
           <p className="text-xs text-muted-foreground">
@@ -236,11 +214,7 @@ export function CollectionForm({
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="btn-primary px-4 py-2"
-        >
+        <button type="submit" disabled={isLoading} className="btn-primary px-4 py-2">
           {isLoading ? (
             <span className="flex items-center gap-2">
               <svg

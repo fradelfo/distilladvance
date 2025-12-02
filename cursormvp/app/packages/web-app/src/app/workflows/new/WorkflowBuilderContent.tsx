@@ -7,31 +7,10 @@
  * Includes drag-drop step reordering, input mapping, and prompt selection.
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { ArrowLeft, Plus, Save, Trash2, GripVertical, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -40,18 +19,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { SortableStep } from '@/components/workflows/SortableStep';
 import { trpc } from '@/lib/trpc';
 import { extractVariables } from '@/lib/variables';
-import { SortableStep } from '@/components/workflows/SortableStep';
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { AlertCircle, ArrowLeft, Plus, Save } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface WorkflowStep {
   id: string;
@@ -109,10 +102,11 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
   }, [workflowData]);
 
   // Fetch prompts for selection
-  const { data: promptsData, isLoading: isLoadingPrompts, error: promptsError } = trpc.distill.listPrompts.useQuery(
-    { limit: 50 },
-    { staleTime: 5 * 60 * 1000 }
-  );
+  const {
+    data: promptsData,
+    isLoading: isLoadingPrompts,
+    error: promptsError,
+  } = trpc.distill.listPrompts.useQuery({ limit: 50 }, { staleTime: 5 * 60 * 1000 });
 
   // Mutations
   const createWorkflow = trpc.workflow.create.useMutation();
@@ -147,9 +141,7 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
     if (!firstStep) return [];
 
     // Variables needed by first step that aren't mapped from previous steps
-    return firstStep.variables.filter(
-      (v) => !firstStep.inputMapping[v]?.startsWith('step.')
-    );
+    return firstStep.variables.filter((v) => !firstStep.inputMapping[v]?.startsWith('step.'));
   }, [steps]);
 
   // Handle drag end for reordering

@@ -7,13 +7,13 @@
  * Supports viewing, running (filling variables), and copying.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { trpc } from '@/lib/trpc';
 import { TagChip } from '@/components/TagFilter';
 import { CoachPanel } from '@/components/prompts/CoachPanel';
+import { trpc } from '@/lib/trpc';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface PromptDetailContentProps {
   promptId: string;
@@ -88,9 +88,7 @@ export function PromptDetailContent({
 
   // Check if all required variables are filled
   const canRun = useMemo(() => {
-    return variables
-      .filter((v) => v.required)
-      .every((v) => variableValues[v.name]?.trim());
+    return variables.filter((v) => v.required).every((v) => variableValues[v.name]?.trim());
   }, [variables, variableValues]);
 
   // Handle variable change
@@ -147,12 +145,11 @@ export function PromptDetailContent({
     return (
       <div className="card p-8 text-center">
         <p className="text-lg font-medium text-foreground mb-2">
-          {error?.message === 'Prompt not found'
-            ? 'Prompt not found'
-            : 'Failed to load prompt'}
+          {error?.message === 'Prompt not found' ? 'Prompt not found' : 'Failed to load prompt'}
         </p>
         <p className="text-sm text-muted-foreground mb-6">
-          {error?.message || 'The prompt you are looking for does not exist or you do not have access to it.'}
+          {error?.message ||
+            'The prompt you are looking for does not exist or you do not have access to it.'}
         </p>
         <Link href="/prompts" className="btn-primary px-6 py-2">
           Back to Library
@@ -168,18 +165,8 @@ export function PromptDetailContent({
         href="/prompts"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Back to Library
       </Link>
@@ -188,22 +175,12 @@ export function PromptDetailContent({
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{prompt.title}</h1>
-          {description && (
-            <p className="mt-2 text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="mt-2 text-muted-foreground">{description}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href={`/prompts/${promptId}/edit`}
-            className="btn-outline px-4 py-2"
-          >
+          <Link href={`/prompts/${promptId}/edit`} className="btn-outline px-4 py-2">
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -219,12 +196,7 @@ export function PromptDetailContent({
             className="btn-outline px-4 py-2 text-error-600 border-error-300 hover:bg-error-50"
           >
             <span className="flex items-center gap-2">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -250,12 +222,7 @@ export function PromptDetailContent({
       {/* Stats */}
       <div className="flex flex-wrap gap-6 mb-6 text-sm text-muted-foreground">
         <span className="flex items-center gap-1">
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -277,12 +244,7 @@ export function PromptDetailContent({
         )}
         {prompt.isPublic && (
           <span className="inline-flex items-center gap-1 text-success-600">
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -322,9 +284,7 @@ export function PromptDetailContent({
       {/* Variables Form (Run Mode) */}
       {isRunMode && variables.length > 0 && (
         <div className="card p-6 mb-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
-            Fill Variables
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Fill Variables</h2>
           <div className="space-y-4">
             {variables.map((variable) => (
               <div key={variable.name}>
@@ -333,22 +293,16 @@ export function PromptDetailContent({
                   className="block text-sm font-medium text-foreground mb-1"
                 >
                   {variable.name}
-                  {variable.required && (
-                    <span className="text-error-500 ml-1">*</span>
-                  )}
+                  {variable.required && <span className="text-error-500 ml-1">*</span>}
                 </label>
                 {variable.description && (
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {variable.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">{variable.description}</p>
                 )}
                 <input
                   id={`var-${variable.name}`}
                   type="text"
                   value={variableValues[variable.name] || ''}
-                  onChange={(e) =>
-                    handleVariableChange(variable.name, e.target.value)
-                  }
+                  onChange={(e) => handleVariableChange(variable.name, e.target.value)}
                   placeholder={variable.example || `Enter ${variable.name}`}
                   className="input w-full"
                 />
@@ -361,42 +315,27 @@ export function PromptDetailContent({
       {/* Variables List (View Mode) */}
       {!isRunMode && variables.length > 0 && (
         <div className="card p-6 mb-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
-            Variables
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Variables</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-2 px-3 font-medium text-foreground">
-                    Name
-                  </th>
-                  <th className="text-left py-2 px-3 font-medium text-foreground">
-                    Description
-                  </th>
-                  <th className="text-left py-2 px-3 font-medium text-foreground">
-                    Example
-                  </th>
-                  <th className="text-left py-2 px-3 font-medium text-foreground">
-                    Required
-                  </th>
+                  <th className="text-left py-2 px-3 font-medium text-foreground">Name</th>
+                  <th className="text-left py-2 px-3 font-medium text-foreground">Description</th>
+                  <th className="text-left py-2 px-3 font-medium text-foreground">Example</th>
+                  <th className="text-left py-2 px-3 font-medium text-foreground">Required</th>
                 </tr>
               </thead>
               <tbody>
                 {variables.map((variable) => (
-                  <tr
-                    key={variable.name}
-                    className="border-b border-neutral-100"
-                  >
+                  <tr key={variable.name} className="border-b border-neutral-100">
                     <td className="py-2 px-3 font-mono text-primary-600">
                       {`{{${variable.name}}}`}
                     </td>
                     <td className="py-2 px-3 text-muted-foreground">
                       {variable.description || '-'}
                     </td>
-                    <td className="py-2 px-3 text-muted-foreground">
-                      {variable.example || '-'}
-                    </td>
+                    <td className="py-2 px-3 text-muted-foreground">{variable.example || '-'}</td>
                     <td className="py-2 px-3">
                       {variable.required ? (
                         <span className="text-success-600">Yes</span>
@@ -445,12 +384,7 @@ export function PromptDetailContent({
                 </>
               ) : (
                 <>
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -478,18 +412,13 @@ export function PromptDetailContent({
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="card p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Delete Prompt?
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Prompt?</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Are you sure you want to delete &quot;{prompt.title}&quot;? This
-              action cannot be undone.
+              Are you sure you want to delete &quot;{prompt.title}&quot;? This action cannot be
+              undone.
             </p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn-outline px-4 py-2"
-              >
+              <button onClick={() => setShowDeleteConfirm(false)} className="btn-outline px-4 py-2">
                 Cancel
               </button>
               <button

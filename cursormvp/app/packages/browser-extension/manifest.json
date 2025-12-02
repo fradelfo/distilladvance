@@ -45,15 +45,8 @@
       "description": "Capture and distill the current conversation"
     }
   },
-  "permissions": [
-    "storage",
-    "activeTab",
-    "contextMenus",
-    "cookies"
-  ],
-  "optional_permissions": [
-    "clipboardWrite"
-  ],
+  "permissions": ["storage", "activeTab", "contextMenus", "cookies"],
+  "optional_permissions": ["clipboardWrite"],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",

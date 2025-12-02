@@ -4,16 +4,16 @@
  */
 
 import type { ExtensionMessage } from '@distill/shared-types';
-import { MessageTypes } from '../shared/messages';
-import { config } from '../shared/config';
 import {
   initExtensionAnalytics,
+  trackChatCaptured,
+  trackContextMenuUsed,
   trackExtensionInstalled,
   trackExtensionUpdated,
   trackKeyboardShortcutUsed,
-  trackContextMenuUsed,
-  trackChatCaptured,
 } from '../shared/analytics';
+import { config } from '../shared/config';
+import { MessageTypes } from '../shared/messages';
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -393,7 +393,7 @@ async function getAuthStatus() {
     // Check auth by calling the web app's session endpoint
     // We need to get cookies for the web app domain
     const cookies = await chrome.cookies.getAll({ url: config.webUrl });
-    const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+    const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
     console.log('[Distill] Checking auth with cookies from:', config.webUrl);
     console.log('[Distill] Found cookies:', cookies.length);
@@ -477,5 +477,3 @@ function getDefaultSettings() {
     theme: 'system',
   };
 }
-
-export {};

@@ -7,15 +7,11 @@
  * including listing and creating workspaces.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
-import {
-  WorkspaceCard,
-  WorkspaceCardSkeleton,
-  WorkspaceForm,
-} from '@/components/workspaces';
 import { EmptyState } from '@/components/EmptyState';
+import { WorkspaceCard, WorkspaceCardSkeleton, WorkspaceForm } from '@/components/workspaces';
 import { trpc } from '@/lib/trpc';
+import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 // Type for a workspace from the API
 interface WorkspaceListItem {
@@ -40,13 +36,7 @@ export function WorkspacesContent() {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch workspaces
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = trpc.workspace.list.useQuery(undefined, {
+  const { data, isLoading, isError, error, refetch } = trpc.workspace.list.useQuery(undefined, {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -92,10 +82,7 @@ export function WorkspacesContent() {
               Collaborate on prompts with your team
             </p>
           </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn-primary px-4 py-2"
-          >
+          <button onClick={() => setIsCreateModalOpen(true)} className="btn-primary px-4 py-2">
             <span className="flex items-center gap-2">
               <svg
                 className="h-4 w-4"
@@ -205,10 +192,7 @@ export function WorkspacesContent() {
           <p className="text-sm text-error-600">
             Failed to load workspaces: {error?.message || 'Unknown error'}
           </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 btn-outline px-4 py-2"
-          >
+          <button onClick={() => refetch()} className="mt-4 btn-outline px-4 py-2">
             Retry
           </button>
         </div>

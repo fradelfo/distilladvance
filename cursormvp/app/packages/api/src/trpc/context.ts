@@ -1,14 +1,14 @@
-import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import { prisma } from "../lib/prisma.js";
-import { env } from "../lib/env.js";
+import type { CreateExpressContextOptions } from '@trpc/server/adapters/express';
+import { env } from '../lib/env.js';
+import { prisma } from '../lib/prisma.js';
 
 /**
  * Context available to all tRPC procedures.
  */
 export interface Context {
   prisma: typeof prisma;
-  req: CreateExpressContextOptions["req"];
-  res: CreateExpressContextOptions["res"];
+  req: CreateExpressContextOptions['req'];
+  res: CreateExpressContextOptions['res'];
   userId?: string;
 }
 
@@ -51,7 +51,7 @@ async function validateSession(
 
     return null;
   } catch (error) {
-    console.error("[Context] Failed to validate session:", error);
+    console.error('[Context] Failed to validate session:', error);
     return null;
   }
 }
@@ -59,10 +59,7 @@ async function validateSession(
 /**
  * Creates context for each tRPC request.
  */
-export async function createContext({
-  req,
-  res,
-}: CreateExpressContextOptions): Promise<Context> {
+export async function createContext({ req, res }: CreateExpressContextOptions): Promise<Context> {
   let userId: string | undefined;
 
   // Try to validate session via web app
@@ -77,7 +74,7 @@ export async function createContext({
   // Fallback: check Authorization header
   if (!userId) {
     const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
+    if (authHeader?.startsWith('Bearer ')) {
       // Simple user ID from header (for extension/API clients)
       const token = authHeader.slice(7);
       // In production, validate this token properly

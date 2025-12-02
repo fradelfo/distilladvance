@@ -51,8 +51,8 @@
             ],
             "resource_filters": {
               "tags": [
-                {"Key": "Project", "Value": "${PROJECT_NAME}"},
-                {"Key": "Environment", "Value": ["dev", "staging", "prod"]}
+                { "Key": "Project", "Value": "${PROJECT_NAME}" },
+                { "Key": "Environment", "Value": ["dev", "staging", "prod"] }
               ]
             }
           },
@@ -131,11 +131,7 @@
           "secretsmanager": {
             "enabled": true,
             "permissions": ["read"],
-            "operations": [
-              "listSecrets",
-              "describeSecret",
-              "getSecretValue"
-            ],
+            "operations": ["listSecrets", "describeSecret", "getSecretValue"],
             "secret_filters": {
               "name_patterns": [
                 "${PROJECT_NAME}/*",
@@ -157,11 +153,7 @@
               "listGroups"
             ],
             "resource_filters": {
-              "path_prefix": [
-                "/${PROJECT_NAME}/",
-                "/service-role/",
-                "/eks-service-role/"
-              ]
+              "path_prefix": ["/${PROJECT_NAME}/", "/service-role/", "/eks-service-role/"]
             }
           },
           "cloudformation": {
@@ -238,19 +230,19 @@
           "name": "API Response Time",
           "namespace": "AWS/ApplicationELB",
           "metric": "TargetResponseTime",
-          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+          "dimension": { "LoadBalancer": "${PROJECT_NAME}-alb" }
         },
         {
           "name": "Error Rate",
           "namespace": "AWS/ApplicationELB",
           "metric": "HTTPCode_Target_5XX_Count",
-          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+          "dimension": { "LoadBalancer": "${PROJECT_NAME}-alb" }
         },
         {
           "name": "Request Count",
           "namespace": "AWS/ApplicationELB",
           "metric": "RequestCount",
-          "dimension": {"LoadBalancer": "${PROJECT_NAME}-alb"}
+          "dimension": { "LoadBalancer": "${PROJECT_NAME}-alb" }
         }
       ]
     },
@@ -261,19 +253,19 @@
           "name": "CPU Utilization",
           "namespace": "AWS/RDS",
           "metric": "CPUUtilization",
-          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+          "dimension": { "DBInstanceIdentifier": "${PROJECT_NAME}-main" }
         },
         {
           "name": "Database Connections",
           "namespace": "AWS/RDS",
           "metric": "DatabaseConnections",
-          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+          "dimension": { "DBInstanceIdentifier": "${PROJECT_NAME}-main" }
         },
         {
           "name": "Read Latency",
           "namespace": "AWS/RDS",
           "metric": "ReadLatency",
-          "dimension": {"DBInstanceIdentifier": "${PROJECT_NAME}-main"}
+          "dimension": { "DBInstanceIdentifier": "${PROJECT_NAME}-main" }
         }
       ]
     },
@@ -284,19 +276,19 @@
           "name": "Lambda Invocations",
           "namespace": "AWS/Lambda",
           "metric": "Invocations",
-          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+          "dimension": { "FunctionName": "${PROJECT_NAME}-ai-processing" }
         },
         {
           "name": "Lambda Duration",
           "namespace": "AWS/Lambda",
           "metric": "Duration",
-          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+          "dimension": { "FunctionName": "${PROJECT_NAME}-ai-processing" }
         },
         {
           "name": "Lambda Errors",
           "namespace": "AWS/Lambda",
           "metric": "Errors",
-          "dimension": {"FunctionName": "${PROJECT_NAME}-ai-processing"}
+          "dimension": { "FunctionName": "${PROJECT_NAME}-ai-processing" }
         }
       ]
     },
@@ -307,19 +299,19 @@
           "name": "Node CPU Utilization",
           "namespace": "AWS/EKS",
           "metric": "cluster_cpu_utilization",
-          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+          "dimension": { "ClusterName": "${PROJECT_NAME}-eks" }
         },
         {
           "name": "Node Memory Utilization",
           "namespace": "AWS/EKS",
           "metric": "cluster_memory_utilization",
-          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+          "dimension": { "ClusterName": "${PROJECT_NAME}-eks" }
         },
         {
           "name": "Pod Count",
           "namespace": "AWS/EKS",
           "metric": "cluster_number_of_running_pods",
-          "dimension": {"ClusterName": "${PROJECT_NAME}-eks"}
+          "dimension": { "ClusterName": "${PROJECT_NAME}-eks" }
         }
       ]
     }
@@ -348,12 +340,7 @@
         "threshold_percentage": 90
       }
     ],
-    "cost_allocation_tags": [
-      "Project",
-      "Environment",
-      "Team",
-      "CostCenter"
-    ]
+    "cost_allocation_tags": ["Project", "Environment", "Team", "CostCenter"]
   },
 
   "automation_workflows": {
@@ -403,12 +390,7 @@
       "security_scanning": {
         "enabled": true,
         "scan_schedule": "cron(0 6 * * 1 *)",
-        "scan_targets": [
-          "ec2_instances",
-          "lambda_functions",
-          "s3_buckets",
-          "iam_policies"
-        ]
+        "scan_targets": ["ec2_instances", "lambda_functions", "s3_buckets", "iam_policies"]
       }
     }
   },
@@ -462,12 +444,7 @@
         },
         {
           "name": "DevelopmentAccess",
-          "actions": [
-            "s3:*",
-            "lambda:InvokeFunction",
-            "lambda:UpdateFunctionCode",
-            "cloudwatch:*"
-          ],
+          "actions": ["s3:*", "lambda:InvokeFunction", "lambda:UpdateFunctionCode", "cloudwatch:*"],
           "conditions": {
             "StringEquals": {
               "aws:RequestedRegion": ["us-east-1", "us-west-2"]
@@ -496,29 +473,16 @@
   "performance_optimization": {
     "auto_optimization": {
       "enabled": true,
-      "optimization_targets": [
-        "cost",
-        "performance",
-        "security"
-      ]
+      "optimization_targets": ["cost", "performance", "security"]
     },
     "recommendations": {
       "trusted_advisor": {
         "enabled": true,
-        "categories": [
-          "cost_optimization",
-          "performance",
-          "security",
-          "fault_tolerance"
-        ]
+        "categories": ["cost_optimization", "performance", "security", "fault_tolerance"]
       },
       "compute_optimizer": {
         "enabled": true,
-        "resource_types": [
-          "ec2_instances",
-          "auto_scaling_groups",
-          "lambda_functions"
-        ]
+        "resource_types": ["ec2_instances", "auto_scaling_groups", "lambda_functions"]
       }
     }
   },

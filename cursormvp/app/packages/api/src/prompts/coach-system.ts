@@ -159,10 +159,7 @@ export const COACH_FOCUSED_PROMPTS: Record<string, string> = {
 export const COACH_COST_PER_1K_INPUT_TOKENS = 0.003;
 export const COACH_COST_PER_1K_OUTPUT_TOKENS = 0.015;
 
-export function estimateCoachCost(
-  inputTokens: number,
-  outputTokens: number
-): number {
+export function estimateCoachCost(inputTokens: number, outputTokens: number): number {
   return (
     (inputTokens / 1000) * COACH_COST_PER_1K_INPUT_TOKENS +
     (outputTokens / 1000) * COACH_COST_PER_1K_OUTPUT_TOKENS

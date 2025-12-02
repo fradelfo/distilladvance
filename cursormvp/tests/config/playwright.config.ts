@@ -1,5 +1,5 @@
-import { defineConfig, devices } from '@playwright/test'
-import path from 'path'
+import path from 'path';
+import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright configuration for comprehensive E2E testing
@@ -12,7 +12,7 @@ export default defineConfig({
   /* Global test configuration */
   timeout: 30 * 1000, // 30 seconds per test
   expect: {
-    timeout: 5000 // 5 seconds for assertions
+    timeout: 5000, // 5 seconds for assertions
   },
 
   /* Fail fast on CI, retry locally */
@@ -26,7 +26,7 @@ export default defineConfig({
     ['html', { outputFolder: '../playwright-report' }],
     ['json', { outputFile: '../test-results/playwright-results.json' }],
     ['junit', { outputFile: '../test-results/playwright-junit.xml' }],
-    process.env.CI ? ['github'] : ['list']
+    process.env.CI ? ['github'] : ['list'],
   ],
 
   /* Global setup and teardown */
@@ -51,7 +51,7 @@ export default defineConfig({
     actionTimeout: 10000,
 
     /* Navigation timeout */
-    navigationTimeout: 15000
+    navigationTimeout: 15000,
   },
 
   /* Test projects for different browsers and scenarios */
@@ -59,7 +59,7 @@ export default defineConfig({
     /* Setup project - runs first */
     {
       name: 'setup',
-      testMatch: '**/setup.spec.ts'
+      testMatch: '**/setup.spec.ts',
     },
 
     /* Browser Extension Testing - Chrome */
@@ -67,7 +67,7 @@ export default defineConfig({
       name: 'chrome-extension',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/browser-extension',
       dependencies: ['setup'],
@@ -80,20 +80,20 @@ export default defineConfig({
           `--load-extension=${path.resolve(__dirname, '../../app/packages/browser-extension/dist')}`,
           '--disable-web-security',
           '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection'
-        ]
-      }
+          '--disable-ipc-flooding-protection',
+        ],
+      },
     },
 
     /* Browser Extension Testing - Firefox */
     {
       name: 'firefox-extension',
       use: {
-        ...devices['Desktop Firefox']
+        ...devices['Desktop Firefox'],
       },
       testDir: '../e2e/browser-extension',
       dependencies: ['setup'],
-      grep: /@extension/
+      grep: /@extension/,
     },
 
     /* Web Application Testing - Desktop Chrome */
@@ -101,54 +101,54 @@ export default defineConfig({
       name: 'chrome-web-app',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/web-app',
       dependencies: ['setup'],
-      grep: /@web-app/
+      grep: /@web-app/,
     },
 
     /* Web Application Testing - Desktop Firefox */
     {
       name: 'firefox-web-app',
       use: {
-        ...devices['Desktop Firefox']
+        ...devices['Desktop Firefox'],
       },
       testDir: '../e2e/web-app',
       dependencies: ['setup'],
-      grep: /@web-app/
+      grep: /@web-app/,
     },
 
     /* Web Application Testing - Desktop Safari */
     {
       name: 'safari-web-app',
       use: {
-        ...devices['Desktop Safari']
+        ...devices['Desktop Safari'],
       },
       testDir: '../e2e/web-app',
       dependencies: ['setup'],
-      grep: /@web-app/
+      grep: /@web-app/,
     },
 
     /* Mobile Testing */
     {
       name: 'mobile-chrome',
       use: {
-        ...devices['Pixel 5']
+        ...devices['Pixel 5'],
       },
       testDir: '../e2e/web-app',
       dependencies: ['setup'],
-      grep: /@mobile/
+      grep: /@mobile/,
     },
 
     {
       name: 'mobile-safari',
       use: {
-        ...devices['iPhone 12']
+        ...devices['iPhone 12'],
       },
       testDir: '../e2e/web-app',
       dependencies: ['setup'],
-      grep: /@mobile/
+      grep: /@mobile/,
     },
 
     /* AI Integration Testing */
@@ -156,12 +156,12 @@ export default defineConfig({
       name: 'ai-integration',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/ai-integration',
       dependencies: ['setup'],
       grep: /@ai/,
-      timeout: 60000 // Longer timeout for AI tests
+      timeout: 60000, // Longer timeout for AI tests
     },
 
     /* Cross-Platform Integration Testing */
@@ -169,11 +169,11 @@ export default defineConfig({
       name: 'cross-platform',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/cross-platform',
       dependencies: ['setup'],
-      grep: /@cross-platform/
+      grep: /@cross-platform/,
     },
 
     /* Performance Testing */
@@ -181,12 +181,12 @@ export default defineConfig({
       name: 'performance',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/performance',
       dependencies: ['setup'],
       grep: /@performance/,
-      timeout: 90000 // Extended timeout for performance tests
+      timeout: 90000, // Extended timeout for performance tests
     },
 
     /* Accessibility Testing */
@@ -194,30 +194,32 @@ export default defineConfig({
       name: 'accessibility',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
+        channel: 'chrome',
       },
       testDir: '../e2e/accessibility',
       dependencies: ['setup'],
-      grep: /@a11y/
-    }
+      grep: /@a11y/,
+    },
   ],
 
   /* Local development server */
-  webServer: process.env.CI ? undefined : [
-    {
-      command: 'bun run dev:web',
-      port: 3000,
-      timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI
-    },
-    {
-      command: 'bun run dev:api',
-      port: 3001,
-      timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI
-    }
-  ]
-})
+  webServer: process.env.CI
+    ? undefined
+    : [
+        {
+          command: 'bun run dev:web',
+          port: 3000,
+          timeout: 120 * 1000,
+          reuseExistingServer: !process.env.CI,
+        },
+        {
+          command: 'bun run dev:api',
+          port: 3001,
+          timeout: 120 * 1000,
+          reuseExistingServer: !process.env.CI,
+        },
+      ],
+});
 
 /* Browser Extension specific configuration */
 export const extensionConfig = defineConfig({
@@ -227,7 +229,7 @@ export const extensionConfig = defineConfig({
   use: {
     trace: 'on',
     video: 'retain-on-failure',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
 
   projects: [
@@ -244,9 +246,9 @@ export const extensionConfig = defineConfig({
           '--disable-ipc-flooding-protection',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
-        ]
-      }
+          '--disable-renderer-backgrounding',
+        ],
+      },
     },
     {
       name: 'firefox-extension-dev',
@@ -254,12 +256,12 @@ export const extensionConfig = defineConfig({
         ...devices['Desktop Firefox'],
         firefoxUserPrefs: {
           'extensions.autoDisableScopes': 0,
-          'extensions.enabledScopes': 15
-        }
-      }
-    }
-  ]
-})
+          'extensions.enabledScopes': 15,
+        },
+      },
+    },
+  ],
+});
 
 /* Performance Testing Configuration */
 export const performanceConfig = defineConfig({
@@ -269,7 +271,7 @@ export const performanceConfig = defineConfig({
   use: {
     trace: 'off', // Disable tracing for performance tests
     video: 'off',
-    screenshot: 'off'
+    screenshot: 'off',
   },
 
   projects: [
@@ -282,12 +284,12 @@ export const performanceConfig = defineConfig({
           '--disable-dev-shm-usage',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
-        ]
-      }
-    }
-  ]
-})
+          '--disable-renderer-backgrounding',
+        ],
+      },
+    },
+  ],
+});
 
 /* Visual Testing Configuration */
 export const visualConfig = defineConfig({
@@ -297,7 +299,7 @@ export const visualConfig = defineConfig({
   use: {
     trace: 'off',
     video: 'off',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
 
   projects: [
@@ -305,22 +307,22 @@ export const visualConfig = defineConfig({
       name: 'visual-chrome',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome'
-      }
+        channel: 'chrome',
+      },
     },
     {
       name: 'visual-firefox',
       use: {
-        ...devices['Desktop Firefox']
-      }
-    }
+        ...devices['Desktop Firefox'],
+      },
+    },
   ],
 
   expect: {
     threshold: 0.2, // Allow 20% pixel difference for visual comparisons
     toHaveScreenshot: {
       mode: 'css',
-      animations: 'disabled'
-    }
-  }
-})
+      animations: 'disabled',
+    },
+  },
+});

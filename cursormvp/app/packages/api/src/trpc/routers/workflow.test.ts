@@ -4,7 +4,7 @@
  * Tests for CRUD operations on workflows and workflow steps.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Prisma client
 const mockWorkflowFindUnique = vi.fn();
@@ -23,7 +23,7 @@ const mockWorkspaceMemberFindUnique = vi.fn();
 const mockPromptFindUnique = vi.fn();
 const mockTransaction = vi.fn();
 
-vi.mock("../../lib/prisma.js", () => ({
+vi.mock('../../lib/prisma.js', () => ({
   prisma: {
     workflow: {
       findUnique: (...args: any[]) => mockWorkflowFindUnique(...args),
@@ -51,17 +51,17 @@ vi.mock("../../lib/prisma.js", () => ({
   },
 }));
 
-import { workflowRouter } from "./workflow.js";
+import { workflowRouter } from './workflow.js';
 
 // Helper to create a mock context with Prisma
-function createMockContext(userId: string | null = "test-user-123") {
+function createMockContext(userId: string | null = 'test-user-123') {
   return {
     userId,
     session: userId
       ? {
           user: {
             id: userId,
-            email: "test@example.com",
+            email: 'test@example.com',
           },
         }
       : null,
@@ -93,7 +93,7 @@ function createMockContext(userId: string | null = "test-user-123") {
   };
 }
 
-describe("Workflow Router", () => {
+describe('Workflow Router', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -102,22 +102,22 @@ describe("Workflow Router", () => {
   // Create Workflow Tests
   // ============================================================================
 
-  describe("create", () => {
-    it("should create a workflow for authenticated user", async () => {
-      const userId = "test-user-123";
+  describe('create', () => {
+    it('should create a workflow for authenticated user', async () => {
+      const userId = 'test-user-123';
       const workflowData = {
-        name: "Test Workflow",
-        description: "A test workflow",
+        name: 'Test Workflow',
+        description: 'A test workflow',
         isPublic: false,
       };
 
       const createdWorkflow = {
-        id: "wf-1",
+        id: 'wf-1',
         userId,
         ...workflowData,
         workspaceId: null,
-        createdAt: new Date("2024-01-01"),
-        updatedAt: new Date("2024-01-01"),
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
       };
 
       mockWorkflowCreate.mockResolvedValue(createdWorkflow);
@@ -126,32 +126,32 @@ describe("Workflow Router", () => {
       const result = await caller.create(workflowData);
 
       expect(result.success).toBe(true);
-      expect(result.workflow.name).toBe("Test Workflow");
-      expect(result.workflow.id).toBe("wf-1");
+      expect(result.workflow.name).toBe('Test Workflow');
+      expect(result.workflow.id).toBe('wf-1');
     });
 
-    it("should create a workflow in a workspace when user has access", async () => {
-      const userId = "test-user-123";
-      const workspaceId = "ws-1";
+    it('should create a workflow in a workspace when user has access', async () => {
+      const userId = 'test-user-123';
+      const workspaceId = 'ws-1';
       const workflowData = {
-        name: "Team Workflow",
+        name: 'Team Workflow',
         workspaceId,
       };
 
       mockWorkspaceMemberFindUnique.mockResolvedValue({
-        id: "membership-1",
-        role: "MEMBER",
+        id: 'membership-1',
+        role: 'MEMBER',
       });
 
       const createdWorkflow = {
-        id: "wf-2",
+        id: 'wf-2',
         userId,
-        name: "Team Workflow",
+        name: 'Team Workflow',
         description: null,
         isPublic: false,
         workspaceId,
-        createdAt: new Date("2024-01-01"),
-        updatedAt: new Date("2024-01-01"),
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
       };
 
       mockWorkflowCreate.mockResolvedValue(createdWorkflow);
@@ -164,9 +164,9 @@ describe("Workflow Router", () => {
       expect(mockWorkspaceMemberFindUnique).toHaveBeenCalled();
     });
 
-    it("should throw FORBIDDEN when user lacks workspace access", async () => {
-      const userId = "test-user-123";
-      const workspaceId = "ws-no-access";
+    it('should throw FORBIDDEN when user lacks workspace access', async () => {
+      const userId = 'test-user-123';
+      const workspaceId = 'ws-no-access';
 
       mockWorkspaceMemberFindUnique.mockResolvedValue(null);
 
@@ -174,18 +174,18 @@ describe("Workflow Router", () => {
 
       await expect(
         caller.create({
-          name: "Forbidden Workflow",
+          name: 'Forbidden Workflow',
           workspaceId,
         })
       ).rejects.toThrow("You don't have access to this workspace");
     });
 
-    it("should throw UNAUTHORIZED for unauthenticated users", async () => {
+    it('should throw UNAUTHORIZED for unauthenticated users', async () => {
       const caller = workflowRouter.createCaller(createMockContext(null) as any);
 
-      await expect(
-        caller.create({ name: "Test" })
-      ).rejects.toThrow("You must be logged in to perform this action");
+      await expect(caller.create({ name: 'Test' })).rejects.toThrow(
+        'You must be logged in to perform this action'
+      );
     });
   });
 
@@ -193,10 +193,10 @@ describe("Workflow Router", () => {
   // Get Workflow Tests
   // ============================================================================
 
-  describe("getById", () => {
-    it("should return workflow with steps for owner", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
+  describe('getById', () => {
+    it('should return workflow with steps for owner', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
 
       // Mock for access check
       mockWorkflowFindUnique
@@ -210,21 +210,26 @@ describe("Workflow Router", () => {
         .mockResolvedValueOnce({
           id: workflowId,
           userId,
-          name: "My Workflow",
-          description: "A workflow",
+          name: 'My Workflow',
+          description: 'A workflow',
           isPublic: false,
           workspaceId: null,
-          createdAt: new Date("2024-01-01"),
-          updatedAt: new Date("2024-01-01"),
-          user: { id: userId, name: "Test User", email: "test@example.com", image: null },
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          user: { id: userId, name: 'Test User', email: 'test@example.com', image: null },
           workspace: null,
           steps: [
             {
-              id: "step-1",
+              id: 'step-1',
               order: 0,
               inputMapping: null,
-              createdAt: new Date("2024-01-01"),
-              prompt: { id: "prompt-1", title: "Extract Info", content: "Extract {{data}}", tags: [] },
+              createdAt: new Date('2024-01-01'),
+              prompt: {
+                id: 'prompt-1',
+                title: 'Extract Info',
+                content: 'Extract {{data}}',
+                tags: [],
+              },
             },
           ],
           _count: { executions: 5 },
@@ -234,30 +239,28 @@ describe("Workflow Router", () => {
       const result = await caller.getById({ id: workflowId });
 
       expect(result.success).toBe(true);
-      expect(result.workflow.name).toBe("My Workflow");
+      expect(result.workflow.name).toBe('My Workflow');
       expect(result.workflow.steps).toHaveLength(1);
       expect(result.workflow.isOwner).toBe(true);
       expect(result.workflow.canEdit).toBe(true);
     });
 
-    it("should throw NOT_FOUND for non-existent workflow", async () => {
-      const userId = "test-user-123";
+    it('should throw NOT_FOUND for non-existent workflow', async () => {
+      const userId = 'test-user-123';
 
       mockWorkflowFindUnique.mockResolvedValue(null);
 
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
 
-      await expect(
-        caller.getById({ id: "non-existent" })
-      ).rejects.toThrow("Workflow not found");
+      await expect(caller.getById({ id: 'non-existent' })).rejects.toThrow('Workflow not found');
     });
 
-    it("should throw FORBIDDEN when user lacks access", async () => {
-      const userId = "test-user-123";
-      const otherUserId = "other-user-456";
+    it('should throw FORBIDDEN when user lacks access', async () => {
+      const userId = 'test-user-123';
+      const otherUserId = 'other-user-456';
 
       mockWorkflowFindUnique.mockResolvedValue({
-        id: "wf-private",
+        id: 'wf-private',
         userId: otherUserId,
         workspace: null,
         isPublic: false,
@@ -265,9 +268,9 @@ describe("Workflow Router", () => {
 
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
 
-      await expect(
-        caller.getById({ id: "wf-private" })
-      ).rejects.toThrow("You don't have access to this workflow");
+      await expect(caller.getById({ id: 'wf-private' })).rejects.toThrow(
+        "You don't have access to this workflow"
+      );
     });
   });
 
@@ -275,21 +278,21 @@ describe("Workflow Router", () => {
   // List Workflows Tests
   // ============================================================================
 
-  describe("list", () => {
+  describe('list', () => {
     it("should return user's workflows", async () => {
-      const userId = "test-user-123";
+      const userId = 'test-user-123';
 
       mockWorkflowFindMany.mockResolvedValue([
         {
-          id: "wf-1",
+          id: 'wf-1',
           userId,
-          name: "Workflow 1",
+          name: 'Workflow 1',
           description: null,
           isPublic: false,
           workspaceId: null,
-          createdAt: new Date("2024-01-01"),
-          updatedAt: new Date("2024-01-01"),
-          user: { id: userId, name: "Test User", email: "test@example.com", image: null },
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          user: { id: userId, name: 'Test User', email: 'test@example.com', image: null },
           workspace: null,
           _count: { steps: 3, executions: 10 },
         },
@@ -304,27 +307,27 @@ describe("Workflow Router", () => {
       expect(result.workflows[0].executionCount).toBe(10);
     });
 
-    it("should support pagination with cursor", async () => {
-      const userId = "test-user-123";
+    it('should support pagination with cursor', async () => {
+      const userId = 'test-user-123';
 
       mockWorkflowFindMany.mockResolvedValue([
         {
-          id: "wf-2",
+          id: 'wf-2',
           userId,
-          name: "Workflow 2",
+          name: 'Workflow 2',
           description: null,
           isPublic: false,
           workspaceId: null,
-          createdAt: new Date("2024-01-01"),
-          updatedAt: new Date("2024-01-01"),
-          user: { id: userId, name: "Test User", email: "test@example.com", image: null },
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          user: { id: userId, name: 'Test User', email: 'test@example.com', image: null },
           workspace: null,
           _count: { steps: 2, executions: 5 },
         },
       ]);
 
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
-      const result = await caller.list({ cursor: "wf-1", limit: 10 });
+      const result = await caller.list({ cursor: 'wf-1', limit: 10 });
 
       expect(result.success).toBe(true);
       expect(result.nextCursor).toBeUndefined();
@@ -335,10 +338,10 @@ describe("Workflow Router", () => {
   // Update Workflow Tests
   // ============================================================================
 
-  describe("update", () => {
-    it("should update workflow for owner", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
+  describe('update', () => {
+    it('should update workflow for owner', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -350,12 +353,12 @@ describe("Workflow Router", () => {
       const updatedWorkflow = {
         id: workflowId,
         userId,
-        name: "Updated Workflow",
-        description: "New description",
+        name: 'Updated Workflow',
+        description: 'New description',
         isPublic: true,
         workspaceId: null,
-        createdAt: new Date("2024-01-01"),
-        updatedAt: new Date("2024-01-02"),
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-02'),
       };
 
       mockWorkflowUpdate.mockResolvedValue(updatedWorkflow);
@@ -363,34 +366,34 @@ describe("Workflow Router", () => {
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
       const result = await caller.update({
         id: workflowId,
-        name: "Updated Workflow",
-        description: "New description",
+        name: 'Updated Workflow',
+        description: 'New description',
         isPublic: true,
       });
 
       expect(result.success).toBe(true);
-      expect(result.workflow.name).toBe("Updated Workflow");
+      expect(result.workflow.name).toBe('Updated Workflow');
       expect(result.workflow.isPublic).toBe(true);
     });
 
-    it("should throw FORBIDDEN for non-owner without edit rights", async () => {
-      const userId = "test-user-123";
-      const otherUserId = "other-user-456";
+    it('should throw FORBIDDEN for non-owner without edit rights', async () => {
+      const userId = 'test-user-123';
+      const otherUserId = 'other-user-456';
 
       mockWorkflowFindUnique.mockResolvedValue({
-        id: "wf-1",
+        id: 'wf-1',
         userId: otherUserId,
         workspace: {
-          members: [{ role: "MEMBER" }], // Not admin/owner
+          members: [{ role: 'MEMBER' }], // Not admin/owner
         },
         isPublic: false,
       });
 
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
 
-      await expect(
-        caller.update({ id: "wf-1", name: "Hacked" })
-      ).rejects.toThrow("You don't have permission to update this workflow");
+      await expect(caller.update({ id: 'wf-1', name: 'Hacked' })).rejects.toThrow(
+        "You don't have permission to update this workflow"
+      );
     });
   });
 
@@ -398,10 +401,10 @@ describe("Workflow Router", () => {
   // Delete Workflow Tests
   // ============================================================================
 
-  describe("delete", () => {
-    it("should delete workflow for owner", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
+  describe('delete', () => {
+    it('should delete workflow for owner', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -424,11 +427,11 @@ describe("Workflow Router", () => {
   // Add Step Tests
   // ============================================================================
 
-  describe("addStep", () => {
-    it("should add a step to workflow", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
-      const promptId = "prompt-1";
+  describe('addStep', () => {
+    it('should add a step to workflow', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
+      const promptId = 'prompt-1';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -447,13 +450,13 @@ describe("Workflow Router", () => {
       mockWorkflowStepFindFirst.mockResolvedValue(null); // No existing steps
 
       const createdStep = {
-        id: "step-1",
+        id: 'step-1',
         workflowId,
         promptId,
         order: 0,
         inputMapping: null,
-        createdAt: new Date("2024-01-01"),
-        prompt: { id: promptId, title: "Test Prompt", content: "Hello {{name}}", tags: [] },
+        createdAt: new Date('2024-01-01'),
+        prompt: { id: promptId, title: 'Test Prompt', content: 'Hello {{name}}', tags: [] },
       };
 
       mockWorkflowStepCreate.mockResolvedValue(createdStep);
@@ -463,13 +466,13 @@ describe("Workflow Router", () => {
 
       expect(result.success).toBe(true);
       expect(result.step.order).toBe(0);
-      expect(result.step.prompt.title).toBe("Test Prompt");
+      expect(result.step.prompt.title).toBe('Test Prompt');
     });
 
-    it("should auto-increment order when adding step without specific order", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
-      const promptId = "prompt-2";
+    it('should auto-increment order when adding step without specific order', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
+      const promptId = 'prompt-2';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -489,13 +492,13 @@ describe("Workflow Router", () => {
       mockWorkflowStepFindFirst.mockResolvedValue({ order: 0 });
 
       const createdStep = {
-        id: "step-2",
+        id: 'step-2',
         workflowId,
         promptId,
         order: 1,
         inputMapping: null,
-        createdAt: new Date("2024-01-01"),
-        prompt: { id: promptId, title: "Another Prompt", content: "Test", tags: [] },
+        createdAt: new Date('2024-01-01'),
+        prompt: { id: promptId, title: 'Another Prompt', content: 'Test', tags: [] },
       };
 
       mockWorkflowStepCreate.mockResolvedValue(createdStep);
@@ -506,19 +509,19 @@ describe("Workflow Router", () => {
       expect(result.step.order).toBe(1);
     });
 
-    it("should throw FORBIDDEN when user lacks prompt access", async () => {
-      const userId = "test-user-123";
-      const otherUserId = "other-user-456";
+    it('should throw FORBIDDEN when user lacks prompt access', async () => {
+      const userId = 'test-user-123';
+      const otherUserId = 'other-user-456';
 
       mockWorkflowFindUnique.mockResolvedValue({
-        id: "wf-1",
+        id: 'wf-1',
         userId,
         workspace: null,
         isPublic: false,
       });
 
       mockPromptFindUnique.mockResolvedValue({
-        id: "prompt-private",
+        id: 'prompt-private',
         userId: otherUserId,
         isPublic: false,
         workspaceId: null,
@@ -527,7 +530,7 @@ describe("Workflow Router", () => {
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
 
       await expect(
-        caller.addStep({ workflowId: "wf-1", promptId: "prompt-private" })
+        caller.addStep({ workflowId: 'wf-1', promptId: 'prompt-private' })
       ).rejects.toThrow("You don't have access to this prompt");
     });
   });
@@ -536,11 +539,11 @@ describe("Workflow Router", () => {
   // Remove Step Tests
   // ============================================================================
 
-  describe("removeStep", () => {
-    it("should remove a step and reorder remaining steps", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
-      const stepId = "step-1";
+  describe('removeStep', () => {
+    it('should remove a step and reorder remaining steps', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
+      const stepId = 'step-1';
 
       mockWorkflowStepFindUnique.mockResolvedValue({
         workflowId,
@@ -568,10 +571,10 @@ describe("Workflow Router", () => {
   // Reorder Steps Tests
   // ============================================================================
 
-  describe("reorderSteps", () => {
-    it("should reorder steps in a workflow", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
+  describe('reorderSteps', () => {
+    it('should reorder steps in a workflow', async () => {
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -581,9 +584,9 @@ describe("Workflow Router", () => {
       });
 
       mockWorkflowStepFindMany.mockResolvedValue([
-        { id: "step-1" },
-        { id: "step-2" },
-        { id: "step-3" },
+        { id: 'step-1' },
+        { id: 'step-2' },
+        { id: 'step-3' },
       ]);
 
       mockTransaction.mockResolvedValue([]);
@@ -591,7 +594,7 @@ describe("Workflow Router", () => {
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
       const result = await caller.reorderSteps({
         workflowId,
-        stepIds: ["step-3", "step-1", "step-2"], // New order
+        stepIds: ['step-3', 'step-1', 'step-2'], // New order
       });
 
       expect(result.success).toBe(true);
@@ -599,8 +602,8 @@ describe("Workflow Router", () => {
     });
 
     it("should throw BAD_REQUEST if step doesn't belong to workflow", async () => {
-      const userId = "test-user-123";
-      const workflowId = "wf-1";
+      const userId = 'test-user-123';
+      const workflowId = 'wf-1';
 
       mockWorkflowFindUnique.mockResolvedValue({
         id: workflowId,
@@ -609,19 +612,16 @@ describe("Workflow Router", () => {
         isPublic: false,
       });
 
-      mockWorkflowStepFindMany.mockResolvedValue([
-        { id: "step-1" },
-        { id: "step-2" },
-      ]);
+      mockWorkflowStepFindMany.mockResolvedValue([{ id: 'step-1' }, { id: 'step-2' }]);
 
       const caller = workflowRouter.createCaller(createMockContext(userId) as any);
 
       await expect(
         caller.reorderSteps({
           workflowId,
-          stepIds: ["step-1", "step-unknown"],
+          stepIds: ['step-1', 'step-unknown'],
         })
-      ).rejects.toThrow("does not belong to this workflow");
+      ).rejects.toThrow('does not belong to this workflow');
     });
   });
 });

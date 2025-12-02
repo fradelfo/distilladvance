@@ -1,9 +1,9 @@
-import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
-import Credentials from 'next-auth/providers/credentials';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/password';
+import { prisma } from '@/lib/prisma';
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
+import { z } from 'zod';
 
 // Validation schema for credentials
 const credentialsSchema = z.object({

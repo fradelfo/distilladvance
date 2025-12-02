@@ -6,6 +6,7 @@
  * Dropdown select for sorting options using shadcn/ui Select.
  */
 
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 
 export type SortOption = 'recent' | 'oldest' | 'most_used' | 'alphabetical';
 

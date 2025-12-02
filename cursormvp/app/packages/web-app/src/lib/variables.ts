@@ -100,10 +100,7 @@ export function extractVariables(content: string): string[] {
  * fillVariables("{{greeting}} {{name}}", { greeting: "Hi" })
  * // Returns: "Hi {{name}}"
  */
-export function fillVariables(
-  content: string,
-  values: Record<string, string>
-): string {
+export function fillVariables(content: string, values: Record<string, string>): string {
   if (!content || typeof content !== 'string') {
     return content ?? '';
   }
@@ -164,14 +161,9 @@ export function hasUnfilledVariables(content: string): boolean {
  * getUnfilledVariables("{{a}} {{b}} {{c}}", { a: "filled", b: "" })
  * // Returns: ["b", "c"]
  */
-export function getUnfilledVariables(
-  content: string,
-  values: Record<string, string>
-): string[] {
+export function getUnfilledVariables(content: string, values: Record<string, string>): string[] {
   const variables = extractVariables(content);
-  return variables.filter(
-    (varName) => !(varName in values) || !values[varName]?.trim()
-  );
+  return variables.filter((varName) => !(varName in values) || !values[varName]?.trim());
 }
 
 /**

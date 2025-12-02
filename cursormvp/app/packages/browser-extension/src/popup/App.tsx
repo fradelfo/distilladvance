@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import type { CapturedConversation, ConversationSource } from '@distill/shared-types';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { config, urls } from '../shared/config';
+import { type AuthStatusPayload, MessageTypes, sendMessage } from '../shared/messages';
 import { CaptureButton } from './components/CaptureButton';
 import { CaptureModal } from './components/CaptureModal';
-import { StatusBadge } from './components/StatusBadge';
 import { StatsPanel } from './components/StatsPanel';
-import { sendMessage, MessageTypes, type AuthStatusPayload } from '../shared/messages';
-import { urls, config } from '../shared/config';
-import type { CapturedConversation, ConversationSource } from '@distill/shared-types';
+import { StatusBadge } from './components/StatusBadge';
 
 type PageStatus = 'unsupported' | 'supported' | 'loading' | 'error';
 
@@ -147,7 +148,9 @@ export function App(): React.ReactElement {
         }));
       } else {
         console.warn('[Distill] Invalid response format:', response);
-        alert('Failed to capture conversation. The conversation data was empty or invalid. Please try again.');
+        alert(
+          'Failed to capture conversation. The conversation data was empty or invalid. Please try again.'
+        );
         setState((prev) => ({ ...prev, captureModalOpen: false, conversation: null }));
       }
     } catch (error) {
@@ -155,7 +158,9 @@ export function App(): React.ReactElement {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
       if (errorMessage.includes('Timeout')) {
-        alert('Timeout while capturing conversation. This page may have a very long conversation. Please try again or refresh the page.');
+        alert(
+          'Timeout while capturing conversation. This page may have a very long conversation. Please try again or refresh the page.'
+        );
       } else if (errorMessage.includes('Could not establish connection')) {
         alert('Content script not loaded. Please refresh the AI chat page and try again.');
       } else {

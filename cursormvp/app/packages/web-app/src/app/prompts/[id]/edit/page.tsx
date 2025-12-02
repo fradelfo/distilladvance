@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppLayout';
+import { redirect } from 'next/navigation';
 import { PromptEditContent } from './PromptEditContent';
 
 interface PromptEditPageProps {

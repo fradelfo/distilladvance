@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Check, Loader2, CreditCard, Settings } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Check, CreditCard, Loader2, Settings } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const PLANS = [
   {
@@ -16,12 +16,7 @@ const PLANS = [
     priceMonthly: 0,
     priceYearly: 0,
     description: 'For individuals getting started',
-    features: [
-      'Up to 10 prompts',
-      '1 workspace',
-      'Basic prompt editor',
-      'Community support',
-    ],
+    features: ['Up to 10 prompts', '1 workspace', 'Basic prompt editor', 'Community support'],
   },
   {
     name: 'Pro',
@@ -156,12 +151,8 @@ export function BillingContent() {
       <div className="max-w-5xl mx-auto space-y-8 p-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">
-            Choose your plan
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Start free, upgrade when you need more
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">Choose your plan</h1>
+          <p className="mt-2 text-muted-foreground">Start free, upgrade when you need more</p>
         </div>
 
         {/* Billing Interval Toggle */}
@@ -188,9 +179,7 @@ export function BillingContent() {
               )}
             >
               Yearly
-              <span className="ml-1 text-xs text-green-600 font-semibold">
-                Save 17%
-              </span>
+              <span className="ml-1 text-xs text-green-600 font-semibold">Save 17%</span>
             </button>
           </div>
         </div>
@@ -219,17 +208,11 @@ export function BillingContent() {
                 )}
 
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {plan.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {plan.description}
-                  </p>
+                  <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
 
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-foreground">
-                      ${price}
-                    </span>
+                    <span className="text-4xl font-bold text-foreground">${price}</span>
                     {plan.key !== 'FREE' && (
                       <span className="text-muted-foreground">
                         /{billingInterval === 'monthly' ? 'mo' : 'yr'}
@@ -242,28 +225,18 @@ export function BillingContent() {
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        {feature}
-                      </span>
+                      <span className="text-sm text-muted-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <div className="mt-6">
                   {isCurrentPlan ? (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled
-                    >
+                    <Button variant="outline" className="w-full" disabled>
                       Current Plan
                     </Button>
                   ) : plan.key === 'FREE' ? (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled
-                    >
+                    <Button variant="outline" className="w-full" disabled>
                       Free Forever
                     </Button>
                   ) : (
@@ -297,11 +270,7 @@ export function BillingContent() {
             <p className="text-muted-foreground mb-4">
               Manage your subscription, update payment method, or cancel anytime
             </p>
-            <Button
-              variant="outline"
-              onClick={handleManageSubscription}
-              disabled={isLoadingPortal}
-            >
+            <Button variant="outline" onClick={handleManageSubscription} disabled={isLoadingPortal}>
               {isLoadingPortal ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -324,33 +293,25 @@ export function BillingContent() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-medium text-foreground">
-                Can I change plans later?
-              </h3>
+              <h3 className="font-medium text-foreground">Can I change plans later?</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Yes! You can upgrade or downgrade at any time. Changes take effect immediately.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-foreground">
-                What happens when I reach my limits?
-              </h3>
+              <h3 className="font-medium text-foreground">What happens when I reach my limits?</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 You&apos;ll be notified before reaching limits and can upgrade to continue creating.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-foreground">
-                Is there a free trial?
-              </h3>
+              <h3 className="font-medium text-foreground">Is there a free trial?</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 The Free plan is free forever. No credit card required to get started.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-foreground">
-                How do I cancel?
-              </h3>
+              <h3 className="font-medium text-foreground">How do I cancel?</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Click &quot;Manage Subscription&quot; above to cancel anytime. No questions asked.
               </p>

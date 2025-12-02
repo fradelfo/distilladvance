@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { CapturedConversation, DistillResult } from '@distill/shared-types';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { urls } from '../../shared/config';
+import { type MessageResponse, MessageTypes, sendMessage } from '../../shared/messages';
 import { ConversationPreview } from './ConversationPreview';
+import { ErrorState } from './ErrorState';
 import { PrivacyModeSelector } from './PrivacyModeSelector';
 import { ProcessingState } from './ProcessingState';
 import { SuccessState } from './SuccessState';
-import { ErrorState } from './ErrorState';
-import { sendMessage, MessageTypes, type MessageResponse } from '../../shared/messages';
-import { urls } from '../../shared/config';
-import type { CapturedConversation, DistillResult } from '@distill/shared-types';
 
 type ModalState = 'preview' | 'processing' | 'saving' | 'success' | 'error';
 type PrivacyMode = 'prompt-only' | 'full';
@@ -124,7 +125,11 @@ export function CaptureModal({
         });
         setModalState('success');
       } else {
-        throw new Error(response?.error?.message || (response as { error?: string })?.error || 'Distillation failed');
+        throw new Error(
+          response?.error?.message ||
+            (response as { error?: string })?.error ||
+            'Distillation failed'
+        );
       }
     } catch (err) {
       console.error('[Distill] Error during distillation:', err);
@@ -151,7 +156,8 @@ export function CaptureModal({
 
       // Generate title from first user message
       const firstUserMessage = conversation.messages.find((m) => m.role === 'user');
-      const title = firstUserMessage?.content?.slice(0, 100) || conversation.title || 'Untitled Conversation';
+      const title =
+        firstUserMessage?.content?.slice(0, 100) || conversation.title || 'Untitled Conversation';
 
       setProgress(50);
       setProgressStep('Uploading to server...');
@@ -174,7 +180,11 @@ export function CaptureModal({
         setSavedResult(data);
         setModalState('success');
       } else {
-        throw new Error(response?.error?.message || (response as { error?: string })?.error || 'Failed to save conversation');
+        throw new Error(
+          response?.error?.message ||
+            (response as { error?: string })?.error ||
+            'Failed to save conversation'
+        );
       }
     } catch (err) {
       console.error('[Distill] Error saving conversation:', err);
@@ -295,7 +305,14 @@ export function CaptureModal({
           {modalState === 'success' && actionType === 'save' && savedResult && (
             <div className="save-success">
               <div className="success-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>

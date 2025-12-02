@@ -6,12 +6,12 @@
  * Form for creating a new prompt template manually.
  */
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { extractVariables, highlightVariables } from '@/lib/variables';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Variable {
   name: string;
@@ -136,9 +136,7 @@ export function NewPromptContent() {
   // Update variable metadata
   const updateVariable = useCallback(
     (index: number, field: keyof Variable, value: string | boolean) => {
-      setVariables((prev) =>
-        prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
-      );
+      setVariables((prev) => prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
     },
     []
   );
@@ -220,7 +218,10 @@ export function NewPromptContent() {
 
       {/* Description */}
       <div className="card p-6 mb-4">
-        <label htmlFor="prompt-description" className="block text-sm font-medium text-foreground mb-2">
+        <label
+          htmlFor="prompt-description"
+          className="block text-sm font-medium text-foreground mb-2"
+        >
           Description
         </label>
         <input
@@ -264,7 +265,12 @@ export function NewPromptContent() {
           <div className="relative group">
             <button className="btn-outline px-3 py-2 text-sm flex items-center gap-2">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               Insert Variable
             </button>
@@ -387,10 +393,16 @@ export function NewPromptContent() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 px-2 font-medium text-foreground w-28">Variable</th>
+                    <th className="text-left py-2 px-2 font-medium text-foreground w-28">
+                      Variable
+                    </th>
                     <th className="text-left py-2 px-2 font-medium text-foreground">Description</th>
-                    <th className="text-left py-2 px-2 font-medium text-foreground w-36">Example</th>
-                    <th className="text-center py-2 px-2 font-medium text-foreground w-20">Required</th>
+                    <th className="text-left py-2 px-2 font-medium text-foreground w-36">
+                      Example
+                    </th>
+                    <th className="text-center py-2 px-2 font-medium text-foreground w-20">
+                      Required
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -448,7 +460,12 @@ export function NewPromptContent() {
               {tag}
               <button type="button" onClick={() => removeTag(tag)} className="hover:text-error-500">
                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </span>

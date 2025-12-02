@@ -6,7 +6,7 @@
  * The actual PostHog initialization requires environment variables.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Create mocks at module scope
 const mockInit = vi.fn();

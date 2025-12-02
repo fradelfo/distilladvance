@@ -4,37 +4,31 @@
  * Provides endpoints for tracking events and retrieving dashboard metrics.
  */
 
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { authedProcedure, router } from "../index.js";
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import {
+  getActivationMetrics,
+  getDashboardMetrics,
+  getEngagementMetrics,
+  getFeatureAdoptionMetrics,
+  getTeamHealthMetrics,
   trackChatCaptured,
-  trackPromptCreated,
-  trackPromptRun,
-  trackPromptEdited,
   trackCoachUsed,
   trackMemberInvited,
+  trackPromptCreated,
+  trackPromptEdited,
+  trackPromptRun,
   trackSearchPerformed,
-  getDashboardMetrics,
-  getActivationMetrics,
-  getEngagementMetrics,
-  getTeamHealthMetrics,
-  getFeatureAdoptionMetrics,
-} from "../../services/analytics.js";
+} from '../../services/analytics.js';
+import { authedProcedure, router } from '../index.js';
 
 // ============================================================================
 // Validation Schemas
 // ============================================================================
 
-const conversationSourceSchema = z.enum([
-  "chatgpt",
-  "claude",
-  "gemini",
-  "copilot",
-  "other",
-]);
+const conversationSourceSchema = z.enum(['chatgpt', 'claude', 'gemini', 'copilot', 'other']);
 
-const privacyModeSchema = z.enum(["prompt_only", "full_chat"]);
+const privacyModeSchema = z.enum(['prompt_only', 'full_chat']);
 
 const dateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
@@ -50,7 +44,7 @@ const trackChatCapturedSchema = z.object({
 });
 
 const trackPromptCreatedSchema = z.object({
-  source: z.enum(["capture", "manual", "import"]),
+  source: z.enum(['capture', 'manual', 'import']),
   hasVariables: z.boolean(),
   variableCount: z.number().int().min(0),
   tagCount: z.number().int().min(0),
@@ -59,7 +53,7 @@ const trackPromptCreatedSchema = z.object({
 
 const trackPromptRunSchema = z.object({
   promptId: z.string().min(1),
-  platform: conversationSourceSchema.or(z.literal("clipboard")),
+  platform: conversationSourceSchema.or(z.literal('clipboard')),
   variableCount: z.number().int().min(0),
   isShared: z.boolean(),
   workspaceId: z.string().optional(),
@@ -67,7 +61,7 @@ const trackPromptRunSchema = z.object({
 
 const trackPromptEditedSchema = z.object({
   promptId: z.string().min(1),
-  editType: z.enum(["title", "content", "variables", "tags", "multiple"]),
+  editType: z.enum(['title', 'content', 'variables', 'tags', 'multiple']),
   timeSinceCreationMs: z.number().int().min(0),
   workspaceId: z.string().optional(),
 });
@@ -83,14 +77,14 @@ const trackCoachUsedSchema = z.object({
 
 const trackMemberInvitedSchema = z.object({
   count: z.number().int().min(1),
-  method: z.enum(["email", "link"]),
+  method: z.enum(['email', 'link']),
   workspaceId: z.string().optional(),
 });
 
 const trackSearchPerformedSchema = z.object({
   queryLength: z.number().int().min(0),
   resultsCount: z.number().int().min(0),
-  searchType: z.enum(["text", "semantic"]),
+  searchType: z.enum(['text', 'semantic']),
   hasFilters: z.boolean(),
   workspaceId: z.string().optional(),
 });
@@ -139,20 +133,18 @@ export const analyticsRouter = router({
   /**
    * Track a prompt run event.
    */
-  trackPromptRun: authedProcedure
-    .input(trackPromptRunSchema)
-    .mutation(async ({ ctx, input }) => {
-      await trackPromptRun({
-        userId: ctx.userId,
-        workspaceId: input.workspaceId,
-        promptId: input.promptId,
-        platform: input.platform,
-        variableCount: input.variableCount,
-        isShared: input.isShared,
-      });
+  trackPromptRun: authedProcedure.input(trackPromptRunSchema).mutation(async ({ ctx, input }) => {
+    await trackPromptRun({
+      userId: ctx.userId,
+      workspaceId: input.workspaceId,
+      promptId: input.promptId,
+      platform: input.platform,
+      variableCount: input.variableCount,
+      isShared: input.isShared,
+    });
 
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 
   /**
    * Track a prompt edit event.
@@ -174,21 +166,19 @@ export const analyticsRouter = router({
   /**
    * Track a coach usage event.
    */
-  trackCoachUsed: authedProcedure
-    .input(trackCoachUsedSchema)
-    .mutation(async ({ ctx, input }) => {
-      await trackCoachUsed({
-        userId: ctx.userId,
-        workspaceId: input.workspaceId,
-        promptId: input.promptId,
-        suggestionsShown: input.suggestionsShown,
-        suggestionsApplied: input.suggestionsApplied,
-        focusArea: input.focusArea,
-        qualityScore: input.qualityScore,
-      });
+  trackCoachUsed: authedProcedure.input(trackCoachUsedSchema).mutation(async ({ ctx, input }) => {
+    await trackCoachUsed({
+      userId: ctx.userId,
+      workspaceId: input.workspaceId,
+      promptId: input.promptId,
+      suggestionsShown: input.suggestionsShown,
+      suggestionsApplied: input.suggestionsApplied,
+      focusArea: input.focusArea,
+      qualityScore: input.qualityScore,
+    });
 
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 
   /**
    * Track a member invite event.
@@ -228,118 +218,108 @@ export const analyticsRouter = router({
    * Get full dashboard metrics.
    * Admin only in production, but available in development.
    */
-  getDashboard: authedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getDashboard: authedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to view analytics",
-        });
-      }
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view analytics',
+      });
+    }
 
-      // Default to last 30 days
-      const endDate = input.endDate ? new Date(input.endDate) : new Date();
-      const startDate = input.startDate
-        ? new Date(input.startDate)
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Default to last 30 days
+    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    const startDate = input.startDate
+      ? new Date(input.startDate)
+      : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const metrics = await getDashboardMetrics(startDate, endDate);
+    const metrics = await getDashboardMetrics(startDate, endDate);
 
-      return metrics;
-    }),
+    return metrics;
+  }),
 
   /**
    * Get activation funnel metrics only.
    */
-  getActivationFunnel: authedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getActivationFunnel: authedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to view analytics",
-        });
-      }
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view analytics',
+      });
+    }
 
-      const endDate = input.endDate ? new Date(input.endDate) : new Date();
-      const startDate = input.startDate
-        ? new Date(input.startDate)
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    const startDate = input.startDate
+      ? new Date(input.startDate)
+      : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      return getActivationMetrics(startDate, endDate);
-    }),
+    return getActivationMetrics(startDate, endDate);
+  }),
 
   /**
    * Get engagement metrics only.
    */
-  getEngagement: authedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getEngagement: authedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to view analytics",
-        });
-      }
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view analytics',
+      });
+    }
 
-      const endDate = input.endDate ? new Date(input.endDate) : new Date();
-      const startDate = input.startDate
-        ? new Date(input.startDate)
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    const startDate = input.startDate
+      ? new Date(input.startDate)
+      : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      return getEngagementMetrics(startDate, endDate);
-    }),
+    return getEngagementMetrics(startDate, endDate);
+  }),
 
   /**
    * Get team health metrics only.
    */
-  getTeamHealth: authedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getTeamHealth: authedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to view analytics",
-        });
-      }
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view analytics',
+      });
+    }
 
-      const endDate = input.endDate ? new Date(input.endDate) : new Date();
-      const startDate = input.startDate
-        ? new Date(input.startDate)
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    const startDate = input.startDate
+      ? new Date(input.startDate)
+      : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      return getTeamHealthMetrics(startDate, endDate);
-    }),
+    return getTeamHealthMetrics(startDate, endDate);
+  }),
 
   /**
    * Get feature adoption metrics only.
    */
-  getFeatureAdoption: authedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.userId;
+  getFeatureAdoption: authedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.userId;
 
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You must be logged in to view analytics",
-        });
-      }
+    if (!userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to view analytics',
+      });
+    }
 
-      const endDate = input.endDate ? new Date(input.endDate) : new Date();
-      const startDate = input.startDate
-        ? new Date(input.startDate)
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    const startDate = input.startDate
+      ? new Date(input.startDate)
+      : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      return getFeatureAdoptionMetrics(startDate, endDate);
-    }),
+    return getFeatureAdoptionMetrics(startDate, endDate);
+  }),
 });

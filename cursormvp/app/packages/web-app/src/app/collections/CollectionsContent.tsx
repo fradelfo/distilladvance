@@ -7,15 +7,11 @@
  * including listing, creating, editing, and deleting collections.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
-import {
-  CollectionCard,
-  CollectionCardSkeleton,
-  CollectionForm,
-} from '@/components/collections';
 import { EmptyState } from '@/components/EmptyState';
+import { CollectionCard, CollectionCardSkeleton, CollectionForm } from '@/components/collections';
 import { trpc } from '@/lib/trpc';
+import { useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 // Type for a collection from the API
 interface CollectionListItem {
@@ -38,23 +34,14 @@ interface CollectionListItem {
 export function CollectionsContent() {
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingCollection, setEditingCollection] =
-    useState<CollectionListItem | null>(null);
-  const [deletingCollectionId, setDeletingCollectionId] = useState<
-    string | null
-  >(null);
+  const [editingCollection, setEditingCollection] = useState<CollectionListItem | null>(null);
+  const [deletingCollectionId, setDeletingCollectionId] = useState<string | null>(null);
 
   // Error state
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch collections
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = trpc.collection.list.useQuery(undefined, {
+  const { data, isLoading, isError, error, refetch } = trpc.collection.list.useQuery(undefined, {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -164,10 +151,7 @@ export function CollectionsContent() {
               Organize your prompts into collections
             </p>
           </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn-primary px-4 py-2"
-          >
+          <button onClick={() => setIsCreateModalOpen(true)} className="btn-primary px-4 py-2">
             <span className="flex items-center gap-2">
               <svg
                 className="h-4 w-4"
@@ -277,10 +261,7 @@ export function CollectionsContent() {
           <p className="text-sm text-error-600">
             Failed to load collections: {error?.message || 'Unknown error'}
           </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 btn-outline px-4 py-2"
-          >
+          <button onClick={() => refetch()} className="mt-4 btn-outline px-4 py-2">
             Retry
           </button>
         </div>
@@ -366,14 +347,11 @@ export function CollectionsContent() {
 
       {/* Delete Confirmation Modal */}
       {deletingCollectionId && (
-        <Modal
-          title="Delete Collection"
-          onClose={cancelDelete}
-        >
+        <Modal title="Delete Collection" onClose={cancelDelete}>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete this collection? This action cannot
-              be undone. The prompts in this collection will not be deleted.
+              Are you sure you want to delete this collection? This action cannot be undone. The
+              prompts in this collection will not be deleted.
             </p>
             <div className="flex justify-end gap-3">
               <button

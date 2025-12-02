@@ -36,6 +36,7 @@ model User {
   apiKeys             ApiKey[]
   workspaceMemberships WorkspaceMember[]
   subscription        Subscription?
+  workflows           Workflow[]
 
   @@map("users")
 }
@@ -170,11 +171,12 @@ model Prompt {
   updatedAt      DateTime @updatedAt
 
   // Relations
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace    Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  collections  CollectionPrompt[]
-  embeddings   PromptEmbedding[]
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  conversation  Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  collections   CollectionPrompt[]
+  embeddings    PromptEmbedding[]
+  workflowSteps WorkflowStep[]
 
   @@index([userId])
   @@index([workspaceId])
@@ -242,6 +244,7 @@ model Workspace {
   invites     WorkspaceInvite[]
   prompts     Prompt[]
   collections Collection[]
+  workflows   Workflow[]
 
   @@map("workspaces")
 }
@@ -338,4 +341,110 @@ model ApiKey {
   @@index([userId])
   @@index([keyHash])
   @@map("api_keys")
+}
+
+// ============================================================================
+// Workflows (Prompt Chains)
+// ============================================================================
+
+model Workflow {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String?
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace  Workspace?          @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  steps      WorkflowStep[]
+  executions WorkflowExecution[]
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id           String   @id @default(cuid())
+  workflowId   String
+  promptId     String
+  order        Int      // 0-indexed position in workflow
+  inputMapping Json?    // { "variableName": "source" } where source is "initial.varName" or "step.N.output"
+  createdAt    DateTime @default(now())
+
+  // Relations
+  workflow   Workflow                @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  prompt     Prompt                  @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  executions WorkflowStepExecution[]
+
+  @@unique([workflowId, order])
+  @@index([promptId])
+  @@map("workflow_steps")
+}
+
+enum WorkflowExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model WorkflowExecution {
+  id           String                  @id @default(cuid())
+  workflowId   String
+  userId       String
+  status       WorkflowExecutionStatus @default(PENDING)
+  initialInput Json                    // User-provided initial variables
+  finalOutput  Json?                   // Final step output
+  totalTokens  Int                     @default(0)
+  totalCost    Float                   @default(0)
+  errorMessage String?
+  startedAt    DateTime                @default(now())
+  completedAt  DateTime?
+
+  // Relations
+  workflow Workflow                @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  steps    WorkflowStepExecution[]
+
+  @@index([workflowId])
+  @@index([userId])
+  @@index([startedAt])
+  @@map("workflow_executions")
+}
+
+enum StepExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+model WorkflowStepExecution {
+  id           String              @id @default(cuid())
+  executionId  String
+  stepId       String
+  stepOrder    Int                 // Denormalized for easy ordering
+  status       StepExecutionStatus @default(PENDING)
+  input        Json?               // Resolved input for this step
+  output       String?             @db.Text // LLM response
+  tokens       Int                 @default(0)
+  cost         Float               @default(0)
+  durationMs   Int?
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  // Relations
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  step      WorkflowStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@index([stepId])
+  @@map("workflow_step_executions")
 }

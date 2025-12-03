@@ -4,7 +4,7 @@
 
 **Project:** Distill
 **Description:** Browser extension + web app (SaaS) that captures AI chat conversations and distills them into reusable, coached prompt templates with team sharing and privacy controls
-**Stage:** Development - Sprint 6 Active (UI/UX Improvements)
+**Stage:** Development - Sprint 7 Active (Cross-Browser & Polish)
 **Repository:** /Users/delf0/Desktop/distill2/cursormvp/
 
 ### Tech stack
@@ -75,7 +75,7 @@ Knowledge workers and teams don't have a simple, trusted way to:
 
 ## Current implementation status
 
-> **Current Sprint:** 6 - UI/UX Improvements
+> **Current Sprint:** 7 - Cross-Browser & Polish
 > **See:** `cursormvp/docs/logs/development-log.md` for detailed progress
 
 ### Sprint 1: Foundation ✅ COMPLETE
@@ -128,13 +128,18 @@ Knowledge workers and teams don't have a simple, trusted way to:
 - [x] Analytics dashboard UI (`/analytics`)
 - [x] All PRD tracking events implemented (10/10)
 
-### Sprint 6: UI/UX Improvements 🔄 IN PROGRESS
+### Sprint 6: UI/UX Improvements ✅ COMPLETE
 - [x] Left sidebar navigation (collapsible, mobile responsive)
 - [x] Home page redesign (stats, activity feed, quick actions)
 - [x] Stats API endpoint (`distill.stats`) with unit tests
-- [ ] Firefox extension support
-- [ ] Billing & payments (Stripe)
-- [ ] Performance optimization
+- [x] Performance optimization (Redis caching, code splitting, DB indexes)
+- [x] Billing & payments (Stripe integration, plan enforcement)
+
+### Sprint 7: Cross-Browser & Polish 🔄 IN PROGRESS
+- [x] Firefox extension support (Manifest V3, webextension-polyfill, min Firefox 121.0)
+- [ ] Edge extension support (stretch goal - uses Chrome build)
+- [ ] Cross-browser testing and validation
+- [ ] Bug fixes and polish
 
 ## Code conventions
 
@@ -246,7 +251,7 @@ chore: description
 
 ### Known limitations
 - Extension only captures visible conversation (no API access)
-- Chrome-first (Firefox/Edge later)
+- Chrome and Firefox supported; Edge uses Chrome build (untested)
 - No SSO in MVP
 
 ### Open questions

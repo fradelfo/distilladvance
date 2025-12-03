@@ -19,7 +19,8 @@ The template uses Manifest V3 for modern browser extension development:
 
 ```
 app/packages/browser-extension/
-├── manifest.json              # Extension manifest (V3)
+├── manifest.json              # Chrome extension manifest (V3)
+├── manifest.firefox.json      # Firefox extension manifest (V3)
 ├── src/
 │   ├── background/            # Service worker scripts
 │   │   ├── service-worker.ts  # Main background script
@@ -37,6 +38,7 @@ app/packages/browser-extension/
 │   ├── options/              # Options/settings page
 │   │   └── index.tsx         # Options entry point
 │   └── shared/               # Shared utilities and types
+│       ├── browser-api.ts    # Cross-browser API abstraction
 │       ├── types/            # TypeScript definitions
 │       ├── utils/            # Helper functions
 │       └── api/              # API communication
@@ -264,23 +266,26 @@ The template includes specialized agents for extension development:
 
 ```bash
 # Extension-specific development commands
-bun run ext:dev              # Development with hot reload
-bun run ext:build            # Production build
-bun run ext:test             # Run extension tests
-bun run ext:lint             # Lint extension code
-bun run ext:validate         # Validate manifest and compliance
-bun run ext:package          # Package for store submission
+bun run dev                  # Development with hot reload (Chrome)
+bun run build                # Production build (Chrome, default)
+bun run test                 # Run extension tests
+bun run lint                 # Lint extension code
 
-# Cross-browser development
-bun run ext:firefox          # Firefox development
-bun run ext:edge            # Edge development
-bun run ext:safari          # Safari development (experimental)
+# Chrome builds
+bun run build:chrome         # Build for Chrome (explicit)
+bun run package:chrome       # Package .zip for Chrome Web Store
 
-# Testing across browsers
-bun run ext:test:chrome      # Chrome-specific tests
-bun run ext:test:firefox     # Firefox-specific tests
-bun run ext:test:cross       # Cross-browser compatibility tests
+# Firefox builds (Manifest V3, min Firefox 121.0)
+bun run build:firefox        # Build for Firefox
+bun run package:firefox      # Package .zip for Mozilla Add-ons (AMO)
+bun run preview:firefox      # Launch Firefox with extension for testing
+
+# Validation
+bun run lint:firefox         # Validate Firefox extension with web-ext lint
 ```
+
+> **Note:** Firefox Manifest V3 support requires Firefox 121.0+ (December 2023).
+> Edge uses Chromium and can use the Chrome build directly.
 
 ## AI Chat Integration
 
@@ -655,96 +660,161 @@ jobs:
 
 ### Browser API Abstraction
 
-Create a unified API wrapper for cross-browser compatibility:
+The extension uses `webextension-polyfill` for cross-browser compatibility. This provides a unified Promise-based `browser.*` API that works on both Chrome and Firefox:
 
 ```typescript
-// src/shared/utils/browser-api.ts
-type BrowserAPI = typeof chrome | typeof browser;
+// src/shared/browser-api.ts
+import browser from 'webextension-polyfill';
 
-export class UnifiedBrowserAPI {
-  private api: BrowserAPI;
+// Re-export the browser object for use throughout the extension
+export { browser };
 
-  constructor() {
-    // Support both Chrome and Firefox APIs
-    this.api = (typeof chrome !== 'undefined' ? chrome : browser) as BrowserAPI;
-  }
+// Type-safe wrappers for common operations
+export const storage = {
+  get: <T>(key: string): Promise<T | undefined> =>
+    browser.storage.local.get(key).then((result) => result[key] as T | undefined),
+  set: <T>(key: string, value: T): Promise<void> =>
+    browser.storage.local.set({ [key]: value }),
+  remove: (key: string): Promise<void> =>
+    browser.storage.local.remove(key),
+};
 
-  // Unified runtime API
-  get runtime() {
-    return {
-      sendMessage: (message: any) => this.promisify(this.api.runtime.sendMessage)(message),
-      onMessage: this.api.runtime.onMessage,
-      getURL: this.api.runtime.getURL.bind(this.api.runtime)
-    };
-  }
+export const runtime = {
+  sendMessage: <T>(message: unknown): Promise<T> =>
+    browser.runtime.sendMessage(message) as Promise<T>,
+  getURL: (path: string): string =>
+    browser.runtime.getURL(path),
+};
 
-  // Unified storage API
-  get storage() {
-    return {
-      sync: {
-        get: (keys: string[]) => this.promisify(this.api.storage.sync.get)(keys),
-        set: (items: Record<string, any>) => this.promisify(this.api.storage.sync.set)(items)
-      }
-    };
-  }
+export const tabs = {
+  query: (queryInfo: browser.Tabs.QueryQueryInfoType) =>
+    browser.tabs.query(queryInfo),
+  sendMessage: <T>(tabId: number, message: unknown): Promise<T> =>
+    browser.tabs.sendMessage(tabId, message) as Promise<T>,
+};
+```
 
-  // Unified tabs API
-  get tabs() {
-    return {
-      query: (queryInfo: chrome.tabs.QueryInfo) => this.promisify(this.api.tabs.query)(queryInfo),
-      sendMessage: (tabId: number, message: any) => this.promisify(this.api.tabs.sendMessage)(tabId, message)
-    };
-  }
+**Why webextension-polyfill?**
+- Provides Promise-based APIs on Chrome (which uses callbacks natively)
+- Firefox's `browser.*` namespace is supported natively
+- Chrome's `chrome.*` namespace is shimmed automatically
+- Industry standard for cross-browser extension development
 
-  private promisify(fn: Function) {
-    return (...args: any[]) => {
-      return new Promise((resolve, reject) => {
-        fn(...args, (result: any) => {
-          if (this.api.runtime.lastError) {
-            reject(this.api.runtime.lastError);
-          } else {
-            resolve(result);
-          }
-        });
-      });
-    };
+**Usage in source files:**
+```typescript
+// Instead of: chrome.storage.local.get(...)
+// Use:
+import { browser, storage } from '../shared/browser-api';
+
+// Promise-based API
+const value = await storage.get<string>('myKey');
+await storage.set('myKey', 'myValue');
+
+// Or use browser directly
+const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+```
+
+### Manifest Differences
+
+Chrome and Firefox have different manifest requirements:
+
+| Feature | Chrome (`manifest.json`) | Firefox (`manifest.firefox.json`) |
+|---------|--------------------------|-----------------------------------|
+| Background script | `service_worker` | `scripts` array |
+| Options page | `options_page` | `options_ui` |
+| Browser settings | `minimum_chrome_version` | `browser_specific_settings.gecko` |
+| Add-on ID | Not required | Required (`id` in gecko settings) |
+
+**Chrome manifest (excerpt):**
+```json
+{
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "options_page": "options/index.html",
+  "minimum_chrome_version": "116"
+}
+```
+
+**Firefox manifest (excerpt):**
+```json
+{
+  "background": {
+    "scripts": ["background/service-worker.js"],
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "distill@distill.ai",
+      "strict_min_version": "121.0"
+    }
   }
 }
 ```
 
-### Browser-Specific Builds
+### Vite Build Configuration
 
-Configure different builds for different browsers:
+The build system detects the target browser via Vite's mode:
 
 ```typescript
-// build/build-config.ts
-interface BuildConfig {
-  browser: 'chrome' | 'firefox' | 'edge' | 'safari';
-  manifestVersion: 2 | 3;
-  apiNamespace: 'chrome' | 'browser';
-  outputDir: string;
-}
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import fs from 'fs';
 
-const buildConfigs: Record<string, BuildConfig> = {
-  chrome: {
-    browser: 'chrome',
-    manifestVersion: 3,
-    apiNamespace: 'chrome',
-    outputDir: 'dist/chrome'
-  },
-  firefox: {
-    browser: 'firefox',
-    manifestVersion: 2, // Firefox still uses MV2 in some cases
-    apiNamespace: 'browser',
-    outputDir: 'dist/firefox'
-  },
-  edge: {
-    browser: 'edge',
-    manifestVersion: 3,
-    apiNamespace: 'chrome',
-    outputDir: 'dist/edge'
-  }
-};
+export default defineConfig(({ mode }) => {
+  const isFirefox = mode === 'firefox';
+  const manifestFile = isFirefox ? 'manifest.firefox.json' : 'manifest.json';
+
+  return {
+    build: {
+      outDir: 'dist',
+      rollupOptions: {
+        // ... build options
+      },
+    },
+    plugins: [
+      {
+        name: 'copy-manifest',
+        writeBundle() {
+          // Copy the appropriate manifest based on build mode
+          fs.copyFileSync(
+            resolve(__dirname, manifestFile),
+            resolve(__dirname, 'dist/manifest.json')
+          );
+        },
+      },
+    ],
+  };
+});
+```
+
+**Build commands:**
+```bash
+# Chrome build (default)
+bun run build              # Uses manifest.json
+
+# Firefox build
+bun run build:firefox      # Uses manifest.firefox.json (--mode firefox)
+```
+
+### Browser-Specific Testing
+
+```bash
+# Test in Chrome
+# 1. Build: bun run build:chrome
+# 2. Load unpacked extension from dist/ in chrome://extensions
+
+# Test in Firefox
+bun run preview:firefox    # Uses web-ext to launch Firefox with extension
+
+# Validate Firefox extension
+bun run lint:firefox       # Runs web-ext lint
 ```
 
 ## Store Deployment
@@ -795,19 +865,37 @@ export class ChromeStoreDeployer {
 }
 ```
 
-### Firefox Add-ons Deployment
+### Firefox Add-ons (AMO) Deployment
 
+**Prerequisites:**
+1. Create a Mozilla Add-ons developer account at https://addons.mozilla.org/developers/
+2. Generate API credentials (JWT issuer/secret) from the developer hub
+
+**Manual Submission:**
+```bash
+# Build and package for Firefox
+bun run build:firefox
+bun run package:firefox   # Creates dist-firefox.zip
+
+# Validate before submission
+bun run lint:firefox      # Should show 0 errors
+
+# Submit at: https://addons.mozilla.org/developers/addon/submit/
+```
+
+**Automated Deployment:**
 ```typescript
 // scripts/deploy-firefox.ts
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import fs from 'fs';
 
 export class FirefoxAMODeployer {
-  async deploy(xpiFilePath: string): Promise<void> {
+  async deploy(zipFilePath: string): Promise<void> {
     const token = this.generateJWT();
 
     const formData = new FormData();
-    formData.append('upload', fs.createReadStream(xpiFilePath));
+    formData.append('upload', fs.createReadStream(zipFilePath));
 
     const response = await axios.post(
       `https://addons.mozilla.org/api/v5/addons/${process.env.FIREFOX_ADDON_ID}/versions/`,
@@ -824,13 +912,33 @@ export class FirefoxAMODeployer {
   }
 
   private generateJWT(): string {
+    const issuedAt = Math.floor(Date.now() / 1000);
     return jwt.sign(
-      { iss: process.env.FIREFOX_JWT_ISSUER, exp: Date.now() + 60000 },
-      process.env.FIREFOX_JWT_SECRET!
+      {
+        iss: process.env.FIREFOX_JWT_ISSUER,
+        jti: Math.random().toString(),
+        iat: issuedAt,
+        exp: issuedAt + 300 // 5 minutes
+      },
+      process.env.FIREFOX_JWT_SECRET!,
+      { algorithm: 'HS256' }
     );
   }
 }
 ```
+
+**Environment Variables:**
+```bash
+FIREFOX_ADDON_ID=distill@distill.ai
+FIREFOX_JWT_ISSUER=user:12345:67    # From AMO developer hub
+FIREFOX_JWT_SECRET=your-secret-key   # From AMO developer hub
+```
+
+**AMO Review Tips:**
+- Firefox reviews are typically faster than Chrome (1-2 days)
+- Ensure all permissions are justified in the submission notes
+- Provide clear description of AI chat site integration
+- Include screenshots showing the extension in action
 
 ### Deployment Pipeline
 

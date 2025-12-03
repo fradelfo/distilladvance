@@ -34,8 +34,8 @@ RUN echo "=== Standalone directory structure ===" && \
     echo "=== Looking for server.js ===" && \
     find app/packages/web-app/.next/standalone -name "server.js" -type f
 
-# Production stage - use Node.js since Next.js standalone requires it
-FROM node:20-slim AS runner
+# Production stage - use Bun since it built the node_modules
+FROM oven/bun:1-slim AS runner
 
 WORKDIR /app
 
@@ -48,12 +48,7 @@ COPY --from=builder /app/cursormvp/app/packages/web-app/.next/standalone ./
 COPY --from=builder /app/cursormvp/app/packages/web-app/.next/static ./.next/static
 COPY --from=builder /app/cursormvp/app/packages/web-app/public ./public
 
-# Debug: List what we copied
-RUN echo "=== Runner /app contents ===" && ls -la /app && \
-    echo "=== Looking for server.js in runner ===" && \
-    find /app -name "server.js" -type f 2>/dev/null || echo "No server.js found"
-
 EXPOSE 3000
 
-# server.js should be at the root of standalone output
-CMD ["node", "server.js"]
+# Use bun to run the server.js (Bun understands its own node_modules format)
+CMD ["bun", "run", "server.js"]

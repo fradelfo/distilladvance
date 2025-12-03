@@ -6,7 +6,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Required for Railway deployment
+  // Note: standalone mode removed due to Bun node_modules incompatibility
   reactStrictMode: true,
   transpilePackages: ['@distill/shared-types'],
   experimental: {

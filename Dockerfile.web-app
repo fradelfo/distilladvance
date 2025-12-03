@@ -25,17 +25,14 @@ COPY cursormvp/app/packages/shared-types ./app/packages/shared-types
 COPY cursormvp/app/packages/api ./app/packages/api
 COPY cursormvp/app/packages/web-app ./app/packages/web-app
 
-# Build the Next.js app
+# Build the Next.js app (without standalone for now)
 RUN cd app/packages/web-app && bun run build
-
-# Debug: List standalone output structure
-RUN echo "=== Standalone directory structure ===" && \
-    ls -la app/packages/web-app/.next/standalone/ && \
-    echo "=== Looking for server.js ===" && \
-    find app/packages/web-app/.next/standalone -name "server.js" -type f
 
 # Production stage - use Bun since it built the node_modules
 FROM oven/bun:1-slim AS runner
+
+# Install OpenSSL for Prisma runtime
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -43,12 +40,11 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Copy built assets from builder - standalone mode puts everything in .next/standalone
-COPY --from=builder /app/cursormvp/app/packages/web-app/.next/standalone ./
-COPY --from=builder /app/cursormvp/app/packages/web-app/.next/static ./.next/static
-COPY --from=builder /app/cursormvp/app/packages/web-app/public ./public
+# Copy the entire workspace with node_modules and built assets
+COPY --from=builder /app/cursormvp ./
 
 EXPOSE 3000
 
-# Use bun to run the server.js (Bun understands its own node_modules format)
-CMD ["bun", "run", "server.js"]
+# Run next start from the web-app directory
+WORKDIR /app/app/packages/web-app
+CMD ["bun", "run", "start"]

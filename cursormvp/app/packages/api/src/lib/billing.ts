@@ -4,8 +4,8 @@
  * Shared billing helpers for plan limit enforcement and feature gating.
  */
 
-import { TRPCError } from '@trpc/server';
 import type { PrismaClient } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
 
 // ============================================================================
 // Plan Configuration

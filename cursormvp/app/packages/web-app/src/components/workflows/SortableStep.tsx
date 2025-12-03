@@ -131,7 +131,9 @@ export function SortableStep({
                       <Badge variant="outline" className="shrink-0 font-mono text-xs">
                         {`{{${varName}}}`}
                       </Badge>
-                      <span className="text-muted-foreground hidden sm:inline" aria-hidden="true">&larr;</span>
+                      <span className="text-muted-foreground hidden sm:inline" aria-hidden="true">
+                        &larr;
+                      </span>
                     </div>
                     <Select
                       value={step.inputMapping[varName] || ''}

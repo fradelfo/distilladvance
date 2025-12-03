@@ -24,11 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  trackWorkflowExecutionCompleted,
-  trackWorkflowExecutionFailed,
-  trackWorkflowExecutionStarted,
-} from '@/lib/analytics';
+import { trackWorkflowExecutionStarted } from '@/lib/analytics';
 import { trpc } from '@/lib/trpc';
 import {
   ArrowLeft,
@@ -133,15 +129,13 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
     isError,
     error,
     refetch,
-  } = trpc.workflow.getExecution.useQuery(
-    { executionId },
-    { staleTime: 10 * 1000 }
-  );
+  } = trpc.workflow.getExecution.useQuery({ executionId }, { staleTime: 10 * 1000 });
 
   // Fetch workflow for context
-  const {
-    data: workflowData,
-  } = trpc.workflow.getById.useQuery({ id: workflowId }, { staleTime: 30 * 1000 });
+  const { data: workflowData } = trpc.workflow.getById.useQuery(
+    { id: workflowId },
+    { staleTime: 30 * 1000 }
+  );
 
   // Mutation for re-running
   const executeWorkflow = trpc.workflow.execute.useMutation();
@@ -229,16 +223,20 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
     );
   }
 
-  const duration = execution.completedAt && execution.startedAt
-    ? new Date(execution.completedAt).getTime() - new Date(execution.startedAt).getTime()
-    : null;
+  const duration =
+    execution.completedAt && execution.startedAt
+      ? new Date(execution.completedAt).getTime() - new Date(execution.startedAt).getTime()
+      : null;
 
   const inputEntries = Object.entries(execution.initialInput || {});
 
   return (
     <div className="space-y-6">
       {/* Breadcrumb Header */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
+      <nav
+        className="flex items-center gap-2 text-sm text-muted-foreground"
+        aria-label="Breadcrumb"
+      >
         <Link href="/workflows" className="hover:text-foreground">
           Workflows
         </Link>
@@ -267,9 +265,7 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
               <h1 className="text-2xl font-bold">Execution Details</h1>
               <StatusBadge status={execution.status} />
             </div>
-            <p className="text-muted-foreground mt-1">
-              {formatDate(execution.startedAt)}
-            </p>
+            <p className="text-muted-foreground mt-1">{formatDate(execution.startedAt)}</p>
           </div>
         </div>
 
@@ -302,9 +298,7 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Cost</p>
-              <p className="text-lg font-medium">
-                {formatCost(execution.totalCost)}
-              </p>
+              <p className="text-lg font-medium">{formatCost(execution.totalCost)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Steps</p>
@@ -365,9 +359,7 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
                     >
                       {index + 1}
                     </Badge>
-                    <span className="font-medium">
-                      {step.promptTitle || `Step ${index + 1}`}
-                    </span>
+                    <span className="font-medium">{step.promptTitle || `Step ${index + 1}`}</span>
                     <StatusBadge status={step.status} />
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -383,22 +375,24 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
                         {formatDuration(step.durationMs)}
                       </span>
                     )}
-                    {step.tokens > 0 && (
-                      <span>{step.tokens.toLocaleString()} tokens</span>
-                    )}
-                    {step.cost > 0 && (
-                      <span>{formatCost(step.cost)}</span>
-                    )}
+                    {step.tokens > 0 && <span>{step.tokens.toLocaleString()} tokens</span>}
+                    {step.cost > 0 && <span>{formatCost(step.cost)}</span>}
                   </div>
                 </div>
 
                 {/* Step Input */}
                 {step.input && Object.keys(step.input).length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Input Variables</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                      Input Variables
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(step.input).map(([varName, value]) => (
-                        <Badge key={varName} variant="outline" className="font-mono text-xs max-w-xs truncate">
+                        <Badge
+                          key={varName}
+                          variant="outline"
+                          className="font-mono text-xs max-w-xs truncate"
+                        >
                           {varName}: {String(value).substring(0, 50)}
                           {String(value).length > 50 && '...'}
                         </Badge>
@@ -472,9 +466,10 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
                       size="icon"
                       className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => {
-                        const output = typeof execution.finalOutput === 'object'
-                          ? JSON.stringify(execution.finalOutput, null, 2)
-                          : String(execution.finalOutput);
+                        const output =
+                          typeof execution.finalOutput === 'object'
+                            ? JSON.stringify(execution.finalOutput, null, 2)
+                            : String(execution.finalOutput);
                         handleCopyOutput(output, 'final');
                       }}
                       aria-label="Copy final output"
@@ -527,14 +522,10 @@ export function ExecutionDetailContent({ workflowId, executionId }: ExecutionDet
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              This workflow has no required inputs.
-            </p>
+            <p className="text-sm text-muted-foreground">This workflow has no required inputs.</p>
           )}
 
-          {runError && (
-            <p className="text-sm text-destructive">{runError}</p>
-          )}
+          {runError && <p className="text-sm text-destructive">{runError}</p>}
 
           <DialogFooter>
             <Button

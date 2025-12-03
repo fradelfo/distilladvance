@@ -33,7 +33,7 @@ async function testSearch() {
     `;
     if (ftsTest.length > 0) {
       console.log('   FTS Results: PASS');
-      ftsTest.forEach(r => console.log(`   - ${r.title} (rank: ${r.rank.toFixed(4)})`));
+      ftsTest.forEach((r) => console.log(`   - ${r.title} (rank: ${r.rank.toFixed(4)})`));
     } else {
       console.log('   FTS Results: NO MATCHES (try different search term)');
     }
@@ -53,7 +53,7 @@ async function testSearch() {
     `;
     if (trigramTest.length > 0) {
       console.log('   Trigram Results: PASS');
-      trigramTest.forEach(r => console.log(`   - ${r.title} (similarity: ${r.sim.toFixed(4)})`));
+      trigramTest.forEach((r) => console.log(`   - ${r.title} (similarity: ${r.sim.toFixed(4)})`));
     } else {
       console.log('   Trigram Results: NO MATCHES (try different search term)');
     }
@@ -123,7 +123,7 @@ async function testSearch() {
     `;
     if (indexTest.length > 0) {
       console.log('   Found indexes:');
-      indexTest.forEach(i => console.log(`   - ${i.indexname}`));
+      indexTest.forEach((i) => console.log(`   - ${i.indexname}`));
     } else {
       console.log('   No search indexes found');
       console.log('   Run: bunx tsx scripts/setup-fts.ts');
@@ -152,11 +152,13 @@ async function testSearch() {
   // 9. Test total prompts
   console.log('\n9. Prompt statistics...');
   try {
-    const stats = await prisma.$queryRaw<Array<{
-      total: bigint;
-      with_vector: bigint;
-      public_count: bigint;
-    }>>`
+    const stats = await prisma.$queryRaw<
+      Array<{
+        total: bigint;
+        with_vector: bigint;
+        public_count: bigint;
+      }>
+    >`
       SELECT
         COUNT(*) as total,
         COUNT(search_vector) as with_vector,

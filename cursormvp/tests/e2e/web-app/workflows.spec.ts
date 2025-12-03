@@ -8,7 +8,7 @@
  * - Execution history and details
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 // Test data
 const TEST_WORKFLOW = {
@@ -65,7 +65,7 @@ test.describe('Workflows List Page @web-app', () => {
 
     // Either empty state or workflow cards should be visible
     const hasEmptyState = await emptyState.isVisible().catch(() => false);
-    const hasWorkflows = await workflowCards.count() > 0;
+    const hasWorkflows = (await workflowCards.count()) > 0;
 
     expect(hasEmptyState || hasWorkflows).toBe(true);
   });
@@ -142,7 +142,9 @@ test.describe('Workflow Detail Page @web-app', () => {
     await page.goto('/workflows');
 
     // Check if there are any workflow cards
-    const workflowCards = page.locator('[data-testid="workflow-card"], [class*="workflow-card"], a[href^="/workflows/"]');
+    const workflowCards = page.locator(
+      '[data-testid="workflow-card"], [class*="workflow-card"], a[href^="/workflows/"]'
+    );
     const cardCount = await workflowCards.count();
 
     if (cardCount === 0) {
@@ -165,7 +167,9 @@ test.describe('Workflow Detail Page @web-app', () => {
     await loginTestUser(page);
     await page.goto('/workflows');
 
-    const workflowLinks = page.locator('a[href^="/workflows/"]').filter({ hasNot: page.locator('text=new'), has: page.locator('text=*') });
+    const workflowLinks = page
+      .locator('a[href^="/workflows/"]')
+      .filter({ hasNot: page.locator('text=new'), has: page.locator('text=*') });
 
     // Try to find a workflow to test with
     const count = await workflowLinks.count();
@@ -175,9 +179,12 @@ test.describe('Workflow Detail Page @web-app', () => {
     }
 
     // Click first workflow link that isn't /workflows/new
-    const firstWorkflow = page.locator('a[href^="/workflows/"]').filter({
-      hasNot: page.locator('[href="/workflows/new"]')
-    }).first();
+    const firstWorkflow = page
+      .locator('a[href^="/workflows/"]')
+      .filter({
+        hasNot: page.locator('[href="/workflows/new"]'),
+      })
+      .first();
     await firstWorkflow.click();
 
     // Wait for detail page
@@ -196,7 +203,9 @@ test.describe('Workflow Detail Page @web-app', () => {
     await page.goto('/workflows');
 
     // Find a workflow
-    const workflowCard = page.locator('a[href^="/workflows/"]:not([href="/workflows/new"])').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/"]:not([href="/workflows/new"])')
+      .first();
     const count = await workflowCard.count();
 
     if (count === 0) {
@@ -226,7 +235,9 @@ test.describe('Execution History Page @web-app', () => {
     // First find a workflow
     await page.goto('/workflows');
 
-    const workflowCard = page.locator('a[href^="/workflows/"]:not([href="/workflows/new"])').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/"]:not([href="/workflows/new"])')
+      .first();
     const count = await workflowCard.count();
 
     if (count === 0) {
@@ -253,7 +264,9 @@ test.describe('Execution History Page @web-app', () => {
     await loginTestUser(page);
     await page.goto('/workflows');
 
-    const workflowCard = page.locator('a[href^="/workflows/"]:not([href="/workflows/new"])').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/"]:not([href="/workflows/new"])')
+      .first();
     if ((await workflowCard.count()) === 0) {
       test.skip(true, 'No workflows available to test');
       return;
@@ -264,9 +277,11 @@ test.describe('Execution History Page @web-app', () => {
 
     // Check for list role
     const list = page.locator('[role="list"]');
-    await expect(list).toBeVisible().catch(() => {
-      // List may be empty, which is fine
-    });
+    await expect(list)
+      .toBeVisible()
+      .catch(() => {
+        // List may be empty, which is fine
+      });
   });
 });
 
@@ -277,7 +292,9 @@ test.describe('Execution Detail Page @web-app', () => {
     // Navigate to a workflow
     await page.goto('/workflows');
 
-    const workflowCard = page.locator('a[href^="/workflows/"]:not([href="/workflows/new"])').first();
+    const workflowCard = page
+      .locator('a[href^="/workflows/"]:not([href="/workflows/new"])')
+      .first();
     if ((await workflowCard.count()) === 0) {
       test.skip(true, 'No workflows available to test');
       return;
@@ -292,7 +309,9 @@ test.describe('Execution Detail Page @web-app', () => {
       await historyTab.click();
 
       // Check if there are any executions
-      const executionItem = page.locator('[data-testid="execution-item"], [role="listitem"]').first();
+      const executionItem = page
+        .locator('[data-testid="execution-item"], [role="listitem"]')
+        .first();
       if ((await executionItem.count()) > 0) {
         // Click View Full Details
         const viewDetails = page.locator('button:has-text("View Full Details")').first();

@@ -1,9 +1,9 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
 
 interface UsageItem {
   label: string;
@@ -28,7 +28,10 @@ function getUsagePercentage(current: number, limit: number): number {
   return Math.min((current / limit) * 100, 100);
 }
 
-function getUsageStatus(current: number, limit: number): 'ok' | 'warning' | 'critical' | 'unlimited' {
+function getUsageStatus(
+  current: number,
+  limit: number
+): 'ok' | 'warning' | 'critical' | 'unlimited' {
   if (limit === -1) return 'unlimited';
   const percentage = (current / limit) * 100;
   if (percentage >= 100) return 'critical';
@@ -57,9 +60,7 @@ function UsageBar({ item, compact }: { item: UsageItem; compact?: boolean }) {
   return (
     <div className={cn('space-y-1.5', compact && 'space-y-1')}>
       <div className="flex items-center justify-between">
-        <span className={cn('text-sm font-medium', compact && 'text-xs')}>
-          {item.label}
-        </span>
+        <span className={cn('text-sm font-medium', compact && 'text-xs')}>{item.label}</span>
         <div className="flex items-center gap-1.5">
           {statusIcons[status]}
           <span className={cn('text-sm text-muted-foreground', compact && 'text-xs')}>
@@ -90,12 +91,8 @@ export function UsageDisplay({
   className,
   showUpgradeLink = true,
 }: UsageDisplayProps) {
-  const hasWarning = usage.some(
-    (item) => getUsageStatus(item.current, item.limit) === 'warning'
-  );
-  const hasCritical = usage.some(
-    (item) => getUsageStatus(item.current, item.limit) === 'critical'
-  );
+  const hasWarning = usage.some((item) => getUsageStatus(item.current, item.limit) === 'warning');
+  const hasCritical = usage.some((item) => getUsageStatus(item.current, item.limit) === 'critical');
 
   return (
     <div className={cn('space-y-4', compact && 'space-y-2', className)}>
@@ -107,9 +104,7 @@ export function UsageDisplay({
         <div
           className={cn(
             'rounded-md p-2 text-xs',
-            hasCritical
-              ? 'bg-red-500/10 text-red-600'
-              : 'bg-amber-500/10 text-amber-600'
+            hasCritical ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600'
           )}
         >
           {hasCritical ? (

@@ -29,13 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import {
   BookmarkIcon,
   CalendarIcon,
-  ChevronDownIcon,
   ClockIcon,
   FilterIcon,
   SearchIcon,
@@ -109,7 +107,12 @@ interface AdvancedSearchPanelProps {
 // Search Mode Icons & Labels
 // ============================================================================
 
-const SEARCH_MODES: { value: SearchMode; label: string; description: string; icon: React.ReactNode }[] = [
+const SEARCH_MODES: {
+  value: SearchMode;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
   {
     value: 'KEYWORD',
     label: 'Keyword',
@@ -214,7 +217,13 @@ export function AdvancedSearchPanel({
         onSearch();
       }
     },
-    [showAutocomplete, autocompleteSuggestions, selectedSuggestionIndex, handleSelectSuggestion, onSearch]
+    [
+      showAutocomplete,
+      autocompleteSuggestions,
+      selectedSuggestionIndex,
+      handleSelectSuggestion,
+      onSearch,
+    ]
   );
 
   // Count active filters
@@ -282,7 +291,9 @@ export function AdvancedSearchPanel({
           {showAutocomplete && (autocompleteSuggestions.length > 0 || isLoadingAutocomplete) && (
             <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover p-1 shadow-md">
               {isLoadingAutocomplete ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">Loading suggestions...</div>
+                <div className="px-3 py-2 text-sm text-muted-foreground">
+                  Loading suggestions...
+                </div>
               ) : (
                 autocompleteSuggestions.map((suggestion, index) => (
                   <button
@@ -420,7 +431,10 @@ export function AdvancedSearchPanel({
                 </DropdownMenuItem>
               ))}
               {onClearHistory && (
-                <DropdownMenuItem onClick={onClearHistory} className="border-t mt-1 pt-2 text-destructive">
+                <DropdownMenuItem
+                  onClick={onClearHistory}
+                  className="border-t mt-1 pt-2 text-destructive"
+                >
                   Clear history
                 </DropdownMenuItem>
               )}
@@ -532,7 +546,9 @@ export function AdvancedSearchPanel({
             <div className="space-y-2">
               <Label>Visibility</Label>
               <Select
-                value={filters.isPublic === undefined ? 'all' : filters.isPublic ? 'public' : 'private'}
+                value={
+                  filters.isPublic === undefined ? 'all' : filters.isPublic ? 'public' : 'private'
+                }
                 onValueChange={(v) =>
                   onFiltersChange({
                     ...filters,

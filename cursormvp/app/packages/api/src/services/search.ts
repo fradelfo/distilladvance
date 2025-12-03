@@ -5,7 +5,7 @@
  * Uses PostgreSQL tsvector for full-text search and combines with vector embeddings.
  */
 
-import { Prisma, type PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { generateEmbedding } from './embedding.js';
 
@@ -504,10 +504,7 @@ export async function semanticSearch(options: SearchOptions): Promise<SearchResp
  * RRF(d) = Σ 1 / (k + rank(d))
  * where k is typically 60
  */
-function reciprocalRankFusion(
-  rankings: Map<string, number>[],
-  k: number = 60
-): Map<string, number> {
+function reciprocalRankFusion(rankings: Map<string, number>[], k = 60): Map<string, number> {
   const fusedScores = new Map<string, number>();
 
   for (const ranking of rankings) {

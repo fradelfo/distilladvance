@@ -1,9 +1,9 @@
 'use client';
 
-import { Crown, Sparkles, User } from 'lucide-react';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Crown, Sparkles, User } from 'lucide-react';
+import Link from 'next/link';
 
 type PlanType = 'FREE' | 'PRO' | 'TEAM';
 

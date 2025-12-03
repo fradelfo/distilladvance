@@ -1,4 +1,4 @@
-import { redis, isRedisAvailable } from './redis.js';
+import { isRedisAvailable, redis } from './redis.js';
 
 /**
  * Cache configuration defaults

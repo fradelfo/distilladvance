@@ -148,8 +148,7 @@ export const billingRouter = router({
       workspaces: {
         used: workspaceCount,
         limit: limits.workspaces,
-        remaining:
-          limits.workspaces === -1 ? -1 : Math.max(0, limits.workspaces - workspaceCount),
+        remaining: limits.workspaces === -1 ? -1 : Math.max(0, limits.workspaces - workspaceCount),
       },
     };
   }),
@@ -160,7 +159,14 @@ export const billingRouter = router({
   canPerform: authedProcedure
     .input(
       z.object({
-        action: z.enum(['createPrompt', 'createWorkspace', 'inviteMember', 'useSemanticSearch', 'useCoach', 'createWorkflow']),
+        action: z.enum([
+          'createPrompt',
+          'createWorkspace',
+          'inviteMember',
+          'useSemanticSearch',
+          'useCoach',
+          'createWorkflow',
+        ]),
         workspaceId: z.string().optional(), // For member count check
       })
     )

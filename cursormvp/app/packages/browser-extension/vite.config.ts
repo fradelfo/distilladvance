@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
-import { build, defineConfig, type ConfigEnv } from 'vite';
+import { type ConfigEnv, build, defineConfig } from 'vite';
 
 type BrowserTarget = 'chrome' | 'firefox';
 

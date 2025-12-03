@@ -11,9 +11,9 @@
  * - TTFB (Time to First Byte) - server response time
  */
 
-import { useEffect, useRef } from 'react';
-import { onCLS, onLCP, onTTFB, onINP, type Metric } from 'web-vitals';
 import { trackWebVitals } from '@/lib/analytics';
+import { useEffect, useRef } from 'react';
+import { type Metric, onCLS, onINP, onLCP, onTTFB } from 'web-vitals';
 
 function getRating(metric: Metric): 'good' | 'needs-improvement' | 'poor' {
   // Thresholds based on Google's recommendations

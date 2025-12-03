@@ -44,8 +44,7 @@ function createRedisClient(): Redis | null {
   return client;
 }
 
-export const redis: Redis | null =
-  globalForRedis.redis ?? createRedisClient();
+export const redis: Redis | null = globalForRedis.redis ?? createRedisClient();
 
 if (process.env.NODE_ENV !== 'production' && redis) {
   globalForRedis.redis = redis;

@@ -1,9 +1,9 @@
 [build]
-builder = "nixpacks"
-buildCommand = "cd ../.. && bun install && cd app/packages/api && bunx prisma generate && bun run build"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["app/packages/api/**", "app/packages/shared-types/**"]
 
 [deploy]
-startCommand = "bun run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

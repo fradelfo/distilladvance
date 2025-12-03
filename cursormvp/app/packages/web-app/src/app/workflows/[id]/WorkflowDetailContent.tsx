@@ -680,9 +680,7 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
 
         <TabsContent value="history">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              Recent executions
-            </p>
+            <p className="text-sm text-muted-foreground">Recent executions</p>
             <Link href={`/workflows/${workflowId}/executions`}>
               <Button variant="link" size="sm" className="text-sm">
                 View All Executions

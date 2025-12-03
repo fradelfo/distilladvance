@@ -184,9 +184,6 @@ async function setupTestDatabase() {
     await globalThis.__TEST_PRISMA__.$executeRaw`
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
     `;
-
-    // Additional test-specific setup
-    console.log('Test database initialized');
   } catch (error) {
     console.warn('Test database setup failed:', error);
   }
@@ -199,7 +196,7 @@ async function cleanupTestDatabase() {
   try {
     if (globalThis.__TEST_PRISMA__) {
       await globalThis.__TEST_PRISMA__.$disconnect();
-      delete globalThis.__TEST_PRISMA__;
+      globalThis.__TEST_PRISMA__ = undefined;
     }
   } catch (error) {
     console.warn('Test database cleanup failed:', error);
@@ -300,7 +297,7 @@ export const testUtils = {
   wait: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
 
   // Create mock function with TypeScript support
-  createMockFn: <T extends (...args: any[]) => any>(): MockedFunction<T> =>
+  createMockFn: <T extends (...args: unknown[]) => unknown>(): MockedFunction<T> =>
     vi.fn() as MockedFunction<T>,
 
   // Generate test data
@@ -348,9 +345,7 @@ export const testUtils = {
 
         try {
           await globalThis.__TEST_PRISMA__.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
-        } catch (error) {
-          console.log({ error });
-        }
+        } catch (_error) {}
       }
     },
 

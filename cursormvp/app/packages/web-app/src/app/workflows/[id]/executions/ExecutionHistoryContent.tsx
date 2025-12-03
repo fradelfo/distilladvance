@@ -80,10 +80,10 @@ function StatusBadge({ status }: { status: string }) {
 
 export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentProps) {
   // Fetch workflow for name
-  const {
-    data: workflowData,
-    isLoading: isLoadingWorkflow,
-  } = trpc.workflow.getById.useQuery({ id: workflowId }, { staleTime: 30 * 1000 });
+  const { data: workflowData, isLoading: isLoadingWorkflow } = trpc.workflow.getById.useQuery(
+    { id: workflowId },
+    { staleTime: 30 * 1000 }
+  );
 
   // Fetch executions with pagination
   const {
@@ -143,11 +143,7 @@ export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentP
         </Link>
         <div>
           <h1 className="text-2xl font-bold">Execution History</h1>
-          {workflow && (
-            <p className="text-muted-foreground">
-              {workflow.name}
-            </p>
-          )}
+          {workflow && <p className="text-muted-foreground">{workflow.name}</p>}
         </div>
       </div>
 
@@ -160,9 +156,7 @@ export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentP
               <p className="text-lg font-medium">No executions yet</p>
               <p className="text-sm mt-1">Run your workflow to see executions here.</p>
               <Link href={`/workflows/${workflowId}`}>
-                <Button className="mt-4">
-                  Go to Workflow
-                </Button>
+                <Button className="mt-4">Go to Workflow</Button>
               </Link>
             </div>
           </CardContent>
@@ -172,7 +166,8 @@ export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentP
           <div className="space-y-3" role="list" aria-label="Execution history">
             {allExecutions.map((execution) => {
               const duration = execution.completedAt
-                ? new Date(execution.completedAt).getTime() - new Date(execution.startedAt).getTime()
+                ? new Date(execution.completedAt).getTime() -
+                  new Date(execution.startedAt).getTime()
                 : null;
 
               return (
@@ -194,8 +189,7 @@ export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentP
                                 year: 'numeric',
                                 month: 'short',
                                 day: 'numeric',
-                              })}
-                              {' '}
+                              })}{' '}
                               {new Date(execution.startedAt).toLocaleTimeString(undefined, {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -218,7 +212,10 @@ export function ExecutionHistoryContent({ workflowId }: ExecutionHistoryContentP
                           </div>
                         </div>
 
-                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+                        <ChevronRight
+                          className="h-5 w-5 text-muted-foreground flex-shrink-0"
+                          aria-hidden="true"
+                        />
                       </div>
                     </CardContent>
                   </Card>

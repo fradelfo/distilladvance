@@ -7,13 +7,13 @@
  * for authentication, tRPC, React Query, analytics, theme, and other client-side state.
  */
 
+import { WebVitals } from '@/components/WebVitals';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ThemeProvider } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { WebVitals } from '@/components/WebVitals';
 import { identifyUser, initAnalytics, resetUser } from './analytics';
 import { createTRPCClient, trpc } from './trpc';
 

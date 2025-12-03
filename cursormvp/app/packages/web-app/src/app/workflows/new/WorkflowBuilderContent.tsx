@@ -188,9 +188,7 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
 
         // Extract variables and auto-map them to initial inputs by default
         const variables = extractVariables(fullPrompt.prompt.content);
-        const autoMapping = Object.fromEntries(
-          variables.map((v) => [v, `initial.${v}`])
-        );
+        const autoMapping = Object.fromEntries(variables.map((v) => [v, `initial.${v}`]));
 
         const newStep: WorkflowStep = {
           id: `temp-${Date.now()}`, // Temporary ID until saved
@@ -552,7 +550,9 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
         <Link href="/workflows">
-          <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
+          <Button variant="outline" className="w-full sm:w-auto">
+            Cancel
+          </Button>
         </Link>
         <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
           <Save className="h-4 w-4 mr-2" aria-hidden="true" />

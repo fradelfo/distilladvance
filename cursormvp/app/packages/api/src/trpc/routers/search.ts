@@ -12,13 +12,10 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
-  type SearchMode,
   fulltextSearch,
   hybridSearch,
   isFullTextSearchAvailable,
-  keywordSearch,
   search,
-  semanticSearch,
   setupFullTextSearch,
 } from '../../services/search.js';
 import { authedProcedure, router } from '../index.js';

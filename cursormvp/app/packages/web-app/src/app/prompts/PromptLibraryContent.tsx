@@ -9,13 +9,13 @@
 
 import { EmptyState } from '@/components/EmptyState';
 import { PromptCard, PromptCardSkeleton } from '@/components/PromptCard';
+import { type SortOption, SortSelect } from '@/components/SortSelect';
 import {
   AdvancedSearchPanel,
   type AutocompleteSuggestion,
   type SearchFilters,
   type SearchMode,
 } from '@/components/search/AdvancedSearchPanel';
-import { type SortOption, SortSelect } from '@/components/SortSelect';
 import { ErrorWithRetry } from '@/components/ui/error-with-retry';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
@@ -208,16 +208,18 @@ export function PromptLibraryContent() {
   // Transform saved searches with proper typing to avoid deep type instantiation
   const savedSearchesList = useMemo(() => {
     // Cast to unknown first to break deep type inference chain
-    const rawData = savedSearchesQuery.data as unknown as {
-      savedSearches?: Array<{
-        id: string;
-        name: string;
-        query: string | null;
-        filters: Record<string, unknown>;
-        searchMode: string;
-        isDefault: boolean;
-      }>;
-    } | undefined;
+    const rawData = savedSearchesQuery.data as unknown as
+      | {
+          savedSearches?: Array<{
+            id: string;
+            name: string;
+            query: string | null;
+            filters: Record<string, unknown>;
+            searchMode: string;
+            isDefault: boolean;
+          }>;
+        }
+      | undefined;
 
     if (!rawData?.savedSearches) return undefined;
 
@@ -241,15 +243,17 @@ export function PromptLibraryContent() {
   // Transform search history with proper typing
   const searchHistoryList = useMemo(() => {
     // Cast to unknown first to break deep type inference chain
-    const rawData = searchHistoryQuery.data as unknown as {
-      history?: Array<{
-        id: string;
-        query: string;
-        searchMode: string;
-        resultCount: number;
-        createdAt: string;
-      }>;
-    } | undefined;
+    const rawData = searchHistoryQuery.data as unknown as
+      | {
+          history?: Array<{
+            id: string;
+            query: string;
+            searchMode: string;
+            resultCount: number;
+            createdAt: string;
+          }>;
+        }
+      | undefined;
 
     if (!rawData?.history) return undefined;
 
@@ -339,7 +343,12 @@ export function PromptLibraryContent() {
   }, []);
 
   // Empty state for no prompts
-  if (!isLoading && prompts.length === 0 && !searchQuery && (!searchFilters.tags || searchFilters.tags.length === 0)) {
+  if (
+    !isLoading &&
+    prompts.length === 0 &&
+    !searchQuery &&
+    (!searchFilters.tags || searchFilters.tags.length === 0)
+  ) {
     return (
       <div>
         {/* Page Header */}
@@ -538,9 +547,7 @@ export function PromptLibraryContent() {
       {/* Loading State */}
       {(isLoading || searchQueryResult.isLoading) && (
         <div
-          className={
-            viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'
-          }
+          className={viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}
         >
           {Array.from({ length: 6 }).map((_, i) => (
             <PromptCardSkeleton key={i} />
@@ -568,9 +575,7 @@ export function PromptLibraryContent() {
       {/* Search Results */}
       {showSearchResults && !searchQueryResult.isLoading && searchResults.length > 0 && (
         <div
-          className={
-            viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'
-          }
+          className={viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}
         >
           {searchResults.map((result) => (
             <PromptCard

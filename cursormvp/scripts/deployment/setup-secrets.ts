@@ -8,7 +8,7 @@
  * Usage: bun scripts/deployment/setup-secrets.ts
  */
 
-import { $ } from "bun";
+import { $ } from 'bun';
 
 interface Secret {
   name: string;
@@ -19,40 +19,40 @@ interface Secret {
 
 const SECRETS: Secret[] = [
   {
-    name: "VERCEL_TOKEN",
-    description: "Vercel API token for deployments",
+    name: 'VERCEL_TOKEN',
+    description: 'Vercel API token for deployments',
     required: true,
-    howToGet: "https://vercel.com/account/tokens → Create Token",
+    howToGet: 'https://vercel.com/account/tokens → Create Token',
   },
   {
-    name: "VERCEL_ORG_ID",
-    description: "Vercel organization/user ID",
+    name: 'VERCEL_ORG_ID',
+    description: 'Vercel organization/user ID',
     required: true,
-    howToGet: "Run: cd app/packages/web-app && vercel link, then cat .vercel/project.json",
+    howToGet: 'Run: cd app/packages/web-app && vercel link, then cat .vercel/project.json',
   },
   {
-    name: "VERCEL_PROJECT_ID",
-    description: "Vercel project ID",
+    name: 'VERCEL_PROJECT_ID',
+    description: 'Vercel project ID',
     required: true,
-    howToGet: "Run: cd app/packages/web-app && vercel link, then cat .vercel/project.json",
+    howToGet: 'Run: cd app/packages/web-app && vercel link, then cat .vercel/project.json',
   },
   {
-    name: "RAILWAY_TOKEN",
-    description: "Railway API token",
+    name: 'RAILWAY_TOKEN',
+    description: 'Railway API token',
     required: true,
-    howToGet: "https://railway.app/account/tokens",
+    howToGet: 'https://railway.app/account/tokens',
   },
   {
-    name: "API_URL",
-    description: "Production API URL (for health checks)",
+    name: 'API_URL',
+    description: 'Production API URL (for health checks)',
     required: true,
-    howToGet: "Your Railway deployment URL, e.g., https://api.yourdomain.com",
+    howToGet: 'Your Railway deployment URL, e.g., https://api.yourdomain.com',
   },
   {
-    name: "WEB_URL",
-    description: "Production Web URL (for health checks)",
+    name: 'WEB_URL',
+    description: 'Production Web URL (for health checks)',
     required: true,
-    howToGet: "Your Vercel deployment URL, e.g., https://app.yourdomain.com",
+    howToGet: 'Your Vercel deployment URL, e.g., https://app.yourdomain.com',
   },
 ];
 
@@ -93,24 +93,24 @@ async function setSecret(name: string, value: string): Promise<boolean> {
 }
 
 async function main() {
-  console.log("🔐 GitHub Secrets Setup for CI/CD\n");
-  console.log("━".repeat(50));
+  console.log('🔐 GitHub Secrets Setup for CI/CD\n');
+  console.log('━'.repeat(50));
 
   // Check GitHub CLI
   if (!(await checkGitHubCLI())) {
-    console.error("❌ GitHub CLI (gh) not found.");
-    console.log("   Install: https://cli.github.com/");
+    console.error('❌ GitHub CLI (gh) not found.');
+    console.log('   Install: https://cli.github.com/');
     process.exit(1);
   }
 
   // Check GitHub authentication
   if (!(await checkGitHubAuth())) {
-    console.error("❌ Not authenticated with GitHub CLI.");
-    console.log("   Run: gh auth login");
+    console.error('❌ Not authenticated with GitHub CLI.');
+    console.log('   Run: gh auth login');
     process.exit(1);
   }
 
-  console.log("✅ GitHub CLI authenticated\n");
+  console.log('✅ GitHub CLI authenticated\n');
 
   // Get existing secrets
   const existingSecrets = await getExistingSecrets();
@@ -119,7 +119,7 @@ async function main() {
   // Process each secret
   for (const secret of SECRETS) {
     const exists = existingSecrets.includes(secret.name);
-    const status = exists ? "✅" : "❌";
+    const status = exists ? '✅' : '❌';
 
     console.log(`${status} ${secret.name}`);
     console.log(`   ${secret.description}`);
@@ -139,31 +139,31 @@ async function main() {
         console.log(`   ⏭️  Skipped`);
       }
     }
-    console.log("");
+    console.log('');
   }
 
-  console.log("━".repeat(50));
-  console.log("\n📊 Summary:\n");
+  console.log('━'.repeat(50));
+  console.log('\n📊 Summary:\n');
 
   // Final status check
   const finalSecrets = await getExistingSecrets();
   const missing = SECRETS.filter((s) => s.required && !finalSecrets.includes(s.name));
 
   if (missing.length === 0) {
-    console.log("✅ All required secrets are configured!\n");
-    console.log("You can now run deployments:");
-    console.log("  - Push to main branch for automatic deployment");
-    console.log("  - Run: gh workflow run deploy-production.yml");
+    console.log('✅ All required secrets are configured!\n');
+    console.log('You can now run deployments:');
+    console.log('  - Push to main branch for automatic deployment');
+    console.log('  - Run: gh workflow run deploy-production.yml');
   } else {
-    console.log("⚠️  Missing required secrets:\n");
+    console.log('⚠️  Missing required secrets:\n');
     for (const secret of missing) {
       console.log(`   - ${secret.name}`);
     }
-    console.log("\nRun this script again to configure missing secrets.");
+    console.log('\nRun this script again to configure missing secrets.');
   }
 }
 
 main().catch((error) => {
-  console.error("❌ Setup failed:", error.message);
+  console.error('❌ Setup failed:', error.message);
   process.exit(1);
 });

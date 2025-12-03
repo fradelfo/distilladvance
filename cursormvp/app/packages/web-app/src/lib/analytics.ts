@@ -429,7 +429,9 @@ export function trackWebVitals(metric: {
 }): void {
   // Log in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)}ms (${metric.rating || 'unknown'})`);
+    console.log(
+      `[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)}ms (${metric.rating || 'unknown'})`
+    );
   }
 
   // Track to PostHog
@@ -440,9 +442,11 @@ export function trackWebVitals(metric: {
     metric_rating: metric.rating,
     // Include useful context
     path: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    connection_type: typeof navigator !== 'undefined'
-      ? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
-      : undefined,
+    connection_type:
+      typeof navigator !== 'undefined'
+        ? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
+            ?.effectiveType
+        : undefined,
   });
 }
 

@@ -1,10 +1,10 @@
 'use client';
 
-import { ArrowRight, Sparkles, Zap } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { ArrowRight, Sparkles, Zap } from 'lucide-react';
+import Link from 'next/link';
 
 type UpgradeNudgeVariant = 'inline' | 'card' | 'banner';
 type RequiredPlan = 'PRO' | 'TEAM';
@@ -56,12 +56,7 @@ export function UpgradeNudge({
 
   if (variant === 'inline') {
     return (
-      <div
-        className={cn(
-          'flex items-center gap-2 text-sm text-muted-foreground',
-          className
-        )}
-      >
+      <div className={cn('flex items-center gap-2 text-sm text-muted-foreground', className)}>
         <Sparkles className="h-4 w-4 text-amber-500" />
         <span>{displayMessage}</span>
         {showCTA && (

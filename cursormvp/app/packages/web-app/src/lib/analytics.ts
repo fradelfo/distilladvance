@@ -17,6 +17,7 @@ const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'http://localhost:8
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== 'false';
 
 let isInitialized = false;
+let isDisabledLogged = false;
 
 // ============================================================================
 // Initialization
@@ -30,7 +31,11 @@ export function initAnalytics(): void {
   if (typeof window === 'undefined') return;
   if (isInitialized) return;
   if (!ANALYTICS_ENABLED || !POSTHOG_KEY) {
-    console.log('[Analytics] Disabled or no API key configured');
+    // Only log once in development to avoid console spam
+    if (!isDisabledLogged && process.env.NODE_ENV === 'development') {
+      console.log('[Analytics] Disabled or no API key configured');
+      isDisabledLogged = true;
+    }
     return;
   }
 

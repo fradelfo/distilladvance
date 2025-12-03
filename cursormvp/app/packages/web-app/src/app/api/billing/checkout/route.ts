@@ -38,6 +38,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const priceId = STRIPE_PRICES[priceKey];
 
     if (!priceId) {
+      // Distinguish between missing config vs invalid input
+      const allPricesEmpty = Object.values(STRIPE_PRICES).every((p) => !p);
+      if (allPricesEmpty) {
+        return NextResponse.json(
+          { success: false, message: 'Billing is not configured. Please contact support.' },
+          { status: 503 }
+        );
+      }
       return NextResponse.json(
         { success: false, message: 'Invalid plan or interval' },
         { status: 400 }

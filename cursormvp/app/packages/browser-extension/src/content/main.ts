@@ -9,6 +9,7 @@ import type {
   ConversationSource,
   ExtensionMessage,
 } from '@distill/shared-types';
+import { browser } from '../shared/browser-api';
 import { MessageTypes } from '../shared/messages';
 import { type CaptureModal, showCaptureModal } from './components/CaptureModal';
 
@@ -381,7 +382,7 @@ async function openCaptureModal(): Promise<void> {
 }
 
 // Listen for messages from background script and popup
-chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
+browser.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
   console.log('[Distill] Content script received message:', message.type);
 
   // Handle async operations properly
@@ -394,7 +395,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendRe
           console.log('[Distill] Conversation captured:', capturedData.messages.length, 'messages');
 
           // Send back to background script
-          chrome.runtime
+          browser.runtime
             .sendMessage({
               type: MessageTypes.CONVERSATION_CAPTURED,
               payload: capturedData,

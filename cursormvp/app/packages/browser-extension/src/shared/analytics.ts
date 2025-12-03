@@ -6,6 +6,7 @@
  */
 
 import type { ConversationSource } from '@distill/shared-types';
+import { browser } from './browser-api';
 import { config } from './config';
 
 // ============================================================================
@@ -26,7 +27,7 @@ let analyticsEnabled = true;
  */
 export async function initExtensionAnalytics(): Promise<void> {
   // Generate or retrieve session ID
-  const storage = await chrome.storage.local.get(['analyticsSessionId', 'analyticsEnabled']);
+  const storage = await browser.storage.local.get(['analyticsSessionId', 'analyticsEnabled']);
 
   if (storage.analyticsEnabled === false) {
     analyticsEnabled = false;
@@ -34,10 +35,10 @@ export async function initExtensionAnalytics(): Promise<void> {
   }
 
   sessionId = storage.analyticsSessionId || generateSessionId();
-  await chrome.storage.local.set({ analyticsSessionId: sessionId });
+  await browser.storage.local.set({ analyticsSessionId: sessionId });
 
   // Check for user ID from auth
-  const authStorage = await chrome.storage.local.get(['userId']);
+  const authStorage = await browser.storage.local.get(['userId']);
   userId = authStorage.userId || null;
 }
 
@@ -54,7 +55,7 @@ function generateSessionId(): string {
 export function setUserId(id: string | null): void {
   userId = id;
   if (id) {
-    chrome.storage.local.set({ userId: id });
+    browser.storage.local.set({ userId: id });
   }
 }
 
@@ -83,7 +84,7 @@ async function trackEvent(event: string, properties: Record<string, unknown>): P
     event,
     properties: {
       ...properties,
-      extensionVersion: chrome.runtime.getManifest().version,
+      extensionVersion: browser.runtime.getManifest().version,
       source: 'extension',
     },
     userId: userId || undefined,
@@ -118,8 +119,8 @@ async function trackEvent(event: string, properties: Record<string, unknown>): P
  * Get auth token from storage.
  */
 async function getAuthToken(): Promise<string | null> {
-  const storage = await chrome.storage.local.get(['authToken']);
-  return storage.authToken || null;
+  const storage = await browser.storage.local.get(['authToken']);
+  return (storage as { authToken?: string }).authToken || null;
 }
 
 // ============================================================================
@@ -130,7 +131,7 @@ async function getAuthToken(): Promise<string | null> {
  * Track extension installation.
  */
 export function trackExtensionInstalled(): void {
-  const manifest = chrome.runtime.getManifest();
+  const manifest = browser.runtime.getManifest();
 
   trackEvent('extension_installed', {
     browser: 'chrome',
@@ -143,7 +144,7 @@ export function trackExtensionInstalled(): void {
  * Track extension update.
  */
 export function trackExtensionUpdated(previousVersion: string): void {
-  const manifest = chrome.runtime.getManifest();
+  const manifest = browser.runtime.getManifest();
 
   trackEvent('extension_updated', {
     previousVersion,
@@ -264,7 +265,7 @@ export function trackError(errorCode: string, errorMessage: string, context?: st
  */
 export async function setAnalyticsEnabled(enabled: boolean): Promise<void> {
   analyticsEnabled = enabled;
-  await chrome.storage.local.set({ analyticsEnabled: enabled });
+  await browser.storage.local.set({ analyticsEnabled: enabled });
 }
 
 /**

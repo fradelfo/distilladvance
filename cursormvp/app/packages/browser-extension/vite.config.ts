@@ -1,17 +1,20 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
-import { build, defineConfig } from 'vite';
+import { build, defineConfig, type ConfigEnv } from 'vite';
+
+type BrowserTarget = 'chrome' | 'firefox';
 
 // Plugin to copy static files, fix output paths, and build content script as IIFE
-function copyStaticFiles() {
+function copyStaticFiles(browser: BrowserTarget) {
   return {
     name: 'copy-static-files',
     async writeBundle() {
       const distDir = resolve(__dirname, 'dist');
 
-      // Copy manifest.json
-      copyFileSync(resolve(__dirname, 'manifest.json'), resolve(distDir, 'manifest.json'));
+      // Copy the appropriate manifest based on browser target
+      const manifestFile = browser === 'firefox' ? 'manifest.firefox.json' : 'manifest.json';
+      copyFileSync(resolve(__dirname, manifestFile), resolve(distDir, 'manifest.json'));
 
       // Copy icons if they exist
       const iconsDir = resolve(__dirname, 'public/icons');
@@ -94,56 +97,62 @@ function copyStaticFiles() {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), copyStaticFiles()],
-  publicDir: 'public',
-  build: {
-    outDir: 'dist',
-    emptyDirOnBuildStart: true,
-    rollupOptions: {
-      input: {
-        // Popup React app
-        popup: resolve(__dirname, 'src/popup/index.html'),
-        // Options page
-        options: resolve(__dirname, 'src/options/index.html'),
-        // Background service worker
-        'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
-        // Content script is built separately as IIFE (see copyStaticFiles plugin)
-      },
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          // Keep CSS files in appropriate locations
-          if (assetInfo.name?.endsWith('.css')) {
-            if (assetInfo.name.includes('popup')) {
-              return 'popup/[name][extname]';
+export default defineConfig(({ mode }: ConfigEnv) => {
+  // Determine browser target from mode
+  const browser: BrowserTarget = mode === 'firefox' ? 'firefox' : 'chrome';
+  console.log(`Building for: ${browser}`);
+
+  return {
+    plugins: [react(), copyStaticFiles(browser)],
+    publicDir: 'public',
+    build: {
+      outDir: 'dist',
+      emptyDirOnBuildStart: true,
+      rollupOptions: {
+        input: {
+          // Popup React app
+          popup: resolve(__dirname, 'src/popup/index.html'),
+          // Options page
+          options: resolve(__dirname, 'src/options/index.html'),
+          // Background service worker
+          'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
+          // Content script is built separately as IIFE (see copyStaticFiles plugin)
+        },
+        output: {
+          entryFileNames: '[name].js',
+          chunkFileNames: 'chunks/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            // Keep CSS files in appropriate locations
+            if (assetInfo.name?.endsWith('.css')) {
+              if (assetInfo.name.includes('popup')) {
+                return 'popup/[name][extname]';
+              }
+              return 'content/[name][extname]';
             }
-            return 'content/[name][extname]';
-          }
-          return '[name][extname]';
-        },
-        // Vendor chunk for popup/background
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+            return '[name][extname]';
+          },
+          // Vendor chunk for popup/background
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          },
         },
       },
+      // Enable IIFE format for content scripts (no module imports)
+      target: 'esnext',
+      minify: false, // Easier debugging during development
+      sourcemap: true,
     },
-    // Enable IIFE format for content scripts (no module imports)
-    target: 'esnext',
-    minify: false, // Easier debugging during development
-    sourcemap: true,
-  },
-  resolve: {
-    alias: {
-      '@distill/shared-types': resolve(__dirname, '../shared-types/src/index.ts'),
+    resolve: {
+      alias: {
+        '@distill/shared-types': resolve(__dirname, '../shared-types/src/index.ts'),
+      },
     },
-  },
-  // Development server config (for testing popup separately)
-  server: {
-    port: 5173,
-    open: '/src/popup/index.html',
-  },
+    // Development server config (for testing popup separately)
+    server: {
+      port: 5173,
+      open: '/src/popup/index.html',
+    },
+  };
 });

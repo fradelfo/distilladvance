@@ -1,6 +1,7 @@
 import type { CapturedConversation, ConversationSource } from '@distill/shared-types';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { browser } from '../shared/browser-api';
 import { config, urls } from '../shared/config';
 import { type AuthStatusPayload, MessageTypes, sendMessage } from '../shared/messages';
 import { CaptureButton } from './components/CaptureButton';
@@ -37,7 +38,7 @@ export function App(): React.ReactElement {
 
   const checkCurrentPage = useCallback(async () => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.url) {
         setState((prev) => ({ ...prev, pageStatus: 'unsupported', platform: null }));
         return;
@@ -81,7 +82,7 @@ export function App(): React.ReactElement {
 
   const loadStats = useCallback(async () => {
     try {
-      const result = await chrome.storage.local.get(['promptsSaved', 'lastCapture']);
+      const result = await browser.storage.local.get(['promptsSaved', 'lastCapture']);
       setState((prev) => ({
         ...prev,
         stats: {
@@ -110,7 +111,7 @@ export function App(): React.ReactElement {
     setState((prev) => ({ ...prev, captureModalOpen: true, conversation: null }));
 
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       console.log('[Distill] Active tab:', tab?.id, tab?.url);
       if (!tab?.id) {
         console.log('[Distill] No tab ID found');
@@ -122,7 +123,7 @@ export function App(): React.ReactElement {
       console.log('[Distill] Sending CAPTURE_CONVERSATION message to tab', tab.id);
 
       // Add timeout to the message
-      const messagePromise = chrome.tabs.sendMessage(tab.id, {
+      const messagePromise = browser.tabs.sendMessage(tab.id, {
         type: MessageTypes.CAPTURE_CONVERSATION,
         payload: {},
         source: 'popup',
@@ -196,18 +197,18 @@ export function App(): React.ReactElement {
     }));
 
     // Persist stats
-    chrome.storage.local.set({
+    browser.storage.local.set({
       promptsSaved: state.stats.promptsSaved + 1,
       lastCapture: new Date().toISOString(),
     });
   };
 
   const openDashboard = () => {
-    chrome.tabs.create({ url: urls.dashboard });
+    browser.tabs.create({ url: urls.dashboard });
   };
 
   const openLogin = () => {
-    chrome.tabs.create({ url: urls.login });
+    browser.tabs.create({ url: urls.login });
   };
 
   return (

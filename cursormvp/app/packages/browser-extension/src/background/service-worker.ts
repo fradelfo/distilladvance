@@ -4,6 +4,7 @@
  */
 
 import type { ExtensionMessage } from '@distill/shared-types';
+import type { Runtime, Tabs } from 'webextension-polyfill';
 import {
   initExtensionAnalytics,
   trackChatCaptured,
@@ -12,11 +13,12 @@ import {
   trackExtensionUpdated,
   trackKeyboardShortcutUsed,
 } from '../shared/analytics';
+import { browser } from '../shared/browser-api';
 import { config } from '../shared/config';
 import { MessageTypes } from '../shared/messages';
 
 // Initialize extension
-chrome.runtime.onInstalled.addListener(async (details) => {
+browser.runtime.onInstalled.addListener(async (details) => {
   // Initialize analytics first
   await initExtensionAnalytics();
 
@@ -31,13 +33,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 // Handle keyboard shortcut command
-chrome.commands.onCommand.addListener(async (command) => {
+browser.commands.onCommand.addListener(async (command) => {
   if (command === 'capture-conversation') {
     trackKeyboardShortcutUsed();
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (tab?.id) {
       // Send message to content script to open capture modal
-      chrome.tabs.sendMessage(tab.id, {
+      browser.tabs.sendMessage(tab.id, {
         type: MessageTypes.OPEN_CAPTURE_MODAL,
         payload: {},
         source: 'background',
@@ -48,27 +50,23 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 // Handle messages from content scripts and popup
-chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
-  handleMessage(message, sender)
-    .then(sendResponse)
-    .catch((error) => {
-      console.error('[Distill] Message handling error:', error);
-      sendResponse({ success: false, error: error.message });
-    });
-
-  // Return true to indicate async response
-  return true;
+browser.runtime.onMessage.addListener((message: ExtensionMessage, sender) => {
+  // Return a promise for async handling
+  return handleMessage(message, sender).catch((error) => {
+    console.error('[Distill] Message handling error:', error);
+    return { success: false, error: error.message };
+  });
 });
 
 // Context menu setup
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
+browser.runtime.onInstalled.addListener(() => {
+  browser.contextMenus.create({
     id: 'distill-selection',
     title: 'Distill Selected Text',
     contexts: ['selection'],
   });
 
-  chrome.contextMenus.create({
+  browser.contextMenus.create({
     id: 'distill-page',
     title: 'Distill This Conversation',
     contexts: ['page'],
@@ -82,7 +80,7 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+browser.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'distill-selection' && info.selectionText) {
     trackContextMenuUsed('distill-selection');
     handleDistillSelection(info.selectionText, tab);
@@ -98,7 +96,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 async function handleMessage(
   message: ExtensionMessage,
-  sender: chrome.runtime.MessageSender
+  sender: Runtime.MessageSender
 ): Promise<unknown> {
   const { type, payload } = message;
 
@@ -139,19 +137,13 @@ async function handleMessage(
 
 async function handleCaptureConversation(payload: unknown) {
   // Request capture from content script
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    return new Promise((resolve) => {
-      chrome.tabs.sendMessage(
-        tab.id!,
-        {
-          type: MessageTypes.CAPTURE_CONVERSATION,
-          payload: {},
-          source: 'background',
-          timestamp: Date.now(),
-        },
-        resolve
-      );
+    return browser.tabs.sendMessage(tab.id, {
+      type: MessageTypes.CAPTURE_CONVERSATION,
+      payload: {},
+      source: 'background',
+      timestamp: Date.now(),
     });
   }
   return { success: false, error: 'No active tab' };
@@ -159,8 +151,8 @@ async function handleCaptureConversation(payload: unknown) {
 
 async function handleConversationCaptured(payload: unknown) {
   // Store captured conversation
-  const conversations = await chrome.storage.local.get('conversations');
-  const existing = conversations.conversations || [];
+  const conversations = await browser.storage.local.get('conversations');
+  const existing = (conversations.conversations as Array<unknown>) || [];
 
   const capturedData = payload as {
     source?: string;
@@ -174,14 +166,14 @@ async function handleConversationCaptured(payload: unknown) {
   });
 
   // Keep last 100 conversations
-  await chrome.storage.local.set({
+  await browser.storage.local.set({
     conversations: existing.slice(0, 100),
   });
 
   // Update stats
-  const stats = await chrome.storage.local.get(['promptsSaved', 'lastCapture']);
-  await chrome.storage.local.set({
-    promptsSaved: (stats.promptsSaved || 0) + 1,
+  const stats = await browser.storage.local.get(['promptsSaved', 'lastCapture']);
+  await browser.storage.local.set({
+    promptsSaved: ((stats.promptsSaved as number) || 0) + 1,
     lastCapture: new Date().toISOString(),
   });
 
@@ -203,7 +195,7 @@ async function handleDistillRequest(payload: unknown) {
 
   try {
     // Get cookies for auth
-    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookies = await browser.cookies.getAll({ url: config.webUrl });
     const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
     const distillPayload = payload as {
@@ -300,7 +292,7 @@ async function handleSaveConversation(payload: unknown) {
 
   try {
     // Get cookies for auth
-    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookies = await browser.cookies.getAll({ url: config.webUrl });
     const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
     const savePayload = payload as {
@@ -354,9 +346,9 @@ async function handleSaveConversation(payload: unknown) {
     const savedConversation = result.result.data.conversation;
 
     // Update local stats
-    const stats = await chrome.storage.local.get(['conversationsSaved', 'lastSave']);
-    await chrome.storage.local.set({
-      conversationsSaved: (stats.conversationsSaved || 0) + 1,
+    const stats = await browser.storage.local.get(['conversationsSaved', 'lastSave']);
+    await browser.storage.local.set({
+      conversationsSaved: ((stats.conversationsSaved as number) || 0) + 1,
       lastSave: new Date().toISOString(),
     });
 
@@ -379,12 +371,12 @@ async function handleSaveConversation(payload: unknown) {
 }
 
 async function getSettings() {
-  const result = await chrome.storage.sync.get('settings');
+  const result = await browser.storage.sync.get('settings');
   return result.settings || getDefaultSettings();
 }
 
 async function updateSettings(settings: unknown) {
-  await chrome.storage.sync.set({ settings });
+  await browser.storage.sync.set({ settings });
   return { success: true };
 }
 
@@ -392,7 +384,7 @@ async function getAuthStatus() {
   try {
     // Check auth by calling the web app's session endpoint
     // We need to get cookies for the web app domain
-    const cookies = await chrome.cookies.getAll({ url: config.webUrl });
+    const cookies = await browser.cookies.getAll({ url: config.webUrl });
     const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
     console.log('[Distill] Checking auth with cookies from:', config.webUrl);
@@ -421,7 +413,7 @@ async function getAuthStatus() {
 
     // Cache the user ID for API calls
     if (authenticated && session.user.id) {
-      await chrome.storage.local.set({ userId: session.user.id });
+      await browser.storage.local.set({ userId: session.user.id });
     }
 
     return { authenticated, userId: session?.user?.id };
@@ -440,16 +432,16 @@ async function getAuthStatus() {
 // Context Menu Handlers
 // ============================================================================
 
-async function handleDistillSelection(text: string, tab?: chrome.tabs.Tab) {
+async function handleDistillSelection(text: string, tab?: Tabs.Tab) {
   // Open popup with selected text for distillation
   console.log('[Distill] Distilling selection:', text.substring(0, 100));
 }
 
-async function handleDistillPage(tab?: chrome.tabs.Tab) {
+async function handleDistillPage(tab?: Tabs.Tab) {
   if (!tab?.id) return;
 
   // Send message to content script to open capture modal
-  chrome.tabs.sendMessage(tab.id, {
+  browser.tabs.sendMessage(tab.id, {
     type: MessageTypes.OPEN_CAPTURE_MODAL,
     payload: {},
     source: 'background',
@@ -462,7 +454,7 @@ async function handleDistillPage(tab?: chrome.tabs.Tab) {
 // ============================================================================
 
 function initializeDefaults() {
-  chrome.storage.sync.set({
+  browser.storage.sync.set({
     settings: getDefaultSettings(),
   });
 }

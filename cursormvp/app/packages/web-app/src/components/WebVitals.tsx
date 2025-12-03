@@ -11,7 +11,7 @@
  * - TTFB (Time to First Byte) - server response time
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { onCLS, onLCP, onTTFB, onINP, type Metric } from 'web-vitals';
 import { trackWebVitals } from '@/lib/analytics';
 
@@ -41,7 +41,14 @@ function reportMetric(metric: Metric): void {
 }
 
 export function WebVitals() {
+  // Use ref to prevent duplicate registration in React.StrictMode
+  const isRegistered = useRef(false);
+
   useEffect(() => {
+    // Guard against duplicate registration (React.StrictMode runs effects twice)
+    if (isRegistered.current) return;
+    isRegistered.current = true;
+
     // Register all Core Web Vitals observers
     onCLS(reportMetric);
     onLCP(reportMetric);

@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { browser } from '../../shared/browser-api';
 import { urls } from '../../shared/config';
 
 interface ErrorStateProps {
@@ -151,7 +152,7 @@ export function ErrorState({
             type="button"
             className="btn-primary"
             onClick={() => {
-              chrome.tabs.create({ url: urls.login });
+              browser.tabs.create({ url: urls.login });
             }}
           >
             Log In

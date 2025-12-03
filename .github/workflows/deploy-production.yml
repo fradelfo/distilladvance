@@ -65,13 +65,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
 
-      - name: Run database migrations
-        run: railway run --service api0 -- bunx prisma migrate deploy
-        working-directory: cursormvp/app/packages/api
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
-
   # ============================================================================
   # Deploy Web to Railway
   # ============================================================================

@@ -1,41 +1,49 @@
-# Build stage
+# Build stage for Distill web-app
 FROM oven/bun:1 AS builder
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
-# Copy the entire monorepo structure needed for build
+# Copy the monorepo structure needed for build (paths relative to cursormvp/)
 COPY package.json bun.lock* ./
 COPY app/packages/web-app/package.json ./app/packages/web-app/
 COPY app/packages/api/package.json ./app/packages/api/
 COPY app/packages/shared-types/package.json ./app/packages/shared-types/
 
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Copy source files
-COPY app/packages/shared-types ./app/packages/shared-types
+# Copy Prisma schema BEFORE install (needed for postinstall script)
 COPY app/packages/api/prisma ./app/packages/api/prisma
+
+# Install dependencies (postinstall will generate Prisma client)
+RUN bun install --ignore-scripts
+RUN bunx prisma@5.22.0 generate --schema=app/packages/api/prisma/schema.prisma
+
+# Copy source files (API needed for type imports)
+COPY app/packages/shared-types ./app/packages/shared-types
+COPY app/packages/api ./app/packages/api
 COPY app/packages/web-app ./app/packages/web-app
 
-# Generate Prisma client
-RUN cd app/packages/web-app && bunx prisma generate --schema=../api/prisma/schema.prisma
-
-# Build the Next.js app
+# Build the Next.js app (without standalone - Bun node_modules incompatible)
 RUN cd app/packages/web-app && bun run build
 
-# Production stage
+# Production stage - use Bun since it built the node_modules
 FROM oven/bun:1-slim AS runner
+
+# Install OpenSSL for Prisma runtime
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Copy built assets from builder
-COPY --from=builder /app/app/packages/web-app/.next/standalone ./
-COPY --from=builder /app/app/packages/web-app/.next/static ./app/packages/web-app/.next/static
-COPY --from=builder /app/app/packages/web-app/public ./app/packages/web-app/public
+# Copy the entire workspace with node_modules and built assets
+COPY --from=builder /app ./
 
 EXPOSE 3000
 
-CMD ["bun", "app/packages/web-app/server.js"]
+# Run next start from the web-app directory
+WORKDIR /app/app/packages/web-app
+CMD ["bun", "run", "start"]

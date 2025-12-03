@@ -1,0 +1,126 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  BUN_VERSION: 'latest'
+
+defaults:
+  run:
+    working-directory: cursormvp
+
+jobs:
+  # ============================================================================
+  # CI Checks - Must pass before deployment
+  # ============================================================================
+  ci:
+    name: CI Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: bun run type-check
+
+      - name: Test
+        run: bun run test
+
+      - name: Build validation
+        run: |
+          bun run web:build
+          bun run api:build
+
+  # ============================================================================
+  # Deploy API to Railway
+  # ============================================================================
+  deploy-api:
+    name: Deploy API to Railway
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+        working-directory: .
+
+      - name: Deploy API to Railway
+        run: railway up --service api --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Run database migrations
+        run: railway run --service api -- bunx prisma migrate deploy
+        working-directory: cursormvp/app/packages/api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # ============================================================================
+  # Deploy Web to Railway
+  # ============================================================================
+  deploy-web:
+    name: Deploy Web to Railway
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+        working-directory: .
+
+      - name: Deploy Web to Railway
+        run: railway up --service web-app --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # ============================================================================
+  # Post-deployment verification
+  # ============================================================================
+  verify:
+    name: Verify Deployment
+    needs: [deploy-api, deploy-web]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for services to stabilize
+        run: sleep 30
+        working-directory: .
+
+      - name: Check API health
+        working-directory: .
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ vars.API_URL }}/health || echo "000")
+          if [ "$response" != "200" ]; then
+            echo "API health check failed with status: $response"
+            exit 1
+          fi
+          echo "API health check passed"
+
+      - name: Check Web app
+        working-directory: .
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ vars.WEB_URL }}/api/health || echo "000")
+          if [ "$response" != "200" ]; then
+            echo "Web app health check failed with status: $response"
+            exit 1
+          fi
+          echo "Web app health check passed"

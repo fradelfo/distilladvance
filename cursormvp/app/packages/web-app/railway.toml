@@ -1,6 +1,7 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "app/packages/web-app/Dockerfile"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["app/packages/web-app/**", "app/packages/shared-types/**", "app/packages/api/prisma/**"]
 
 [deploy]
 healthcheckPath = "/api/health"

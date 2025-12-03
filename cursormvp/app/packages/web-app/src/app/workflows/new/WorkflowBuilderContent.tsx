@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { SortableStep } from '@/components/workflows/SortableStep';
+import { trackWorkflowCreated, trackWorkflowUpdated } from '@/lib/analytics';
 import { trpc } from '@/lib/trpc';
 import { extractVariables } from '@/lib/variables';
 import {
@@ -298,6 +299,9 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
           });
         }
 
+        // Track workflow creation
+        trackWorkflowCreated(newWorkflowId, steps.length);
+
         utils.workflow.list.invalidate();
         router.push(`/workflows/${newWorkflowId}`);
       } else if (workflowId) {
@@ -326,6 +330,9 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
             stepIds,
           });
         }
+
+        // Track workflow update
+        trackWorkflowUpdated(workflowId, ['name', 'description', 'steps']);
 
         utils.workflow.getById.invalidate({ id: workflowId });
         router.push(`/workflows/${workflowId}`);

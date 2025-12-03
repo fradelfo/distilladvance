@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["openssl", "libuuid"]
+
+[phases.install]
+cmds = ["bun install"]
+
+[phases.build]
+cmds = ["bunx prisma generate --schema=../api/prisma/schema.prisma", "bun run build"]
+
+[start]
+cmd = "bun run start"

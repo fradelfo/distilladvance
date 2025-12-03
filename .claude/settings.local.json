@@ -181,7 +181,8 @@
       "Bash(app/packages/api/src/lib/redis.ts )",
       "Bash(app/packages/api/src/trpc/routers/billing.ts )",
       "Bash(app/packages/api/src/trpc/router.ts )",
-      "Bash(app/packages/web-app/src/components/billing/ )"
+      "Bash(app/packages/web-app/src/components/billing/ )",
+      "Bash(ls:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

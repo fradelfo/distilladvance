@@ -185,14 +185,20 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
           return;
         }
 
+        // Extract variables and auto-map them to initial inputs by default
+        const variables = extractVariables(fullPrompt.prompt.content);
+        const autoMapping = Object.fromEntries(
+          variables.map((v) => [v, `initial.${v}`])
+        );
+
         const newStep: WorkflowStep = {
           id: `temp-${Date.now()}`, // Temporary ID until saved
           promptId: fullPrompt.prompt.id,
           promptTitle: fullPrompt.prompt.title,
           promptContent: fullPrompt.prompt.content,
           order: steps.length,
-          inputMapping: {},
-          variables: extractVariables(fullPrompt.prompt.content),
+          inputMapping: autoMapping,
+          variables,
         };
 
         console.log('[Workflow] Adding new step:', newStep);
@@ -359,8 +365,8 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/workflows">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="ghost" size="icon" aria-label="Back to workflows">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
         </Link>
         <h1 className="text-2xl font-bold">
@@ -408,7 +414,7 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
 
       {/* Steps */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle>Steps</CardTitle>
           <Dialog open={isAddingStep} onOpenChange={setIsAddingStep}>
             <DialogTrigger asChild>
@@ -435,11 +441,15 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
                   Failed to load prompts: {promptsError.message}
                 </p>
               )}
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div
+                className="space-y-2 max-h-96 overflow-y-auto"
+                role="listbox"
+                aria-label="Available prompts"
+              >
                 {isLoadingPrompts ? (
-                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" aria-label="Loading prompts" />
                 ) : promptsError ? (
-                  <p className="text-sm text-destructive py-4 text-center">
+                  <p className="text-sm text-destructive py-4 text-center" role="alert">
                     Failed to load prompts. Please try again.
                   </p>
                 ) : availablePrompts.length === 0 ? (
@@ -452,14 +462,16 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
                       key={prompt.id}
                       onClick={() => handleAddStep(prompt.id)}
                       disabled={isLoadingStep}
-                      className="w-full p-3 text-left rounded-lg border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      role="option"
+                      aria-selected="false"
+                      className="w-full p-3 text-left rounded-lg border hover:bg-accent focus:bg-accent focus:outline-none focus:ring-2 focus:ring-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="font-medium">{prompt.title}</div>
                       <div className="text-sm text-muted-foreground">
                         Used {prompt.usageCount || 0} times
                       </div>
                       {prompt.tags?.length > 0 && (
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-1 mt-2" aria-label="Tags">
                           {prompt.tags.slice(0, 3).map((tag: string) => (
                             <Badge key={tag} variant="secondary" className="text-xs">
                               {tag}
@@ -531,12 +543,12 @@ export function WorkflowBuilderContent({ mode, workflowId }: WorkflowBuilderCont
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
         <Link href="/workflows">
-          <Button variant="outline">Cancel</Button>
+          <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
         </Link>
-        <Button onClick={handleSave} disabled={isSaving}>
-          <Save className="h-4 w-4 mr-2" />
+        <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
+          <Save className="h-4 w-4 mr-2" aria-hidden="true" />
           {isSaving ? 'Saving...' : 'Save Workflow'}
         </Button>
       </div>

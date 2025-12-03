@@ -109,33 +109,51 @@ export function fillVariables(content: string, values: Record<string, string>): 
  * inputMapping format:
  * - "initial.varName" -> get from initialInput
  * - "step.N.output" -> get output from step at order N
+ *
+ * promptVariables: Optional list of variables in the prompt template.
+ * If provided, unmapped variables will be looked up directly from initialInput
+ * as a fallback (for backwards compatibility with workflows created before
+ * auto-mapping was implemented).
  */
 export function resolveVariables(
   inputMapping: Record<string, string> | null,
   initialInput: Record<string, unknown>,
-  stepOutputs: Map<number, string>
+  stepOutputs: Map<number, string>,
+  promptVariables?: string[]
 ): Record<string, string> {
   const resolved: Record<string, string> = {};
 
-  if (!inputMapping) {
-    return resolved;
+  // Process explicit mappings
+  if (inputMapping) {
+    for (const [varName, source] of Object.entries(inputMapping)) {
+      if (source.startsWith('initial.')) {
+        const initialVar = source.slice(8); // Remove "initial."
+        const value = initialInput[initialVar];
+        if (value !== undefined && value !== null) {
+          resolved[varName] = String(value);
+        }
+      } else if (source.startsWith('step.')) {
+        // Format: "step.N.output"
+        const match = source.match(/^step\.(\d+)\.output$/);
+        if (match) {
+          const stepOrder = Number.parseInt(match[1], 10);
+          const output = stepOutputs.get(stepOrder);
+          if (output !== undefined) {
+            resolved[varName] = output;
+          }
+        }
+      }
+    }
   }
 
-  for (const [varName, source] of Object.entries(inputMapping)) {
-    if (source.startsWith('initial.')) {
-      const initialVar = source.slice(8); // Remove "initial."
-      const value = initialInput[initialVar];
-      if (value !== undefined && value !== null) {
-        resolved[varName] = String(value);
-      }
-    } else if (source.startsWith('step.')) {
-      // Format: "step.N.output"
-      const match = source.match(/^step\.(\d+)\.output$/);
-      if (match) {
-        const stepOrder = Number.parseInt(match[1], 10);
-        const output = stepOutputs.get(stepOrder);
-        if (output !== undefined) {
-          resolved[varName] = output;
+  // Fallback: Check for unmapped variables that have direct matches in initialInput
+  // This handles cases where workflows were created without explicit mappings
+  if (promptVariables) {
+    for (const varName of promptVariables) {
+      if (!(varName in resolved) && varName in initialInput) {
+        const value = initialInput[varName];
+        if (value !== undefined && value !== null) {
+          resolved[varName] = String(value);
         }
       }
     }
@@ -244,8 +262,9 @@ async function executeStep(
       },
     });
 
-    // Resolve variables
-    const resolvedVars = resolveVariables(inputMapping, initialInput, stepOutputs);
+    // Extract variables from prompt and resolve them
+    const promptVariables = extractVariables(prompt.content);
+    const resolvedVars = resolveVariables(inputMapping, initialInput, stepOutputs, promptVariables);
 
     // Fill prompt template with variables
     const filledPrompt = fillVariables(prompt.content, resolvedVars);

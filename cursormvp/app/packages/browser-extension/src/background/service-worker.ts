@@ -50,11 +50,12 @@ browser.commands.onCommand.addListener(async (command) => {
 });
 
 // Handle messages from content scripts and popup
-browser.runtime.onMessage.addListener((message: ExtensionMessage, sender) => {
+browser.runtime.onMessage.addListener((message: unknown, sender: Runtime.MessageSender) => {
   // Return a promise for async handling
-  return handleMessage(message, sender).catch((error) => {
+  const typedMessage = message as ExtensionMessage;
+  return handleMessage(typedMessage, sender).catch((error) => {
     console.error('[Distill] Message handling error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   });
 });
 

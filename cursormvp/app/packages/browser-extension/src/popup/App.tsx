@@ -11,6 +11,17 @@ import { StatusBadge } from './components/StatusBadge';
 
 type PageStatus = 'unsupported' | 'supported' | 'loading' | 'error';
 
+interface StatsStorage {
+  promptsSaved?: number;
+  lastCapture?: string;
+}
+
+interface CaptureResponse {
+  success: boolean;
+  data?: CapturedConversation;
+  error?: string;
+}
+
 interface AppState {
   pageStatus: PageStatus;
   platform: ConversationSource | null;
@@ -82,12 +93,15 @@ export function App(): React.ReactElement {
 
   const loadStats = useCallback(async () => {
     try {
-      const result = await browser.storage.local.get(['promptsSaved', 'lastCapture']);
+      const result = (await browser.storage.local.get([
+        'promptsSaved',
+        'lastCapture',
+      ])) as StatsStorage;
       setState((prev) => ({
         ...prev,
         stats: {
-          promptsSaved: result.promptsSaved || 0,
-          lastCapture: result.lastCapture || null,
+          promptsSaved: result.promptsSaved ?? 0,
+          lastCapture: result.lastCapture ?? null,
         },
       }));
     } catch (error) {
@@ -130,11 +144,11 @@ export function App(): React.ReactElement {
         timestamp: Date.now(),
       });
 
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Timeout waiting for conversation data')), 15000)
       );
 
-      const response = await Promise.race([messagePromise, timeoutPromise]);
+      const response = (await Promise.race([messagePromise, timeoutPromise])) as CaptureResponse;
 
       console.log('[Distill] Response from content script:', response);
       console.log('[Distill] Response type:', typeof response);
@@ -145,7 +159,7 @@ export function App(): React.ReactElement {
         console.log('[Distill] Got conversation data:', response.data.messages?.length, 'messages');
         setState((prev) => ({
           ...prev,
-          conversation: response.data,
+          conversation: response.data as CapturedConversation,
         }));
       } else {
         console.warn('[Distill] Invalid response format:', response);

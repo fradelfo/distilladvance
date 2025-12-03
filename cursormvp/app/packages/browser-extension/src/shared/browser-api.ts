@@ -15,7 +15,7 @@
  * - Chrome's chrome.* namespace → shimmed to browser.*
  */
 
-import browserPolyfill from 'webextension-polyfill';
+import browserPolyfill, { type Tabs, type Cookies, type Menus } from 'webextension-polyfill';
 
 /**
  * Unified browser API that works on Chrome and Firefox.
@@ -59,12 +59,12 @@ export const runtime = {
  * Type-safe wrapper for tabs operations
  */
 export const tabs = {
-  query: (queryInfo: browser.Tabs.QueryQueryInfoType) => browser.tabs.query(queryInfo),
+  query: (queryInfo: Tabs.QueryQueryInfoType) => browser.tabs.query(queryInfo),
   sendMessage: <T = unknown>(tabId: number, message: unknown) =>
     browser.tabs.sendMessage(tabId, message) as Promise<T>,
-  create: (createProperties: browser.Tabs.CreateCreatePropertiesType) =>
+  create: (createProperties: Tabs.CreateCreatePropertiesType) =>
     browser.tabs.create(createProperties),
-  update: (tabId: number, updateProperties: browser.Tabs.UpdateUpdatePropertiesType) =>
+  update: (tabId: number, updateProperties: Tabs.UpdateUpdatePropertiesType) =>
     browser.tabs.update(tabId, updateProperties),
 };
 
@@ -72,10 +72,10 @@ export const tabs = {
  * Type-safe wrapper for cookies operations
  */
 export const cookies = {
-  getAll: (details: browser.Cookies.GetAllDetailsType) => browser.cookies.getAll(details),
-  get: (details: browser.Cookies.GetDetailsType) => browser.cookies.get(details),
-  set: (details: browser.Cookies.SetDetailsType) => browser.cookies.set(details),
-  remove: (details: browser.Cookies.RemoveDetailsType) => browser.cookies.remove(details),
+  getAll: (details: Cookies.GetAllDetailsType) => browser.cookies.getAll(details),
+  get: (details: Cookies.GetDetailsType) => browser.cookies.get(details),
+  set: (details: Cookies.SetDetailsType) => browser.cookies.set(details),
+  remove: (details: Cookies.RemoveDetailsType) => browser.cookies.remove(details),
 };
 
 /**
@@ -90,7 +90,7 @@ export const commands = {
  * Type-safe wrapper for context menus
  */
 export const contextMenus = {
-  create: (createProperties: browser.Menus.CreateCreatePropertiesType) =>
+  create: (createProperties: Menus.CreateCreatePropertiesType) =>
     browser.contextMenus.create(createProperties),
   remove: (menuItemId: string | number) => browser.contextMenus.remove(menuItemId),
   removeAll: () => browser.contextMenus.removeAll(),

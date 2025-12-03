@@ -5,6 +5,7 @@
  */
 
 import type { CapturedConversation } from '@distill/shared-types';
+import { browser } from '../../shared/browser-api';
 import { MessageTypes } from '../../shared/messages';
 
 type ModalState = 'preview' | 'processing' | 'success' | 'error';
@@ -304,7 +305,7 @@ export class CaptureModal {
 
     // View & Edit button
     this.shadow.querySelector('[data-action="view-edit"]')?.addEventListener('click', () => {
-      chrome.runtime.sendMessage({
+      browser.runtime.sendMessage({
         type: 'OPEN_DASHBOARD',
         payload: {},
       });
@@ -364,8 +365,8 @@ export class CaptureModal {
     this.render();
 
     // Send distill request to background
-    chrome.runtime.sendMessage(
-      {
+    browser.runtime
+      .sendMessage({
         type: MessageTypes.DISTILL_REQUEST,
         payload: {
           messages: this.config.conversation?.messages || [],
@@ -373,16 +374,20 @@ export class CaptureModal {
         },
         source: 'content',
         timestamp: Date.now(),
-      },
-      (response) => {
-        if (response?.success) {
+      })
+      .then((response: unknown) => {
+        const typedResponse = response as { success?: boolean } | undefined;
+        if (typedResponse?.success) {
           this.state = 'success';
         } else {
           this.state = 'error';
         }
         this.render();
-      }
-    );
+      })
+      .catch(() => {
+        this.state = 'error';
+        this.render();
+      });
 
     // Simulate success for now since backend isn't implemented
     setTimeout(() => {

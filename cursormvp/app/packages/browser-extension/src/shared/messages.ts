@@ -11,6 +11,8 @@ import type {
   ExtensionMessageType,
   ExtensionSettings,
 } from '@distill/shared-types';
+import type { Runtime } from 'webextension-polyfill';
+import { browser } from './browser-api';
 
 // ============================================================================
 // Message Types
@@ -146,7 +148,7 @@ export async function sendMessage<T = unknown, R = unknown>(
 ): Promise<R | null> {
   try {
     const message = createMessage(type, payload, 'popup');
-    const response = await chrome.runtime.sendMessage(message);
+    const response = await browser.runtime.sendMessage(message);
     return response as R;
   } catch (error) {
     console.error('[Distill] Error sending message:', error);
@@ -164,7 +166,7 @@ export async function sendToTab<T = unknown, R = unknown>(
 ): Promise<R | null> {
   try {
     const message = createMessage(type, payload, 'background');
-    const response = await chrome.tabs.sendMessage(tabId, message);
+    const response = await browser.tabs.sendMessage(tabId, message);
     return response as R;
   } catch (error) {
     console.error('[Distill] Error sending message to tab:', error);
@@ -180,7 +182,7 @@ export async function sendToActiveTab<T = unknown, R = unknown>(
   payload: T
 ): Promise<R | null> {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) {
       console.error('[Distill] No active tab found');
       return null;
@@ -198,7 +200,7 @@ export async function sendToActiveTab<T = unknown, R = unknown>(
 
 type MessageHandler<T = unknown, R = unknown> = (
   payload: T,
-  sender: chrome.runtime.MessageSender
+  sender: Runtime.MessageSender
 ) => Promise<R> | R;
 
 interface MessageHandlers {
@@ -211,7 +213,7 @@ interface MessageHandlers {
 export function createMessageListener(handlers: MessageHandlers) {
   return (
     message: ExtensionMessage,
-    sender: chrome.runtime.MessageSender,
+    sender: Runtime.MessageSender,
     sendResponse: (response: unknown) => void
   ): boolean => {
     const handler = handlers[message.type];

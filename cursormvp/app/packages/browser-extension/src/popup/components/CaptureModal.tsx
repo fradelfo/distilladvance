@@ -1,6 +1,7 @@
 import type { CapturedConversation, DistillResult } from '@distill/shared-types';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { browser } from '../../shared/browser-api';
 import { urls } from '../../shared/config';
 import { type MessageResponse, MessageTypes, sendMessage } from '../../shared/messages';
 import { ConversationPreview } from './ConversationPreview';
@@ -151,7 +152,7 @@ export function CaptureModal({
 
     try {
       // Get the current tab URL for sourceUrl
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       const sourceUrl = tab?.url;
 
       // Generate title from first user message
@@ -203,7 +204,7 @@ export function CaptureModal({
 
   const handleViewEdit = () => {
     if (result?.promptId) {
-      chrome.tabs.create({
+      browser.tabs.create({
         url: urls.prompts(result.promptId),
       });
     }
@@ -216,11 +217,11 @@ export function CaptureModal({
 
   const handleViewConversations = () => {
     if (savedResult?.conversationId) {
-      chrome.tabs.create({
+      browser.tabs.create({
         url: `${urls.dashboard.replace('/dashboard', '')}/conversations/${savedResult.conversationId}`,
       });
     } else {
-      chrome.tabs.create({
+      browser.tabs.create({
         url: `${urls.dashboard.replace('/dashboard', '')}/conversations`,
       });
     }

@@ -80,6 +80,8 @@ export function MemberList({
                 src={member.user.image}
                 alt={member.user.name || 'Member'}
                 className="w-10 h-10 rounded-full"
+                width={40}
+                height={40}
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-sm font-medium text-primary-600">

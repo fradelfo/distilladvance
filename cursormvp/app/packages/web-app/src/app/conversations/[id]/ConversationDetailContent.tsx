@@ -113,15 +113,20 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 w-48 rounded bg-neutral-200 mb-2" />
-          <div className="h-4 w-32 rounded bg-neutral-200" />
+        {/* Header skeleton - matches actual h1 + metadata */}
+        <div className="animate-pulse flex items-start gap-4">
+          <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-muted" />
+          <div className="min-w-0 flex-1">
+            <div className="h-8 w-48 rounded bg-muted mb-2" />
+            <div className="h-4 w-32 rounded bg-muted" />
+          </div>
         </div>
+        {/* Content skeleton */}
         <div className="card animate-pulse p-6">
           <div className="space-y-4">
-            <div className="h-4 w-full rounded bg-neutral-200" />
-            <div className="h-4 w-3/4 rounded bg-neutral-200" />
-            <div className="h-4 w-1/2 rounded bg-neutral-200" />
+            <div className="h-4 w-full rounded bg-muted" />
+            <div className="h-4 w-3/4 rounded bg-muted" />
+            <div className="h-4 w-1/2 rounded bg-muted" />
           </div>
         </div>
       </div>
@@ -185,6 +190,8 @@ export function ConversationDetailContent({ conversationId }: ConversationDetail
                 src={sourceIcons[conversation.source]}
                 alt={sourceNames[conversation.source] || conversation.source}
                 className="h-7 w-7"
+                width={28}
+                height={28}
               />
             ) : (
               <span className="text-2xl">💬</span>

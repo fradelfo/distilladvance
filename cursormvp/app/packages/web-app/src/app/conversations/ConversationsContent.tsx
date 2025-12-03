@@ -209,12 +209,15 @@ export function ConversationsContent() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="card animate-pulse p-4">
               <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-lg bg-neutral-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-neutral-200" />
-                  <div className="h-3 w-1/2 rounded bg-neutral-200" />
+                {/* Icon placeholder - matches actual 10x10 icon container */}
+                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-muted" />
+                {/* Content placeholder - matches actual title + subtitle structure */}
+                <div className="min-w-0 flex-1">
+                  <div className="h-5 w-3/4 rounded bg-muted" />
+                  <div className="mt-1 h-4 w-1/2 rounded bg-muted" />
                 </div>
-                <div className="h-6 w-20 rounded bg-neutral-200" />
+                {/* Badge placeholder - matches actual privacy badge */}
+                <div className="h-6 w-20 flex-shrink-0 rounded-full bg-muted" />
               </div>
             </div>
           ))}
@@ -255,6 +258,8 @@ export function ConversationsContent() {
                         src={sourceIcons[conversation.source]}
                         alt={sourceNames[conversation.source] || conversation.source}
                         className="h-6 w-6"
+                        width={24}
+                        height={24}
                       />
                     ) : (
                       <span className="text-lg">💬</span>

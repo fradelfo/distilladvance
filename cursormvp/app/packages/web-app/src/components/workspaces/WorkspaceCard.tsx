@@ -50,7 +50,13 @@ export function WorkspaceCard({
           <div className="flex items-start gap-3">
             {/* Workspace Icon/Image */}
             {image ? (
-              <img src={image} alt={name} className="w-12 h-12 rounded-lg object-cover" />
+              <img
+                src={image}
+                alt={name}
+                className="w-12 h-12 rounded-lg object-cover"
+                width={48}
+                height={48}
+              />
             ) : (
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground text-lg font-bold">
                 {name.charAt(0).toUpperCase()}

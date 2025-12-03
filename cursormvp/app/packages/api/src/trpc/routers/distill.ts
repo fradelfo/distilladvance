@@ -11,7 +11,33 @@ import {
   createUsageLogEntry,
   distillConversation,
 } from '../../services/distillation.js';
+import { embedPrompt } from '../../services/embedding.js';
 import { authedProcedure, router } from '../index.js';
+
+// ============================================================================
+// Auto-Embed Helper
+// ============================================================================
+
+/**
+ * Trigger embedding generation for a prompt asynchronously (fire and forget).
+ * Errors are logged but don't affect the main operation.
+ */
+function triggerAutoEmbed(promptId: string): void {
+  // Use setImmediate to not block the response
+  setImmediate(async () => {
+    try {
+      console.log(`[AutoEmbed] Starting embedding for prompt: ${promptId}`);
+      await embedPrompt(promptId);
+      console.log(`[AutoEmbed] Successfully embedded prompt: ${promptId}`);
+    } catch (error) {
+      // Log but don't throw - embedding is a background enhancement
+      console.error(
+        `[AutoEmbed] Failed to embed prompt ${promptId}:`,
+        error instanceof Error ? error.message : error
+      );
+    }
+  });
+}
 
 // ============================================================================
 // Validation Schemas
@@ -184,6 +210,9 @@ export const distillRouter = router({
       },
     });
 
+    // Trigger async embedding generation (fire and forget)
+    triggerAutoEmbed(prompt.id);
+
     return {
       success: true,
       prompt: {
@@ -259,6 +288,13 @@ export const distillRouter = router({
         metadata: true,
       },
     });
+
+    // Re-embed if content fields changed (title, template, or tags)
+    const contentFieldsChanged =
+      input.title !== undefined || input.template !== undefined || input.tags !== undefined;
+    if (contentFieldsChanged) {
+      triggerAutoEmbed(updated.id);
+    }
 
     return {
       success: true,
@@ -659,6 +695,9 @@ export const distillRouter = router({
           createdAt: true,
         },
       });
+
+      // Trigger async embedding generation (fire and forget)
+      triggerAutoEmbed(savedPrompt.id);
 
       return {
         success: true,

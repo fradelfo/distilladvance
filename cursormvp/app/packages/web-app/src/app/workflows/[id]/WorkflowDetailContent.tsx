@@ -679,6 +679,16 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
         </TabsContent>
 
         <TabsContent value="history">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Recent executions
+            </p>
+            <Link href={`/workflows/${workflowId}/executions`}>
+              <Button variant="link" size="sm" className="text-sm">
+                View All Executions
+              </Button>
+            </Link>
+          </div>
           {isLoadingExecutions ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
@@ -800,17 +810,14 @@ export function WorkflowDetailContent({ workflowId }: WorkflowDetailContentProps
                               <span>{formatCost(exec.totalCost)}</span>
                             </div>
                             <div className="flex items-center gap-2 ml-auto">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveExecutionId(exec.id);
-                                  setExpandedExecutionId(null);
-                                }}
+                              <Link
+                                href={`/workflows/${workflowId}/executions/${exec.id}`}
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                View Details
-                              </Button>
+                                <Button variant="outline" size="sm">
+                                  View Full Details
+                                </Button>
+                              </Link>
                               <Button
                                 variant="outline"
                                 size="sm"

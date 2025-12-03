@@ -64,11 +64,12 @@ export function SortableStep({
         <div className="flex items-center gap-2 p-3">
           {/* Drag Handle */}
           <button
-            className="cursor-grab touch-none p-1 hover:bg-accent rounded"
+            className="cursor-grab touch-none p-1 hover:bg-accent rounded focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label={`Drag to reorder step ${index + 1}: ${step.promptTitle}`}
             {...attributes}
             {...listeners}
           >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <GripVertical className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </button>
 
           {/* Step Number */}
@@ -89,11 +90,16 @@ export function SortableStep({
           {/* Expand/Collapse */}
           {step.variables.length > 0 && (
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                aria-label={isExpanded ? 'Collapse variable mapping' : 'Expand variable mapping'}
+              >
                 {isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
+                  <ChevronUp className="h-4 w-4" aria-hidden="true" />
                 ) : (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 )}
               </Button>
             </CollapsibleTrigger>
@@ -105,8 +111,9 @@ export function SortableStep({
             size="icon"
             className="shrink-0 text-destructive hover:text-destructive"
             onClick={onRemove}
+            aria-label={`Remove step ${index + 1}: ${step.promptTitle}`}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
@@ -117,18 +124,20 @@ export function SortableStep({
               <div className="text-sm font-medium text-muted-foreground mb-2 mt-3">
                 Input Mapping
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {step.variables.map((varName) => (
-                  <div key={varName} className="flex items-center gap-2">
-                    <Badge variant="outline" className="shrink-0 font-mono text-xs">
-                      {`{{${varName}}}`}
-                    </Badge>
-                    <span className="text-muted-foreground">&larr;</span>
+                  <div key={varName} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                        {`{{${varName}}}`}
+                      </Badge>
+                      <span className="text-muted-foreground hidden sm:inline" aria-hidden="true">&larr;</span>
+                    </div>
                     <Select
                       value={step.inputMapping[varName] || ''}
                       onValueChange={(value) => onUpdateMapping(varName, value)}
                     >
-                      <SelectTrigger className="flex-1">
+                      <SelectTrigger className="w-full sm:flex-1">
                         <SelectValue placeholder="Select source..." />
                       </SelectTrigger>
                       <SelectContent>

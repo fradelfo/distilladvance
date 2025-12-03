@@ -37,6 +37,8 @@ model User {
   workspaceMemberships WorkspaceMember[]
   subscription        Subscription?
   workflows           Workflow[]
+  savedSearches       SavedSearch[]
+  searchHistory       SearchHistory[]
 
   @@map("users")
 }
@@ -447,4 +449,49 @@ model WorkflowStepExecution {
   @@index([executionId])
   @@index([stepId])
   @@map("workflow_step_executions")
+}
+
+// ============================================================================
+// Search & Discovery
+// ============================================================================
+
+enum SearchMode {
+  KEYWORD   // Basic title search
+  FULLTEXT  // PostgreSQL full-text search on title + content
+  SEMANTIC  // Vector similarity search
+  HYBRID    // Combined fulltext + semantic with RRF ranking
+}
+
+model SavedSearch {
+  id         String     @id @default(cuid())
+  userId     String
+  name       String
+  query      String?    // Search query text
+  filters    Json       // { tags: [], dateRange: {}, isPublic: null, etc. }
+  searchMode SearchMode @default(FULLTEXT)
+  isDefault  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_searches")
+}
+
+model SearchHistory {
+  id          String     @id @default(cuid())
+  userId      String
+  query       String
+  searchMode  SearchMode
+  resultCount Int
+  filters     Json?      // Filters applied at time of search
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("search_history")
 }

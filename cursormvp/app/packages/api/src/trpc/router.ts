@@ -7,6 +7,7 @@ import { conversationRouter } from './routers/conversation.js';
 import { distillRouter } from './routers/distill.js';
 import { embeddingRouter } from './routers/embedding.js';
 import { healthRouter } from './routers/health.js';
+import { searchRouter } from './routers/search.js';
 import { userRouter } from './routers/user.js';
 import { workflowRouter } from './routers/workflow.js';
 import { workspaceRouter } from './routers/workspace.js';
@@ -23,6 +24,7 @@ export const appRouter = router({
   distill: distillRouter,
   embedding: embeddingRouter,
   health: healthRouter,
+  search: searchRouter,
   user: userRouter,
   workflow: workflowRouter,
   workspace: workspaceRouter,

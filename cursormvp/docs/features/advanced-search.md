@@ -464,6 +464,304 @@ Autocomplete uses 200ms debounce to reduce API load while typing.
 
 ---
 
+## Testing Examples
+
+### 1. Full-Text Search Test
+
+```bash
+# Test via curl (replace <your-token> with actual JWT)
+curl -X POST http://localhost:3001/trpc/search.search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "query": "API integration",
+    "mode": "FULLTEXT",
+    "limit": 10
+  }'
+```
+
+**UI Test:**
+1. Go to `/prompts`
+2. Type "API" in the search box
+3. Select "Full-Text" mode from dropdown
+4. Press Enter - should search title AND content
+
+### 2. Semantic Search Test
+
+```bash
+# Search by meaning (requires embeddings)
+curl -X POST http://localhost:3001/trpc/search.search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "query": "help me write better code",
+    "mode": "SEMANTIC",
+    "limit": 10
+  }'
+```
+
+**UI Test:**
+1. Type a conceptual query like "debugging techniques"
+2. Select "Semantic" mode
+3. Should find prompts with similar meaning, not just keywords
+
+### 3. Hybrid Search Test
+
+```bash
+# Combined FTS + Semantic with RRF ranking
+curl -X POST http://localhost:3001/trpc/search.hybrid \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "query": "refactor code",
+    "limit": 10,
+    "ftsWeight": 0.4,
+    "semanticWeight": 0.6
+  }'
+```
+
+**UI Test:**
+1. Select "Hybrid" mode
+2. Type "code review best practices"
+3. Results combine keyword matches + semantic similarity
+
+### 4. Advanced Filters Test
+
+**UI Test:**
+1. Click the filter icon to expand filters
+2. Try these filter combinations:
+
+| Filter | Test Value |
+|--------|------------|
+| Date range | Last 7 days |
+| Tags | Select "javascript", "api" |
+| Visibility | Toggle "Public only" |
+| Min usage | Set to 5 |
+
+### 5. Autocomplete Test
+
+**UI Test:**
+1. Start typing slowly: "cod"
+2. Wait 200ms - dropdown should appear with:
+   - Recent searches (clock icon)
+   - Matching titles (search icon)
+   - Matching tags (tag badge)
+3. Use arrow keys to navigate, Enter to select
+
+### 6. Saved Searches Test
+
+**UI Test:**
+1. Set up a search with filters (e.g., query="API", tags=["javascript"])
+2. Click the bookmark icon → "Save Search"
+3. Enter name: "JS API Prompts"
+4. Click saved searches dropdown → should see your saved search
+5. Click to load it
+
+### 7. Search History Test
+
+**UI Test:**
+1. Perform several searches
+2. Click the clock icon
+3. Should see recent unique searches
+4. Click one to reload that search
+5. Test "Clear history" button
+
+### 8. Auto-Embed Test
+
+```bash
+# Create a new prompt - embedding should trigger automatically
+curl -X POST http://localhost:3001/trpc/distill.savePrompt \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "title": "Test Auto Embed",
+    "template": "This is a test prompt for {{topic}}",
+    "variables": [{"name": "topic", "description": "The topic", "example": "testing", "required": true}],
+    "tags": ["test"]
+  }'
+```
+
+**Check server logs for:**
+```
+[AutoEmbed] Starting embedding for prompt: <id>
+[AutoEmbed] Successfully embedded prompt: <id>
+```
+
+### 9. Highlighted Matches Test
+
+When searching with Full-Text mode, results should include a `highlight` field:
+
+```json
+{
+  "results": [{
+    "id": "...",
+    "title": "API Integration Guide",
+    "highlight": "...the <b>API</b> endpoint handles..."
+  }]
+}
+```
+
+### Database Verification Script
+
+Create `test-search.ts` in the api package:
+
+```typescript
+/**
+ * Test script for Advanced Search features
+ * Run with: bunx tsx test-search.ts
+ */
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function testSearch() {
+  console.log('=== Advanced Search Test Suite ===\n');
+
+  // 1. Test FTS is working
+  console.log('1. Testing Full-Text Search...');
+  try {
+    const ftsTest = await prisma.$queryRaw<Array<{ id: string; title: string; rank: number }>>`
+      SELECT id, title,
+             ts_rank(search_vector, plainto_tsquery('english', 'api')) as rank
+      FROM prompts
+      WHERE search_vector @@ plainto_tsquery('english', 'api')
+      ORDER BY rank DESC
+      LIMIT 5;
+    `;
+    console.log('   FTS Results:', ftsTest.length > 0 ? 'PASS' : 'NO MATCHES');
+    ftsTest.forEach(r => console.log(`   - ${r.title} (rank: ${r.rank.toFixed(4)})`));
+  } catch (e) {
+    console.log('   FTS Results: FAIL -', (e as Error).message);
+  }
+
+  // 2. Test trigram similarity
+  console.log('\n2. Testing Trigram Autocomplete...');
+  try {
+    const trigramTest = await prisma.$queryRaw<Array<{ title: string; sim: number }>>`
+      SELECT title, similarity(LOWER(title), 'cod') as sim
+      FROM prompts
+      WHERE similarity(LOWER(title), 'cod') > 0.1
+      ORDER BY sim DESC
+      LIMIT 5;
+    `;
+    console.log('   Trigram Results:', trigramTest.length > 0 ? 'PASS' : 'NO MATCHES');
+    trigramTest.forEach(r => console.log(`   - ${r.title} (similarity: ${r.sim.toFixed(4)})`));
+  } catch (e) {
+    console.log('   Trigram Results: FAIL -', (e as Error).message);
+  }
+
+  // 3. Test search_vector column exists
+  console.log('\n3. Testing search_vector column...');
+  try {
+    const vectorTest = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM prompts WHERE search_vector IS NOT NULL;
+    `;
+    console.log(`   Indexed prompts: ${vectorTest[0].count}`);
+  } catch (e) {
+    console.log('   search_vector: FAIL -', (e as Error).message);
+  }
+
+  // 4. Test embeddings exist
+  console.log('\n4. Testing embeddings...');
+  try {
+    const embeddingTest = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM prompt_embeddings;
+    `;
+    console.log(`   Embedded prompts: ${embeddingTest[0].count}`);
+  } catch (e) {
+    console.log('   Embeddings: FAIL -', (e as Error).message);
+  }
+
+  // 5. Test saved searches table
+  console.log('\n5. Testing saved_searches table...');
+  try {
+    const savedTest = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM saved_searches;
+    `;
+    console.log(`   Saved searches: ${savedTest[0].count}`);
+  } catch (e) {
+    console.log('   saved_searches: FAIL -', (e as Error).message);
+  }
+
+  // 6. Test search history table
+  console.log('\n6. Testing search_history table...');
+  try {
+    const historyTest = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM search_history;
+    `;
+    console.log(`   History entries: ${historyTest[0].count}`);
+  } catch (e) {
+    console.log('   search_history: FAIL -', (e as Error).message);
+  }
+
+  // 7. Test indexes exist
+  console.log('\n7. Testing indexes...');
+  try {
+    const indexTest = await prisma.$queryRaw<Array<{ indexname: string }>>`
+      SELECT indexname FROM pg_indexes
+      WHERE tablename = 'prompts'
+      AND (indexname LIKE '%search%' OR indexname LIKE '%trgm%');
+    `;
+    console.log('   Found indexes:');
+    indexTest.forEach(i => console.log(`   - ${i.indexname}`));
+  } catch (e) {
+    console.log('   Indexes: FAIL -', (e as Error).message);
+  }
+
+  console.log('\n=== Test Complete ===');
+}
+
+testSearch()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+```
+
+Run the test:
+
+```bash
+cd app/packages/api
+source ../../.env  # Load DATABASE_URL
+bunx tsx test-search.ts
+```
+
+Expected output:
+
+```
+=== Advanced Search Test Suite ===
+
+1. Testing Full-Text Search...
+   FTS Results: PASS
+   - API Integration Guide (rank: 0.0607)
+   - REST API Best Practices (rank: 0.0455)
+
+2. Testing Trigram Autocomplete...
+   Trigram Results: PASS
+   - Code Review Checklist (similarity: 0.4286)
+   - Coding Standards (similarity: 0.3333)
+
+3. Testing search_vector column...
+   Indexed prompts: 20
+
+4. Testing embeddings...
+   Embedded prompts: 15
+
+5. Testing saved_searches table...
+   Saved searches: 0
+
+6. Testing search_history table...
+   History entries: 0
+
+7. Testing indexes...
+   Found indexes:
+   - prompts_search_vector_idx
+   - prompts_title_trgm_idx
+   - prompts_content_trgm_idx
+
+=== Test Complete ===
+```
+
+---
+
 ## Troubleshooting
 
 ### Full-Text Search Not Working

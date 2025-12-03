@@ -25,9 +25,18 @@ let analyticsEnabled = true;
 /**
  * Initialize extension analytics.
  */
+interface AnalyticsStorage {
+  analyticsSessionId?: string;
+  analyticsEnabled?: boolean;
+  userId?: string;
+}
+
 export async function initExtensionAnalytics(): Promise<void> {
   // Generate or retrieve session ID
-  const storage = await browser.storage.local.get(['analyticsSessionId', 'analyticsEnabled']);
+  const storage = (await browser.storage.local.get([
+    'analyticsSessionId',
+    'analyticsEnabled',
+  ])) as AnalyticsStorage;
 
   if (storage.analyticsEnabled === false) {
     analyticsEnabled = false;
@@ -38,7 +47,7 @@ export async function initExtensionAnalytics(): Promise<void> {
   await browser.storage.local.set({ analyticsSessionId: sessionId });
 
   // Check for user ID from auth
-  const authStorage = await browser.storage.local.get(['userId']);
+  const authStorage = (await browser.storage.local.get(['userId'])) as AnalyticsStorage;
   userId = authStorage.userId || null;
 }
 

@@ -382,13 +382,14 @@ async function openCaptureModal(): Promise<void> {
 }
 
 // Listen for messages from background script and popup
-browser.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
-  console.log('[Distill] Content script received message:', message.type);
+browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  const typedMessage = message as ExtensionMessage;
+  console.log('[Distill] Content script received message:', typedMessage.type);
 
   // Handle async operations properly
   (async () => {
     try {
-      switch (message.type) {
+      switch (typedMessage.type) {
         case MessageTypes.CAPTURE_CONVERSATION: {
           console.log('[Distill] Starting conversation capture...');
           const capturedData = await buildCapturedConversation();
@@ -442,7 +443,7 @@ browser.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendR
         }
 
         default:
-          console.warn('[Distill] Unknown message type:', message.type);
+          console.warn('[Distill] Unknown message type:', typedMessage.type);
           sendResponse({ success: false, error: 'Unknown message type' });
       }
     } catch (error) {

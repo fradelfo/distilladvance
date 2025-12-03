@@ -176,7 +176,12 @@
       "WebFetch(domain:railway.com)",
       "Bash(docs/deployment/ )",
       "Bash(scripts/deployment/)",
-      "Bash(__NEW_LINE__ git status --short)"
+      "Bash(__NEW_LINE__ git status --short)",
+      "Bash(app/packages/api/src/lib/cache.ts )",
+      "Bash(app/packages/api/src/lib/redis.ts )",
+      "Bash(app/packages/api/src/trpc/routers/billing.ts )",
+      "Bash(app/packages/api/src/trpc/router.ts )",
+      "Bash(app/packages/web-app/src/components/billing/ )"
     ]
   },
   "enableAllProjectMcpServers": true,

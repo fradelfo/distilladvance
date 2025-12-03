@@ -28,6 +28,12 @@ COPY cursormvp/app/packages/web-app ./app/packages/web-app
 # Build the Next.js app
 RUN cd app/packages/web-app && bun run build
 
+# Debug: List standalone output structure
+RUN echo "=== Standalone directory structure ===" && \
+    ls -la app/packages/web-app/.next/standalone/ && \
+    echo "=== Looking for server.js ===" && \
+    find app/packages/web-app/.next/standalone -name "server.js" -type f
+
 # Production stage - use Node.js since Next.js standalone requires it
 FROM node:20-slim AS runner
 
@@ -39,10 +45,15 @@ ENV HOSTNAME=0.0.0.0
 
 # Copy built assets from builder - standalone mode puts everything in .next/standalone
 COPY --from=builder /app/cursormvp/app/packages/web-app/.next/standalone ./
-COPY --from=builder /app/cursormvp/app/packages/web-app/.next/static ./app/packages/web-app/.next/static
-COPY --from=builder /app/cursormvp/app/packages/web-app/public ./app/packages/web-app/public
+COPY --from=builder /app/cursormvp/app/packages/web-app/.next/static ./.next/static
+COPY --from=builder /app/cursormvp/app/packages/web-app/public ./public
+
+# Debug: List what we copied
+RUN echo "=== Runner /app contents ===" && ls -la /app && \
+    echo "=== Looking for server.js in runner ===" && \
+    find /app -name "server.js" -type f 2>/dev/null || echo "No server.js found"
 
 EXPOSE 3000
 
-# The server.js is at the web-app root in standalone output
-CMD ["node", "app/packages/web-app/server.js"]
+# server.js should be at the root of standalone output
+CMD ["node", "server.js"]
